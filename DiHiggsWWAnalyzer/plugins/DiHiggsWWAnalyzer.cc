@@ -233,6 +233,10 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
       mu_negative = false;
       bquark = false;
       bbarquark = false;
+    const reco::Candidate* mu1_htoWW_cand=NULL;
+    const reco::Candidate* mu2_htoWW_cand=NULL;
+    const reco::Candidate* b1_htobb_cand=NULL;
+    const reco::Candidate* b2_htobb_cand=NULL;
     
    for (reco::GenParticleCollection::const_iterator it = genParticleColl->begin(); it != genParticleColl->end(); ++it) {
 
@@ -250,6 +254,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
           mu1_mother_py = it->mother()->py();
           mu1_mother_pz = it->mother()->pz();
           mu1_mother_energy = it->mother()->energy();
+          mu1_htoWW_cand = it->mother()->mother();
       }
       else if (it->pdgId() == -13 && it->mother()->pdgId() == 24 && it->mother()->mother()->pdgId() == 25 && it->status() == 1 && !mu_positive)
       {
@@ -263,6 +268,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
           mu2_mother_py = it->mother()->py();
           mu2_mother_pz = it->mother()->pz();
           mu2_mother_energy = it->mother()->energy();
+          mu2_htoWW_cand = it->mother()->mother();
       }
       else if (it->pdgId() == 5 && it->mother()->pdgId() == 25 && bquark)
       {
@@ -272,6 +278,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  b1_pz = it->pz();
 	  b1_motherid = it->mother()->pdgId();
 	  bquark = true;
+          b1_htobb_cand = it->mother();
       }
       else if (it->pdgId() == -5 && it->mother()->pdgId() == 25 && bbarquark)
       {
@@ -281,17 +288,28 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  b2_pz = it->pz();
 	  b2_motherid = it->mother()->pdgId();
 	  bbarquark = true;
+          b2_htobb_cand = it->mother();
       }
 
      // std::cout << "test" << std::endl;
 
    }// all Gen particles
 
+    if (mu_negative and mu_positive and mu1_htoWW_cand == mu2_htoWW_cand)
+       {
+         std::cout << "find 2 muons and they come from same higgs" << std::endl;
+
+         }
+    if (bquark and bbarquark and b1_htobb_cand == b2_htobb_cand)
+       {
+         std::cout << "find bbar and they come from same higgs" << std::endl;
+
+         }
    //TLorentzVector htobb;// = new TLorentzVector(0,0,0,0);
    //htobb.SetPxPyPzE(b1_px+b2_px, b1_py+b2_py, b1_pz+b2_pz, b1_energy+b2_energy);
 
 
-   if (mu_positive and mu_negative and bquark and bbarquark) 
+   if (mu_positive and mu_negative and bquark and bbarquark and mu1_htoWW_cand != b1_htobb_cand) 
    {
      //  htobb_mass = htobb.M();
        std::cout << "find one event with required final state(mumubb)" << std::endl;
