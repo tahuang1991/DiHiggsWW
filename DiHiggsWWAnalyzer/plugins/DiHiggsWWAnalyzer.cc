@@ -236,13 +236,13 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
    }// all Gen particles
 
-   //TLorentzVector htobb;// = new TLorentzVector(0,0,0,0);
-   //htobb.SetPxPyPzE(b1_px+b2_px, b1_py+b2_py, b1_pz+b2_pz, b1_energy+b2_energy);
+   TLorentzVector htobb;// = new TLorentzVector(0,0,0,0);
+   htobb.SetPxPyPzE(b1_px+b2_px, b1_py+b2_py, b1_pz+b2_pz, b1_energy+b2_energy);
 
 
    if (mu_positive and mu_negative and bquark and bbarquark) 
    {
-     //  htobb_mass = htobb.M();
+       htobb_mass = htobb.M();
        std::cout << "find one event with required final state(mumubb)" << std::endl;
        evtree->Fill();
        
