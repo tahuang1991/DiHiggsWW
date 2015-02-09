@@ -1,4 +1,4 @@
-<library name="GEMCodeGEMValidation_plugins" file="*.cc">
+<library name="Dihiggs_plugins" file="*.cc">
   <use name="root"/>
   <use name="boost"/>
   <use name="FWCore/Framework"/>
@@ -22,6 +22,5 @@
   <use name="SimGeneral/HepPDTRecord"/>
   <use name="CommonTools/UtilAlgos"/>
   <use name="Utilities/General"/>
-  <use name="GEMCode/GEMValidation"/>
   <flags EDM_PLUGIN="1" />
 </library>
