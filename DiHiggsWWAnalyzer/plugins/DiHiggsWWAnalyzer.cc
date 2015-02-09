@@ -116,6 +116,9 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       bool mu_negative;
       bool bquark;
       bool bbarquark;
+      bool htobb;
+      bool htoWW;
+      bool h2tohh;
       float virtualW_lowM;
       float virtualW_highM;
 
@@ -233,6 +236,10 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
       mu_negative = false;
       bquark = false;
       bbarquark = false;
+      htobb = false;
+      htoWW = false;
+      h2tohh = false;
+
     const reco::Candidate* mu1_htoWW_cand=NULL;
     const reco::Candidate* mu2_htoWW_cand=NULL;
     const reco::Candidate* b1_htobb_cand=NULL;
@@ -298,20 +305,38 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     if (mu_negative and mu_positive and mu1_htoWW_cand == mu2_htoWW_cand)
        {
          std::cout << "find 2 muons and they come from same higgs" << std::endl;
-
+          htoWW_energy = mu1_htoWW_cand->energy();
+          htoWW_px = mu1_htoWW_cand->px();
+          htoWW_py = mu1_htoWW_cand->py();
+          htoWW_pz = mu1_htoWW_cand->pz();
+          htoWW = true;
          }
     if (bquark and bbarquark and b1_htobb_cand == b2_htobb_cand)
        {
          std::cout << "find bbar and they come from same higgs" << std::endl;
-
+          htobb_energy = b1_htobb_cand->energy();
+          htobb_px = b1_htobb_cand->px();
+          htobb_py = b1_htobb_cand->py();
+          htobb_pz = b1_htobb_cand->pz();
+          htobb = true;
+         }
+    if (htoWW and htobb and mu1_htoWW_cand != b1_htobb_cand and mu1_htoWW_cand->mother() == b1_htobb_cand->mother())
+       {
+         std::cout << "find 2 higgs and both of them come from same heavey higgs"  << std::endl;
+          h2tohh_energy = mu1_htoWW_cand->mother()->energy();
+          h2tohh_px = mu1_htoWW_cand->mother()->px();
+          h2tohh_py = mu1_htoWW_cand->mother()->py();
+          h2tohh_pz = mu1_htoWW_cand->mother()->pz();
+          h2tohh = true;
          }
    //TLorentzVector htobb;// = new TLorentzVector(0,0,0,0);
    //htobb.SetPxPyPzE(b1_px+b2_px, b1_py+b2_py, b1_pz+b2_pz, b1_energy+b2_energy);
-
-
-   if (mu_positive and mu_negative and bquark and bbarquark and mu1_htoWW_cand != b1_htobb_cand) 
-   {
      //  htobb_mass = htobb.M();
+
+
+   //if (mu_positive and mu_negative and bquark and bbarquark and mu1_htoWW_cand != b1_htobb_cand) 
+   if (h2tohh)
+   {
        std::cout << "find one event with required final state(mumubb)" << std::endl;
        evtree->Fill();
        
