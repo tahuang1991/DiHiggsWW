@@ -20,6 +20,9 @@
 
 // system include files
 #include <memory>
+#include <iostream>
+#include <fstream>
+#include <string>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -29,6 +32,13 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+
+//headers from root lib
+#include "TTree.h"
+#include "TFile.h"
+#include "TLorentzVector.h"
+
 //
 // class declaration
 //
@@ -52,9 +62,48 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       //virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
 
       // ----------member data ---------------------------
+      TTree *evtree;
+      TFile *output;
+
+      //branches of tree
+      float mu1_energy;
+      float mu1_px;
+      float mu1_py;
+      float mu1_pz;
+      int mu1_motherid;
+      float mu2_energy;
+      float mu2_px;
+      float mu2_py;
+      float mu2_pz;
+      int mu2_motherid;
+    //  float w1_mass;
+    //  float w2_mass;
+      float b1_energy;
+      float b1_px;
+      float b1_py;
+      float b1_pz;
+      int b1_motherid;
+      float b2_energy;
+      float b2_px;
+      float b2_py;
+      float b2_pz;
+      int b2_motherid;
+      float htobb_mass;
+
+      //cuts for higgstoWWbb
+      bool mu_positive;
+      bool mu_negative;
+      bool bquark;
+      bool bbarquark;
+      float virtualW_lowM;
+      float virtualW_highM;
+
+
+
+
 };
 
-//
+    //
 // constants, enums and typedefs
 //
 
@@ -69,6 +118,34 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
 
 {
    //now do what ever initialization is needed
+      mu1_energy = 0.0;
+      mu1_px = 0.0;
+      mu1_py = 0.0;
+      mu1_pz = 0.0;
+      mu1_motherid = 0;
+      mu2_energy = 0.0;
+      mu2_px = 0.0;
+      mu2_py = 0.0;
+      mu2_pz = 0.0;
+      mu2_motherid = 0;
+      b1_energy = 0.0;
+      b1_px = 0.0;
+      b1_py = 0.0;
+      b1_pz = 0.0;
+      b1_motherid = 0;
+      b2_energy = 0.0;
+      b2_px = 0.0;
+      b2_py = 0.0;
+      b2_pz = 0.0;
+      b2_motherid = 0;
+      htobb_mass = 0.0;
+
+      mu_positive = false;
+      mu_negative = false;
+      bquark = false;
+      bbarquark = false;
+      virtualW_lowM = 25;
+      virtualW_highM = 45;
 
 }
 
@@ -103,6 +180,73 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    ESHandle<SetupData> pSetup;
    iSetup.get<SetupRecord>().get(pSetup);
 #endif
+//   if(iEvent.isRealData()) std::cout << " Not a real Data " << std::endl;
+    
+   std::cout << "event  " << iEvent.id().event() << std::endl;
+
+   Handle<reco::GenParticleCollection> genParticleColl;
+   iEvent.getByLabel("genParticles", genParticleColl);
+    
+      mu_positive = false;
+      mu_negative = false;
+      bquark = false;
+      bbarquark = false;
+    
+   for (reco::GenParticleCollection::const_iterator it = genParticleColl->begin(); it != genParticleColl->end(); ++it) {
+
+   // particle id  it->pdgId() 
+      if (it->pdgId() == 13 && !mu_negative)
+      {
+	  mu1_energy = it->energy();
+	  mu1_px = it->px();
+	  mu1_py = it->py();
+	  mu1_pz = it->pz();
+	  mu1_motherid = it->mother()->pdgId();
+	  mu_negative = true;
+      }
+      else if (it->pdgId() == -13 && !mu_positive)
+      {
+	  mu2_energy = it->energy();
+	  mu2_px = it->px();
+	  mu2_py = it->py();
+	  mu2_pz = it->pz();
+	  mu2_motherid = it->mother()->pdgId();
+	  mu_positive = true;
+      }
+      else if (it->pdgId() == 5 && bquark)
+      {
+	  b1_energy = it->energy();
+	  b1_px = it->px();
+	  b1_py = it->py();
+	  b1_pz = it->pz();
+	  b1_motherid = it->mother()->pdgId();
+	  bquark = true;
+      }
+      else if (it->pdgId() == -5 && bbarquark)
+      {
+	  b2_energy = it->energy();
+	  b2_px = it->px();
+	  b2_py = it->py();
+	  b2_pz = it->pz();
+	  b2_motherid = it->mother()->pdgId();
+	  bbarquark = true;
+      }
+
+      std::cout << "test" << std::endl;
+
+   }// all Gen particles
+
+   //TLorentzVector htobb;// = new TLorentzVector(0,0,0,0);
+   //htobb.SetPxPyPzE(b1_px+b2_px, b1_py+b2_py, b1_pz+b2_pz, b1_energy+b2_energy);
+
+
+   if (mu_positive and mu_negative and bquark and bbarquark) 
+   {
+     //  htobb_mass = htobb.M();
+       std::cout << "find one event with required final state(mumubb)" << std::endl;
+       evtree->Fill();
+       
+   }
 }
 
 
@@ -110,12 +254,39 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 void 
 DiHiggsWWAnalyzer::beginJob()
 {
+   output = new TFile("output.root","recreate");
+   output->cd();
+
+   evtree = new TTree("evtree","event tree");
+   evtree->Branch("mu1_energy",&mu1_energy);
+   evtree->Branch("mu1_px",&mu1_px);
+   evtree->Branch("mu1_py",&mu1_py);
+   evtree->Branch("mu1_pz",&mu1_pz);
+   evtree->Branch("mu1_motherid",&mu1_motherid);
+   evtree->Branch("mu2_energy",&mu2_energy);
+   evtree->Branch("mu2_px",&mu2_px);
+   evtree->Branch("mu2_py",&mu2_py);
+   evtree->Branch("mu2_pz",&mu2_pz);
+   evtree->Branch("mu2_motherid",&mu2_motherid);
+   evtree->Branch("b1_energy",&b1_energy);
+   evtree->Branch("b1_px",&b1_px);
+   evtree->Branch("b1_py",&b1_py);
+   evtree->Branch("b1_pz",&b1_pz);
+   evtree->Branch("b1_motherid",&b1_motherid);
+   evtree->Branch("b2_energy",&b2_energy);
+   evtree->Branch("b2_px",&b2_px);
+   evtree->Branch("b2_py",&b2_py);
+   evtree->Branch("b2_pz",&b2_pz);
+   evtree->Branch("b2_motherid",&b2_motherid);
+    
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
 void 
 DiHiggsWWAnalyzer::endJob() 
 {
+    output->Write();
+    output->Close();
 }
 
 // ------------ method called when starting to processes a run  ------------
