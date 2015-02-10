@@ -248,36 +248,67 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    for (reco::GenParticleCollection::const_iterator it = genParticleColl->begin(); it != genParticleColl->end(); ++it) {
 
 //particle id, (muon13),(b5),(W+24),(SM higgs25)
-   // particle id  it->pdgId() 
-      if (it->pdgId() == 13 && it->mother()->pdgId() == -24 && it->mother()->mother()->pdgId() == 25 && it->status() == 1 && !mu_negative)
+   // particle id  it->pdgId()
+   //
+      std::cout << "Gen paticles: id " << it->pdgId() << std::endl; 
+      if (it->pdgId() == 13 && it->status() == 1 && !mu_negative)
       {
 	  mu1_energy = it->energy();
 	  mu1_px = it->px();
 	  mu1_py = it->py();
 	  mu1_pz = it->pz();
-	  mu1_motherid = it->mother()->pdgId();
-	  mu_negative = true;
-          mu1_mother_px = it->mother()->px();
-          mu1_mother_py = it->mother()->py();
-          mu1_mother_pz = it->mother()->pz();
-          mu1_mother_energy = it->mother()->energy();
-          mu1_htoWW_cand = it->mother()->mother();
+	  //mu_negative = true;
+          const reco::Candidate* tmp_mu1 = it->mother(); 
+          while (tmp_mu1->pdgId() == 13) tmp_mu1 = tmp_mu1->mother();
+	  mu1_motherid = tmp_mu1->pdgId();
+          mu1_mother_px = tmp_mu1->px();
+          mu1_mother_py = tmp_mu1->py();
+          mu1_mother_pz = tmp_mu1->pz();
+          mu1_mother_energy = tmp_mu1->energy();
+
+          while (tmp_mu1->pdgId() == -24) tmp_mu1 = tmp_mu1->mother();
+          if (tmp_mu1->pdgId() == 25)   
+             {
+                  std::cout << "find muon(-) candidate" << std::endl;
+	          mu_negative = true;
+              }
+          mu1_htoWW_cand = tmp_mu1;
       }
-      else if (it->pdgId() == -13 && it->mother()->pdgId() == 24 && it->mother()->mother()->pdgId() == 25 && it->status() == 1 && !mu_positive)
+    /* else if (abs(it->pdgId()) == 13) //for test
+      {
+          std::cout << "find a muon, id " << it->pdgId() << " energy "<< it->energy() << " status "  << it->status() << std::endl;
+          const reco::Candidate* tmp=it->mother(); 
+          while (abs(tmp->pdgId()) == 13) tmp = tmp->mother();
+          std::cout << "above muon, id " << tmp->pdgId() << " energy " << tmp->energy()  << " status " << tmp->status() << std::endl;
+          
+          while (abs(tmp->pdgId()) == 24) tmp = tmp->mother();
+          std::cout << "above W, id " << tmp->pdgId() << " energy " << tmp->energy() <<" status " << tmp->status() << std::endl;
+         
+       }*/
+      else if (it->pdgId() == -13 && it->status() == 1 && !mu_positive)
       {
 	  mu2_energy = it->energy();
 	  mu2_px = it->px();
 	  mu2_py = it->py();
 	  mu2_pz = it->pz();
 	  mu2_motherid = it->mother()->pdgId();
-	  mu_positive = true;
-          mu2_mother_px = it->mother()->px();
-          mu2_mother_py = it->mother()->py();
-          mu2_mother_pz = it->mother()->pz();
-          mu2_mother_energy = it->mother()->energy();
-          mu2_htoWW_cand = it->mother()->mother();
+	//  mu_positive = true;
+          const reco::Candidate* tmp_mu2 = it->mother(); 
+          while (tmp_mu2->pdgId() == -13) tmp_mu2 = tmp_mu2->mother();
+	  mu2_motherid = tmp_mu2->pdgId();
+          mu2_mother_px = tmp_mu2->px();
+          mu2_mother_py = tmp_mu2->py();
+          mu2_mother_pz = tmp_mu2->pz();
+          mu2_mother_energy = tmp_mu2->energy();
+          while (tmp_mu2->pdgId() == 24) tmp_mu2 = tmp_mu2->mother();
+          if (tmp_mu2->pdgId() == 25)   
+             {
+                 std::cout << "find muon(+) candidate" << std::endl;
+	         mu_positive = true;
+                }
+          mu2_htoWW_cand = tmp_mu2;
       }
-      else if (it->pdgId() == 5 && it->mother()->pdgId() == 25 && bquark)
+      else if (it->pdgId() == 5 && it->mother()->pdgId() == 25 && !bquark)
       {
 	  b1_energy = it->energy();
 	  b1_px = it->px();
@@ -285,9 +316,10 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  b1_pz = it->pz();
 	  b1_motherid = it->mother()->pdgId();
 	  bquark = true;
+          std::cout << "find bquark candidate" << std::endl;
           b1_htobb_cand = it->mother();
       }
-      else if (it->pdgId() == -5 && it->mother()->pdgId() == 25 && bbarquark)
+      else if (it->pdgId() == -5 && it->mother()->pdgId() == 25 && !bbarquark)
       {
 	  b2_energy = it->energy();
 	  b2_px = it->px();
@@ -295,6 +327,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  b2_pz = it->pz();
 	  b2_motherid = it->mother()->pdgId();
 	  bbarquark = true;
+          std::cout << "find bbarquark candidate" << std::endl;
           b2_htobb_cand = it->mother();
       }
 
@@ -310,6 +343,13 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
           htoWW_py = mu1_htoWW_cand->py();
           htoWW_pz = mu1_htoWW_cand->pz();
           htoWW = true;
+         }
+    else if(mu_negative and mu_positive)   
+       {
+         std::cout << "find 2 muons but they are not from same higgs" << std::endl;
+         std::cout << "mu1_higgs energy " << mu1_htoWW_cand->energy() << " px " << mu1_htoWW_cand->px() << std::endl;
+         std::cout << "mu2_higgs energy " << mu2_htoWW_cand->energy() << " px " << mu2_htoWW_cand->px() << std::endl;
+
          }
     if (bquark and bbarquark and b1_htobb_cand == b2_htobb_cand)
        {
@@ -329,6 +369,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
           h2tohh_pz = mu1_htoWW_cand->mother()->pz();
           h2tohh = true;
          }
+    
    //TLorentzVector htobb;// = new TLorentzVector(0,0,0,0);
    //htobb.SetPxPyPzE(b1_px+b2_px, b1_py+b2_py, b1_pz+b2_pz, b1_energy+b2_energy);
      //  htobb_mass = htobb.M();
