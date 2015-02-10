@@ -75,6 +75,12 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float mu1_mother_px;
       float mu1_mother_py;
       float mu1_mother_pz;
+      float nu1_energy;
+      float nu1_px;
+      float nu1_py;
+      float nu1_pz;
+      bool Wtomu1nu1;
+
       float mu2_energy;
       float mu2_px;
       float mu2_py;
@@ -84,6 +90,11 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float mu2_mother_px;
       float mu2_mother_py;
       float mu2_mother_pz;
+      float nu2_energy;
+      float nu2_px;
+      float nu2_py;
+      float nu2_pz;
+      bool Wtomu2nu2;
      
       float htoWW_energy;
       float htoWW_px;
@@ -114,6 +125,8 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       //cuts for higgstoWWbb
       bool mu_positive;
       bool mu_negative;
+      bool nu_positive;
+      bool nu_negative;
       bool bquark;
       bool bbarquark;
       bool htobb;
@@ -151,6 +164,12 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       mu1_mother_px = 0.0;
       mu1_mother_py = 0.0;
       mu1_mother_pz = 0.0;
+      nu1_energy = 0.0;
+      nu1_px = 0.0;
+      nu1_py = 0.0;
+      nu1_pz = 0.0;
+      Wtomu1nu1 = false;
+
       mu2_energy = 0.0;
       mu2_px = 0.0;
       mu2_py = 0.0;
@@ -160,6 +179,12 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       mu2_mother_px = 0.0;
       mu2_mother_py = 0.0;
       mu2_mother_pz = 0.0;
+      nu2_energy = 0.0;
+      nu2_px = 0.0;
+      nu2_py = 0.0;
+      nu2_pz = 0.0;
+      Wtomu2nu2 = false;
+
       htoWW_energy = 0.0;
       htoWW_px = 0.0;
       htoWW_py = 0.0;
@@ -234,8 +259,12 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     
       mu_positive = false;
       mu_negative = false;
+      nu_positive = false;
+      mu_negative = false;
       bquark = false;
       bbarquark = false;
+      Wtomu1nu1 = false;
+      Wtomu2nu2 = false;
       htobb = false;
       htoWW = false;
       h2tohh = false;
@@ -258,21 +287,28 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  mu1_py = it->py();
 	  mu1_pz = it->pz();
 	  //mu_negative = true;
+          std::cout << "find muon(-) with status 1" << std::endl;
           const reco::Candidate* tmp_mu1 = it->mother(); 
-          while (tmp_mu1->pdgId() == 13) tmp_mu1 = tmp_mu1->mother();
+          while (tmp_mu1->pdgId() == 13 && tmp_mu1->numberOfMothers() == 1) tmp_mu1 = tmp_mu1->mother();
+          if (tmp_mu1->numberOfMothers() != 1 ) std::cout << "muon has more than one mother particle" << std::endl;
+ 
 	  mu1_motherid = tmp_mu1->pdgId();
           mu1_mother_px = tmp_mu1->px();
           mu1_mother_py = tmp_mu1->py();
           mu1_mother_pz = tmp_mu1->pz();
           mu1_mother_energy = tmp_mu1->energy();
 
-          while (tmp_mu1->pdgId() == -24) tmp_mu1 = tmp_mu1->mother();
+          while (tmp_mu1->pdgId() == -24 && tmp_mu1->numberOfMothers() == 1) tmp_mu1 = tmp_mu1->mother();
+          if (tmp_mu1->numberOfMothers() != 1 ) std::cout << "W- has more than one mother particle" << std::endl;
+         
           if (tmp_mu1->pdgId() == 25)   
              {
+                  while (tmp_mu1->mother()->pdgId() == 25) tmp_mu1 = tmp_mu1->mother();
                   std::cout << "find muon(-) candidate" << std::endl;
 	          mu_negative = true;
+                  mu1_htoWW_cand = tmp_mu1;
+                  std::cout << "mother of this higgs, id " << tmp_mu1->mother()->pdgId() << " energy " << tmp_mu1->mother()->energy() << std::endl;
               }
-          mu1_htoWW_cand = tmp_mu1;
       }
     /* else if (abs(it->pdgId()) == 13) //for test
       {
@@ -292,22 +328,58 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  mu2_py = it->py();
 	  mu2_pz = it->pz();
 	  mu2_motherid = it->mother()->pdgId();
+          std::cout << "find muon(+) with status 1" << std::endl;
 	//  mu_positive = true;
           const reco::Candidate* tmp_mu2 = it->mother(); 
-          while (tmp_mu2->pdgId() == -13) tmp_mu2 = tmp_mu2->mother();
+          while (tmp_mu2->pdgId() == -13 && tmp_mu2->numberOfMothers() == 1) tmp_mu2 = tmp_mu2->mother();
+          if (tmp_mu2->numberOfMothers() != 1)  std::cout << "muon has more than one mother particle" << std::endl;
 	  mu2_motherid = tmp_mu2->pdgId();
           mu2_mother_px = tmp_mu2->px();
           mu2_mother_py = tmp_mu2->py();
           mu2_mother_pz = tmp_mu2->pz();
           mu2_mother_energy = tmp_mu2->energy();
-          while (tmp_mu2->pdgId() == 24) tmp_mu2 = tmp_mu2->mother();
+          while (tmp_mu2->pdgId() == 24 && tmp_mu2->numberOfMothers() == 1) tmp_mu2 = tmp_mu2->mother();
+          if (tmp_mu2->numberOfMothers() != 1 ) std::cout << "W+ has more than one mother particle" << std::endl;
+    //      const reco::Candidate* tmphiggs_mu2 = tmp_mu2->mother();
           if (tmp_mu2->pdgId() == 25)   
              {
+                 while (tmp_mu2->mother()->pdgId() == 25)   tmp_mu2 = tmp_mu2->mother();
                  std::cout << "find muon(+) candidate" << std::endl;
 	         mu_positive = true;
+                 mu2_htoWW_cand = tmp_mu2;
+                 std::cout << "mother of this higgs, id " << tmp_mu2->mother()->pdgId() << " energy " << tmp_mu2->mother()->energy() << std::endl;
+               }
+        }
+      else if (it->pdgId() == 14 && !nu_negative )
+      {
+          const reco::Candidate* tmp_nu1 = it->mother(); 
+          while (tmp_nu1->pdgId() == -24) tmp_nu1 = tmp_nu1->mother();
+          if (tmp_nu1->pdgId() == 25)
+             {
+                 std::cout << "find nuetrino candidate" << std::endl;
+	         nu1_energy = it->energy();
+	         nu1_px = it->px();
+	         nu1_py = it->py();
+	         nu1_pz = it->pz();
+                 nu_negative = true;
                 }
-          mu2_htoWW_cand = tmp_mu2;
-      }
+         
+       }
+      else if (it->pdgId() == -14 && !nu_positive )
+      {
+          const reco::Candidate* tmp_nu2 = it->mother(); 
+          while (tmp_nu2->pdgId() == 24) tmp_nu2 = tmp_nu2->mother();
+          if (tmp_nu2->pdgId() == 25)
+             {
+                 std::cout << "find antinuetrino candidate" << std::endl;
+	         nu2_energy = it->energy();
+	         nu2_px = it->px();
+	         nu2_py = it->py();
+	         nu2_pz = it->pz();
+                 nu_positive = true;
+                }
+         
+       }
       else if (it->pdgId() == 5 && it->mother()->pdgId() == 25 && !bquark)
       {
 	  b1_energy = it->energy();
@@ -316,6 +388,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  b1_pz = it->pz();
 	  b1_motherid = it->mother()->pdgId();
 	  bquark = true;
+          if (it->numberOfMothers() != 1) std::cout << "bquark has more than one mother particle" << std::endl;
           std::cout << "find bquark candidate" << std::endl;
           b1_htobb_cand = it->mother();
       }
@@ -327,6 +400,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  b2_pz = it->pz();
 	  b2_motherid = it->mother()->pdgId();
 	  bbarquark = true;
+          if (it->numberOfMothers() != 1) std::cout << "bquark has more than one mother particle" << std::endl;
           std::cout << "find bbarquark candidate" << std::endl;
           b2_htobb_cand = it->mother();
       }
@@ -354,12 +428,16 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     if (bquark and bbarquark and b1_htobb_cand == b2_htobb_cand)
        {
          std::cout << "find bbar and they come from same higgs" << std::endl;
+         // const reco::Candidate* tmphiggs_bb = b1_htobb_cand->mother();
+          while (b1_htobb_cand->mother()->pdgId() == 25)  b1_htobb_cand = b1_htobb_cand->mother();
+          
           htobb_energy = b1_htobb_cand->energy();
           htobb_px = b1_htobb_cand->px();
           htobb_py = b1_htobb_cand->py();
           htobb_pz = b1_htobb_cand->pz();
           htobb = true;
          }
+//     else if()
     if (htoWW and htobb and mu1_htoWW_cand != b1_htobb_cand and mu1_htoWW_cand->mother() == b1_htobb_cand->mother())
        {
          std::cout << "find 2 higgs and both of them come from same heavey higgs"  << std::endl;
@@ -368,6 +446,13 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
           h2tohh_py = mu1_htoWW_cand->mother()->py();
           h2tohh_pz = mu1_htoWW_cand->mother()->pz();
           h2tohh = true;
+         }
+    else if(htoWW and htobb)   
+       {
+         std::cout << "find 2 higgs but they are not from same heavey higgs" << std::endl;
+         std::cout << "mother of htoWW id " << mu1_htoWW_cand->mother()->pdgId() <<" energy " << mu1_htoWW_cand->mother()->energy() << " px " << mu1_htoWW_cand->mother()->px() << std::endl;
+         std::cout << "mother of htobb id " << b1_htobb_cand->mother()->pdgId() << " energy " << b1_htobb_cand->mother()->energy() << " px " << b1_htobb_cand->mother()->px() << std::endl;
+
          }
     
    //TLorentzVector htobb;// = new TLorentzVector(0,0,0,0);
@@ -402,6 +487,12 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("mu1_mother_px",&mu1_mother_px);
    evtree->Branch("mu1_mother_py",&mu1_mother_py);
    evtree->Branch("mu1_mother_pz",&mu1_mother_pz);
+   evtree->Branch("nu1_energy",&nu1_energy);
+   evtree->Branch("nu1_px",&nu1_px);
+   evtree->Branch("nu1_py",&nu1_py);
+   evtree->Branch("nu1_pz",&nu1_pz);
+   evtree->Branch("Wtomu1nu1",&Wtomu1nu1);
+
    evtree->Branch("mu2_energy",&mu2_energy);
    evtree->Branch("mu2_px",&mu2_px);
    evtree->Branch("mu2_py",&mu2_py);
@@ -411,10 +502,17 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("mu2_mother_py",&mu2_mother_py);
    evtree->Branch("mu2_mother_pz",&mu2_mother_pz);
    evtree->Branch("mu2_motherid",&mu2_motherid);
+   evtree->Branch("nu2_energy",&nu2_energy);
+   evtree->Branch("nu2_px",&nu2_px);
+   evtree->Branch("nu2_py",&nu2_py);
+   evtree->Branch("nu2_pz",&nu2_pz);
+   evtree->Branch("Wtomu2nu2",&Wtomu2nu2);
+
    evtree->Branch("htoWW_energy",&htoWW_energy);
    evtree->Branch("htoWW_px",&htoWW_px);
    evtree->Branch("htoWW_py",&htoWW_py);
    evtree->Branch("htoWW_pz",&htoWW_pz);
+   
    evtree->Branch("b1_energy",&b1_energy);
    evtree->Branch("b1_px",&b1_px);
    evtree->Branch("b1_py",&b1_py);
@@ -425,10 +523,12 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("b2_py",&b2_py);
    evtree->Branch("b2_pz",&b2_pz);
    evtree->Branch("b2_motherid",&b2_motherid);
+   
    evtree->Branch("htobb_energy",&htobb_energy);
    evtree->Branch("htobb_px",&htobb_px);
    evtree->Branch("htobb_py",&htobb_py);
    evtree->Branch("htobb_pz",&htobb_pz);
+   
    evtree->Branch("h2tohh_energy",&h2tohh_energy);
    evtree->Branch("h2tohh_px",&h2tohh_px);
    evtree->Branch("h2tohh_py",&h2tohh_py);
