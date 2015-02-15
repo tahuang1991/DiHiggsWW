@@ -23,6 +23,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -42,6 +43,7 @@
 //
 // class declaration
 //
+using namespace reco;
 
 class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
    public:
@@ -214,6 +216,8 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       mu_negative = false;
       bquark = false;
       bbarquark = false;
+      htobb = false;
+      htoWW = false;
       virtualW_lowM = 25;
       virtualW_highM = 45;
 
@@ -260,7 +264,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
       mu_positive = false;
       mu_negative = false;
       nu_positive = false;
-      mu_negative = false;
+      nu_negative = false;
       bquark = false;
       bbarquark = false;
       Wtomu1nu1 = false;
@@ -273,13 +277,13 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     const reco::Candidate* mu2_htoWW_cand=NULL;
     const reco::Candidate* b1_htobb_cand=NULL;
     const reco::Candidate* b2_htobb_cand=NULL;
-    
+    std::vector<reco::GenParticle*> mu1Coll; 
    for (reco::GenParticleCollection::const_iterator it = genParticleColl->begin(); it != genParticleColl->end(); ++it) {
 
 //particle id, (muon13),(b5),(W+24),(SM higgs25)
    // particle id  it->pdgId()
    //
-      std::cout << "Gen paticles: id " << it->pdgId() << std::endl; 
+//      std::cout << "Gen paticles: id " << it->pdgId() << std::endl; 
       if (it->pdgId() == 13 && it->status() == 1 && !mu_negative)
       {
 	  mu1_energy = it->energy();
@@ -287,7 +291,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  mu1_py = it->py();
 	  mu1_pz = it->pz();
 	  //mu_negative = true;
-          std::cout << "find muon(-) with status 1" << std::endl;
+          //std::cout << "find muon(-) with status 1" << std::endl;
           const reco::Candidate* tmp_mu1 = it->mother(); 
           while (tmp_mu1->pdgId() == 13 && tmp_mu1->numberOfMothers() == 1) tmp_mu1 = tmp_mu1->mother();
           if (tmp_mu1->numberOfMothers() != 1 ) std::cout << "muon has more than one mother particle" << std::endl;
@@ -307,6 +311,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                   std::cout << "find muon(-) candidate" << std::endl;
 	          mu_negative = true;
                   mu1_htoWW_cand = tmp_mu1;
+                  mu1Coll.push_back(it->clone());
                   std::cout << "mother of this higgs, id " << tmp_mu1->mother()->pdgId() << " energy " << tmp_mu1->mother()->energy() << std::endl;
               }
       }
@@ -328,7 +333,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  mu2_py = it->py();
 	  mu2_pz = it->pz();
 	  mu2_motherid = it->mother()->pdgId();
-          std::cout << "find muon(+) with status 1" << std::endl;
+         // std::cout << "find muon(+) with status 1" << std::endl;
 	//  mu_positive = true;
           const reco::Candidate* tmp_mu2 = it->mother(); 
           while (tmp_mu2->pdgId() == -13 && tmp_mu2->numberOfMothers() == 1) tmp_mu2 = tmp_mu2->mother();
@@ -350,13 +355,14 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                  std::cout << "mother of this higgs, id " << tmp_mu2->mother()->pdgId() << " energy " << tmp_mu2->mother()->energy() << std::endl;
                }
         }
-      else if (it->pdgId() == 14 && !nu_negative )
+      else if (it->pdgId() == -14 && !nu_negative )
       {
-          const reco::Candidate* tmp_nu1 = it->mother(); 
+          const reco::Candidate* tmp_nu1 = it->mother();
+    //      std::cout << " the mother of nutrio" 
           while (tmp_nu1->pdgId() == -24) tmp_nu1 = tmp_nu1->mother();
           if (tmp_nu1->pdgId() == 25)
              {
-                 std::cout << "find nuetrino candidate" << std::endl;
+            //     std::cout << "find nuetrino candidate" << std::endl;
 	         nu1_energy = it->energy();
 	         nu1_px = it->px();
 	         nu1_py = it->py();
@@ -365,13 +371,13 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                 }
          
        }
-      else if (it->pdgId() == -14 && !nu_positive )
+      else if (it->pdgId() == 14 && !nu_positive )
       {
           const reco::Candidate* tmp_nu2 = it->mother(); 
           while (tmp_nu2->pdgId() == 24) tmp_nu2 = tmp_nu2->mother();
           if (tmp_nu2->pdgId() == 25)
              {
-                 std::cout << "find antinuetrino candidate" << std::endl;
+              //   std::cout << "find antinuetrino candidate" << std::endl;
 	         nu2_energy = it->energy();
 	         nu2_px = it->px();
 	         nu2_py = it->py();
@@ -389,7 +395,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  b1_motherid = it->mother()->pdgId();
 	  bquark = true;
           if (it->numberOfMothers() != 1) std::cout << "bquark has more than one mother particle" << std::endl;
-          std::cout << "find bquark candidate" << std::endl;
+       //   std::cout << "find bquark candidate" << std::endl;
           b1_htobb_cand = it->mother();
       }
       else if (it->pdgId() == -5 && it->mother()->pdgId() == 25 && !bbarquark)
@@ -401,7 +407,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  b2_motherid = it->mother()->pdgId();
 	  bbarquark = true;
           if (it->numberOfMothers() != 1) std::cout << "bquark has more than one mother particle" << std::endl;
-          std::cout << "find bbarquark candidate" << std::endl;
+         // std::cout << "find bbarquark candidate" << std::endl;
           b2_htobb_cand = it->mother();
       }
 
@@ -461,9 +467,9 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
 
    //if (mu_positive and mu_negative and bquark and bbarquark and mu1_htoWW_cand != b1_htobb_cand) 
-   if (h2tohh)
+   if (htoWW or htobb)
    {
-       std::cout << "find one event with required final state(mumubb)" << std::endl;
+     //  std::cout << "find one event with required final state(mumubb)" << std::endl;
        evtree->Fill();
        
    }
@@ -533,6 +539,10 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("h2tohh_px",&h2tohh_px);
    evtree->Branch("h2tohh_py",&h2tohh_py);
    evtree->Branch("h2tohh_pz",&h2tohh_pz);
+   
+   evtree->Branch("htobb",&htobb);
+   evtree->Branch("htoWW",&htoWW);
+   evtree->Branch("h2tohh",&h2tohh);
     
 }
 
