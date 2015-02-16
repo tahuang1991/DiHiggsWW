@@ -32,6 +32,9 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 
@@ -66,7 +69,8 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       // ----------member data ---------------------------
       TTree *evtree;
       TFile *output;
-
+      
+      edm::Service< TFileService > fs;
       //branches of tree
       float mu1_energy;
       float mu1_px;
@@ -480,10 +484,11 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 void 
 DiHiggsWWAnalyzer::beginJob()
 {
-   output = new TFile("output.root","recreate");
-   output->cd();
+   evtree = fs->make<TTree>("evtree", "evtree");
+ //  output = new TFile("output.root","recreate");
+  // output->cd();
 
-   evtree = new TTree("evtree","event tree");
+ //  evtree = new TTree("evtree","event tree");
    evtree->Branch("mu1_energy",&mu1_energy);
    evtree->Branch("mu1_px",&mu1_px);
    evtree->Branch("mu1_py",&mu1_py);
@@ -550,8 +555,8 @@ DiHiggsWWAnalyzer::beginJob()
 void 
 DiHiggsWWAnalyzer::endJob() 
 {
-    output->Write();
-    output->Close();
+    //output->Write();
+   // output->Close();
 }
 
 // ------------ method called when starting to processes a run  ------------
