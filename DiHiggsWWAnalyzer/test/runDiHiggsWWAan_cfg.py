@@ -4,13 +4,13 @@ process = cms.Process("DiHiggsWWAna")
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 
 process.source = cms.Source("PoolSource",
     # replace 'myfile.root' with the source file you want to use
     fileNames = cms.untracked.vstring(
-        'file:/fdata/hepx/store/user/taohuang/Hhh/HH-bbWW-B6_Gen_all.root'
+        'file:/fdata/hepx/store/user/taohuang/Hhh/HH-bbWW-B6_Gen_100k_0215.root'
     )
 )
 
@@ -18,7 +18,7 @@ process.DiHiggsWWAna = cms.EDAnalyzer('DiHiggsWWAnalyzer')
 process.dump=cms.EDAnalyzer('EventContentAnalyzer')
 
 process.TFileService = cms.Service("TFileService", 
-      fileName = cms.string("DiHiggs_Test.root"),
+      fileName = cms.string("/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_Test_B6_0217.root"),
       closeFileFast = cms.untracked.bool(True)
   )
 
