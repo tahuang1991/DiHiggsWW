@@ -22,6 +22,65 @@ ROOT.gStyle.SetPadRightMargin(0.14)
 ROOT.gStyle.SetPadTopMargin(0.06)
 ROOT.gStyle.SetPadBottomMargin(0.13)
 
+
+
+#___________________________________________
+def draw1D(file,dir,todraw,x_bins,x_title,cut,pic_name):
+    
+    c1 = ROOT.TCanvas()
+    c1.SetGridx()
+    c1.SetGridy()
+    c1.SetTickx()
+    c1.SetTicky()
+
+    f = ROOT.TFile(file)
+    t = f.Get(dir)
+    xBins = int(x_bins[1:-1].split(',')[0])
+    xminBin = float(x_bins[1:-1].split(',')[1])
+    xmaxBin = float(x_bins[1:-1].split(',')[2])
+    
+    b1 = ROOT.TH1F("b1","b1",xBins,xminBin,xmaxBin)
+    b1.SetTitle("h2#rightarrow h1h1#rightarrow BBWW, B3"+" "*12 + "CMS Simulation Preliminary")
+    b1.GetYaxis().SetTitle("Events")
+    b1.GetXaxis().SetTitle("%s"%x_title)
+    b1.SetStats(0)
+    
+    t.Draw(todraw+">>b1",cut)
+   # b1.Draw("colz")
+#    b2 = ROOT.TF2("b2","x^2+y^2",xminBin,xmaxBin,yminBin,ymaxBin)
+ #   contour = [1,2,3,4]
+    #list = [None]*3
+    #list.append(1)
+    #list.append(2)
+    #list.append(3)
+    #list = list[-3:]    
+    #b2.SetContour(4, contour)
+   # b2.SetContourLevel(0,1)
+    #b2.SetContourLevel(1,2)
+    #b2.SetContourLevel(2,3)
+    #b2.SetContourLevel(3,4)
+    #b2.Draw("CONT3 same")
+    legend = ROOT.TLegend(0.15,0.46,0.45,0.64)
+    legend.SetFillColor(ROOT.kWhite)
+    legend.SetFillStyle(0)
+#    legend.SetHeader("PU140,simTrack Pt(%s"%pt_min+",%s)"%pt_max)
+#legend.AddEntry(e1,"","l")
+#    legend.Draw("same")
+ #   line1 = "PU140,simTrack Pt(%s"%pt_min+",%s)"%pt_max
+  #  line2 = "98 dphicut %f"%dphi_cut
+   # tex = ROOT.TLatex(0.15,0.45,line1)
+    #tex.SetTextSize(0.05)
+    #tex.SetNDC()
+    #tex.Draw("same")
+    #tex2 = ROOT.TLatex(0.15,0.35,line2)
+    #tex2.SetTextSize(0.05)
+    #tex2.SetNDC()
+    #tex2.Draw("same")
+	
+    c1.SaveAs("Dihiggs_%s"%pic_name+"_B3.pdf")
+    c1.SaveAs("Dihiggs_%s"%pic_name+"_B3.png")
+
+
 #____________________________________________________________________
 def draw2D(file,dir,num,xaxis,yaxis,x_bins,y_bins):
     
@@ -43,7 +102,7 @@ def draw2D(file,dir,num,xaxis,yaxis,x_bins,y_bins):
     b1 = ROOT.TH2F("b1","b1",xBins,xminBin,xmaxBin,yBins,yminBin,ymaxBin)
     b1.GetYaxis().SetTitle("%s"%yaxis)
     b1.GetXaxis().SetTitle("%s"%xaxis)
-    b1.SetTitle("h2#rightarrow h1h1#rightarrow BBWW, B6"+" "*12 + "CMS Simulation Preliminary")
+    b1.SetTitle("h2#rightarrow h1h1#rightarrow BBWW, B3"+" "*12 + "CMS Simulation Preliminary")
    # b1.SetStats(1)
     todraw = "(%s)"%yaxis+":"+"(%s)>>b1"%xaxis
     t.Draw(todraw,num,"colz")
@@ -73,7 +132,7 @@ def draw2D(file,dir,num,xaxis,yaxis,x_bins,y_bins):
 
 #deltaeta, deltaphi distribution
 #___________________________________________
-def deltaR(file,dir,x_bins,y_bins,cut,pic_name):
+def deltaR1(file,dir,x_bins,y_bins,cut,pic_name):
     
     c1 = ROOT.TCanvas()
     c1.SetGridx()
@@ -91,14 +150,27 @@ def deltaR(file,dir,x_bins,y_bins,cut,pic_name):
     ymaxBin = float(y_bins[1:-1].split(',')[2])
     
     b1 = ROOT.TH2F("b1","b1",xBins,xminBin,xmaxBin,yBins,yminBin,ymaxBin)
-    b1.SetTitle("h2#rightarrow h1h1#rightarrow BBWW, B6"+" "*12 + "CMS Simulation Preliminary")
-    b1.GetYaxis().SetTitle("#delta#phi_{#mu,#nu}")
-    b1.GetYaxis().SetTitle("#delta#eta_{#mu,#nu}")
-#    b1.SetStats(0)
+    b1.SetTitle("h2#rightarrow h1h1#rightarrow BBWW, B3"+" "*12 + "CMS Simulation Preliminary")
+    b1.GetYaxis().SetTitle("#Delta#phi(#mu,#nu)")
+    b1.GetXaxis().SetTitle("#Delta#eta(#mu,#nu)")
+    b1.SetStats(0)
     
-    todraw = "((mu1_eta-nu1_eta):(mu2_phi-nu2_phi))>>b1"
+    todraw = "TVector2::Phi_mpi_pi(mu1_phi-nu1_phi):(mu1_eta-nu1_eta)>>b1"
     t.Draw(todraw,cut)
-    b1.Draw()
+    b1.Draw("colz")
+#    b2 = ROOT.TF2("b2","x^2+y^2",xminBin,xmaxBin,yminBin,ymaxBin)
+ #   contour = [1,2,3,4]
+    #list = [None]*3
+    #list.append(1)
+    #list.append(2)
+    #list.append(3)
+    #list = list[-3:]    
+    #b2.SetContour(4, contour)
+   # b2.SetContourLevel(0,1)
+    #b2.SetContourLevel(1,2)
+    #b2.SetContourLevel(2,3)
+    #b2.SetContourLevel(3,4)
+    #b2.Draw("CONT3 same")
     legend = ROOT.TLegend(0.15,0.46,0.45,0.64)
     legend.SetFillColor(ROOT.kWhite)
     legend.SetFillStyle(0)
@@ -116,10 +188,69 @@ def deltaR(file,dir,x_bins,y_bins,cut,pic_name):
     #tex2.SetNDC()
     #tex2.Draw("same")
 	
-    c1.SaveAs("Dihiggs_deltaR_%s"%pic_name+"_B6_update.pdf")
-    c1.SaveAs("Dihiggs_deltaR_%s"%pic_name+"_B6_update.png")
+    c1.SaveAs("Dihiggs_deltaR1_%s"%pic_name+"_B3.pdf")
+    c1.SaveAs("Dihiggs_deltaR1_%s"%pic_name+"_B3.png")
 
 
+#___________________________________________
+def deltaR2(file,dir,x_bins,y_bins,cut,pic_name):
+    
+    c1 = ROOT.TCanvas()
+    c1.SetGridx()
+    c1.SetGridy()
+    c1.SetTickx()
+    c1.SetTicky()
+
+    f = ROOT.TFile(file)
+    t = f.Get(dir)
+    xBins = int(x_bins[1:-1].split(',')[0])
+    xminBin = float(x_bins[1:-1].split(',')[1])
+    xmaxBin = float(x_bins[1:-1].split(',')[2])
+    yBins = int(y_bins[1:-1].split(',')[0])
+    yminBin = float(y_bins[1:-1].split(',')[1])
+    ymaxBin = float(y_bins[1:-1].split(',')[2])
+    
+    b1 = ROOT.TH2F("b1","b1",xBins,xminBin,xmaxBin,yBins,yminBin,ymaxBin)
+    b1.SetTitle("h2#rightarrow h1h1#rightarrow BBWW, B3"+" "*12 + "CMS Simulation Preliminary")
+    b1.GetYaxis().SetTitle("#Delta#phi(#mu,#nu)")
+    b1.GetXaxis().SetTitle("#Delta#eta(#mu,#nu)")
+    b1.SetStats(0)
+    
+    todraw = "TVector2::Phi_mpi_pi(mu2_phi-nu2_phi):(mu2_eta-nu2_eta)>>b1"
+    t.Draw(todraw,cut)
+    b1.Draw("colz")
+#    b2 = ROOT.TF2("b2","x^2+y^2",xminBin,xmaxBin,yminBin,ymaxBin)
+ #   contour = [1,2,3,4]
+    #list = [None]*3
+    #list.append(1)
+    #list.append(2)
+    #list.append(3)
+    #list = list[-3:]    
+    #b2.SetContour(4, contour)
+   # b2.SetContourLevel(0,1)
+    #b2.SetContourLevel(1,2)
+    #b2.SetContourLevel(2,3)
+    #b2.SetContourLevel(3,4)
+    #b2.Draw("CONT3 same")
+    legend = ROOT.TLegend(0.15,0.46,0.45,0.64)
+    legend.SetFillColor(ROOT.kWhite)
+    legend.SetFillStyle(0)
+#    legend.SetHeader("PU140,simTrack Pt(%s"%pt_min+",%s)"%pt_max)
+#legend.AddEntry(e1,"","l")
+#    legend.Draw("same")
+ #   line1 = "PU140,simTrack Pt(%s"%pt_min+",%s)"%pt_max
+  #  line2 = "98 dphicut %f"%dphi_cut
+   # tex = ROOT.TLatex(0.15,0.45,line1)
+    #tex.SetTextSize(0.05)
+    #tex.SetNDC()
+    #tex.Draw("same")
+    #tex2 = ROOT.TLatex(0.15,0.35,line2)
+    #tex2.SetTextSize(0.05)
+    #tex2.SetNDC()
+    #tex2.Draw("same")
+	
+    c1.SaveAs("Dihiggs_deltaR2_%s"%pic_name+"_B3.pdf")
+    c1.SaveAs("Dihiggs_deltaR2_%s"%pic_name+"_B3.png")
 
 
 
@@ -173,7 +304,7 @@ def getPurity(file,dir,den,num,xaxis,h_bins):
 #_______________________________________________________________________________
 if __name__ == "__main__":
      
-    file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_Test_B6_0217.root"
+    file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_B3_0223.root"
     dir = "DiHiggsWWAna/evtree"
   
     #htoWW_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz)**2)"
@@ -181,15 +312,30 @@ if __name__ == "__main__":
     
     htoWW_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz)**2)"
     hmass_bins = "(50,100,150)"
+    hmass_bins1 = "(20,120,130)" 
     htoWW_cut = "htoWW" 
-    draw1D(file,dir,htoWW_mass,hmass_bins,"mass of h#rightarrow WW", htoWW_cut,"htoWW_mass_0217")
+    
+    #draw1D(file,dir,htoWW_mass,hmass_bins,"mass of h#rightarrow WW", htoWW_cut,"htoWW_mass_0217")
     
     htoBB_mass = "sqrt((b1_energy+b2_energy)**2-(b1_px+b2_px)**2-(b1_py+b2_py)**2-(b1_pz+b2_pz)**2)"
     htoBB_cut = "htobb"
-    draw1D(file,dir,htoBB_mass,hmass_bins,"mass of h#rightarrow BB", htoBB_cut,"htoBB_mass_0217")
+    draw1D(file,dir,htoBB_mass,hmass_bins1,"mass of h#rightarrow BB", htoBB_cut,"htoBB_mass_0223")
    
     h2toh1h1_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy+b1_energy+b2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px+b1_px+b2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py+b1_py+b2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz+b1_pz+b2_pz)**2)"
     h2toh1h1_cut = "h2tohh"
     h2mass_bins_6 = "(100,400,600)"
     h2mass_bins_3 = "(100,250,450)"
-    draw1D(file,dir,h2toh1h1_mass,h2mass_bins_6,"mass of h2#rightarrow h1h1", h2toh1h1_cut,"h2toh1h1_mass_0217")
+    #draw1D(file,dir,h2toh1h1_mass,h2mass_bins_6,"mass of h2#rightarrow h1h1", h2toh1h1_cut,"h2toh1h1_mass_0217")
+    
+    htoWW_mass1 = "sqrt((mu1_mother_energy+mu2_mother_energy)**2-(mu1_mother_px+mu2_mother_px)**2-(mu1_mother_py+mu2_mother_py)**2-(mu1_mother_pz+mu2_mother_pz)**2)"
+    #draw1D(file,dir,htoWW_mass1,hmass_bins1,"mass of h#rightarrow WW, reconstruction from (WW)", htoWW_cut,"htoWW_mass_0223")
+
+    phi_bins = "(25,-3.1415,3.1415)"
+    nu1_phi = "nu1_phi";
+    nu2_phi = "nu2_phi"
+    draw1D(file,dir,nu1_phi,phi_bins,"phi of #nu1", htoWW_cut,"htoWW_nu1_phi_0223")
+    draw1D(file,dir,nu2_phi,phi_bins,"phi of #nu2", htoWW_cut,"htoWW_nu2_phi_0223")
+    delta_phi = "(25,-3.1415,3.1415)"
+    delta_eta = "(50,-5.0,5.0)"
+    deltaR1(file,dir,delta_eta,delta_phi,h2toh1h1_cut,"h2toh1h1_0223")
+    deltaR2(file,dir,delta_eta,delta_phi,h2toh1h1_cut,"h2toh1h1_0223")

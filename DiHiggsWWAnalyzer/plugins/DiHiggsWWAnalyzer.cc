@@ -24,6 +24,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include "math.h"
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -43,10 +44,17 @@
 #include "TFile.h"
 #include "TLorentzVector.h"
 
+#define WMass 80.385   // W mass
+#define SMHMass 125.03 // SM module higgs mass
+
+
 //
 // class declaration
 //
+
 using namespace reco;
+
+typedef std::pair<float, float> EtaPhi;
 
 class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
    public:
@@ -60,18 +68,39 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       virtual void beginJob() override;
       virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
       virtual void endJob() override;
-
+      
+      EtaPhi generatenu1_etaphi();
+      float nu1pt_onshellW(EtaPhi nu1_etaphi, TLorentzVector* mu1lorentz);
+      TLorentzVector* nu2lorentz_offshellW(TLorentzVector* jetlorentz, TLorentzVector* mu1lorentz, TLorentzVector* mu2lorentz, TLorentzVector*       nu1lorentz);
+      
+      bool cutsCheck();
+       
+          
+ 
+      void print();
       //virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
       //virtual void endRun(edm::Run const&, edm::EventSetup const&) override;
       //virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
       //virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
 
       // ----------member data ---------------------------
+      const reco::Candidate* mu1_W1_cand;
+      const reco::Candidate* nu1_W1_cand;
+      const reco::Candidate* mu2_W2_cand;
+      const reco::Candidate* nu2_W2_cand;
+      const reco::Candidate* mu1_htoWW_cand;
+      const reco::Candidate* mu2_htoWW_cand;
+      const reco::Candidate* b1_htobb_cand;
+      const reco::Candidate* b2_htobb_cand;
+      const reco::Candidate* h2tohh_cand;
+
+
       TTree *evtree;
       TFile *output;
       
       edm::Service< TFileService > fs;
-      //branches of tree
+      
+      //----------branches of tree ---------------------------
       float mu1_energy;
       float mu1_px;
       float mu1_py;
@@ -83,6 +112,7 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float mu1_mother_px;
       float mu1_mother_py;
       float mu1_mother_pz;
+      float mu1_mother_mass;
       float nu1_energy;
       float nu1_px;
       float nu1_py;
@@ -102,6 +132,7 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float mu2_mother_px;
       float mu2_mother_py;
       float mu2_mother_pz;
+      float mu2_mother_mass;
       float nu2_energy;
       float nu2_px;
       float nu2_py;
@@ -172,6 +203,16 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
 
 {
    //now do what ever initialization is needed
+      mu1_W1_cand = NULL;
+      nu1_W1_cand = NULL;
+      mu2_W2_cand = NULL;
+      nu2_W2_cand = NULL;
+      mu1_htoWW_cand = NULL;
+      mu2_htoWW_cand = NULL;
+      b1_htobb_cand = NULL;
+      b2_htobb_cand = NULL;
+      h2tohh_cand = NULL;
+   //  
       mu1_energy = 0.0;
       mu1_px = 0.0;
       mu1_py = 0.0;
@@ -181,6 +222,7 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       mu1_mother_px = 0.0;
       mu1_mother_py = 0.0;
       mu1_mother_pz = 0.0;
+      mu1_mother_mass = 0.0;
       nu1_energy = 0.0;
       nu1_px = 0.0;
       nu1_py = 0.0;
@@ -196,6 +238,7 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       mu2_mother_px = 0.0;
       mu2_mother_py = 0.0;
       mu2_mother_pz = 0.0;
+      mu2_mother_mass = 0.0;
       nu2_energy = 0.0;
       nu2_px = 0.0;
       nu2_py = 0.0;
@@ -291,15 +334,6 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
       htoWW = false;
       h2tohh = false;
 
-    const reco::Candidate* mu1_W1_cand=NULL;
-    const reco::Candidate* nu1_W1_cand=NULL;
-    const reco::Candidate* mu2_W2_cand=NULL;
-    const reco::Candidate* nu2_W2_cand=NULL;
-    const reco::Candidate* mu1_htoWW_cand=NULL;
-    const reco::Candidate* mu2_htoWW_cand=NULL;
-    const reco::Candidate* b1_htobb_cand=NULL;
-    const reco::Candidate* b2_htobb_cand=NULL;
-    std::vector<reco::GenParticle*> mu1Coll; 
    for (reco::GenParticleCollection::const_iterator it = genParticleColl->begin(); it != genParticleColl->end(); ++it) {
 
 //particle id, (muon13),(b5),(W+24),(SM higgs25)
@@ -331,7 +365,6 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                   std::cout << "find muon(-) candidate" << std::endl;
 	          mu_negative = true;
                   mu1_htoWW_cand = tmp_mu1;
-                  mu1Coll.push_back(it->clone());
                  // std::cout << "mother of this higgs, id " << tmp_mu1->mother()->pdgId() << " energy " << tmp_mu1->mother()->energy() << std::endl;
               }
       }
@@ -446,8 +479,11 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
           mu1_mother_px = mu1_W1_cand->px();
           mu1_mother_py = mu1_W1_cand->py();
           mu1_mother_pz = mu1_W1_cand->pz();
+      //    TLorentzVector W1(mu1_mother_px,mu1_mother_py,mu1_mother_pz,mu1_mother_energy);
           mu1_mother_energy = mu1_W1_cand->energy();
-          std::cout << "find W1 from negative mu nu " << std::endl;
+          mu1_mother_mass = mu1_W1_cand->mass();
+          std::cout << "find W1 from negative mu nu, mass " << mu1_W1_cand->mass() 
+                    << " energy " << mu1_W1_cand->energy() << std::endl;
     
           }
      else if (mu_negative && nu_negative)  std::cout << "find negative mu && nu but not find W1" << std::endl;
@@ -460,7 +496,9 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
           mu2_mother_py = mu2_W2_cand->py();
           mu2_mother_pz = mu2_W2_cand->pz();
           mu2_mother_energy = mu2_W2_cand->energy();
-          std::cout << "find W2 from positive mu nu " << std::endl;
+          mu2_mother_mass = mu2_W2_cand->mass();
+          std::cout << "find W2 from positive mu nu, mass " << mu2_W2_cand->mass()
+                    << " energy " << mu2_W2_cand->energy() << std::endl;
     
           }
      else if (mu_positive && nu_positive)  std::cout << "find positive mu && nu but not find W2" << std::endl;
@@ -527,6 +565,8 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
               h2tohh_pz = tmp_htoWW->pz();
               h2tohh_mass = tmp_htoWW->mass();
               h2tohh = true;
+              h2tohh_cand = tmp_htoWW;
+              print();
             }
           else {
               std::cout << "pdgId of mother htoWW " << tmp_htoWW->pdgId() << " htoBB " << tmp_htoBB->pdgId() << std::endl;  
@@ -575,6 +615,7 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("mu1_mother_px",&mu1_mother_px);
    evtree->Branch("mu1_mother_py",&mu1_mother_py);
    evtree->Branch("mu1_mother_pz",&mu1_mother_pz);
+   evtree->Branch("mu1_mother_mass",&mu1_mother_mass);
    evtree->Branch("nu1_energy",&nu1_energy);
    evtree->Branch("nu1_px",&nu1_px);
    evtree->Branch("nu1_py",&nu1_py);
@@ -593,6 +634,7 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("mu2_mother_px",&mu2_mother_px);
    evtree->Branch("mu2_mother_py",&mu2_mother_py);
    evtree->Branch("mu2_mother_pz",&mu2_mother_pz);
+   evtree->Branch("mu2_mother_mass",&mu2_mother_mass);
    evtree->Branch("mu2_motherid",&mu2_motherid);
    evtree->Branch("nu2_energy",&nu2_energy);
    evtree->Branch("nu2_px",&nu2_px);
@@ -676,6 +718,84 @@ DiHiggsWWAnalyzer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSet
 {
 }
 */
+
+// ------------ method called for printing additional information, useful for debugging  ------------
+void
+DiHiggsWWAnalyzer::print() {
+    
+    std::cout << "print() " << std::endl;
+    if (!h2tohh)  {
+       
+        std::cout << "print() error " << std::endl;
+        return;
+    }
+    
+    std::cout << "  particle	, id	, mass	, px	, py	, pz	, Energy	" << std::endl;
+    std::cout << "  h2	"<< h2tohh_cand->pdgId() <<"	, "<< h2tohh_cand->mass() << "	, " << h2tohh_cand->px() 
+              << "	, "<< h2tohh_cand->py() << "	, " << h2tohh_cand->pz() << "	, " << h2tohh_cand->energy()
+              << std::endl;
+    
+
+
+}
+
+
+// ------------ method called to generate a pair (eta,phi) for nuetrino1  ------------
+EtaPhi 
+DiHiggsWWAnalyzer::generatenu1_etaphi(){
+
+   float eta=0.0;
+   float phi=0.0;
+
+   return std::make_pair(eta, phi);
+}
+
+//------------- method called to calculate pt of nuetrinos from on-shell W decay ------------
+float 
+DiHiggsWWAnalyzer::nu1pt_onshellW(EtaPhi nu1_etaphi, TLorentzVector* mu1lorentz){
+  
+   float nu1_pt=0.0;
+//   TVector2 *numu_phi = new TVector(nu_etaphi.first(),mu1lorentz->eta());
+   float deltaeta = nu1_etaphi.first - mu1lorentz->Eta();
+   float deltaphi = nu1_etaphi.second - mu1lorentz->Phi();
+   nu1_pt = WMass*WMass/(2*mu1lorentz->Pt()*(cosh(deltaeta)-cos(deltaphi)));
+ 
+   return nu1_pt;
+
+}
+
+//------------- method called to calculate lorentzvector of second nuetrinos, which is from offshell W -----------
+TLorentzVector* 
+DiHiggsWWAnalyzer::nu2lorentz_offshellW(TLorentzVector* jetslorentz, 
+                                        TLorentzVector* mu1lorentz, 
+                                        TLorentzVector* mu2lorentz, 
+                                        TLorentzVector* nu1lorentz){
+
+   TLorentzVector* nu2lorentz = new TLorentzVector();
+   TLorentzVector* tmplorentz = new TLorentzVector(mu1lorentz->Px()+mu2lorentz->Px()+nu1lorentz->Px(),
+                                                   mu1lorentz->Py()+mu2lorentz->Py()+nu1lorentz->Py(),
+                                                   mu1lorentz->Pz()+mu2lorentz->Pz()+nu1lorentz->Pz(),
+                                                   mu1lorentz->Energy()+mu2lorentz->Energy()+nu1lorentz->Energy());
+   float nu2_px;
+   float nu2_py;
+   float nu2_pt;
+   
+   nu2_px = -jetslorentz->Px()-mu1lorentz->Px()-mu2lorentz->Px()-nu1lorentz->Px();
+   nu2_py = -jetslorentz->Py()-mu1lorentz->Py()-mu2lorentz->Py()-nu1lorentz->Py();
+   nu2_pt = sqrt(nu2_px*nu2_px+nu2_py*nu2_py);
+
+   float chdeltaeta;//cosh(nu2_eta-mu2_eta)
+   
+   chdeltaeta = (pow(SMHMass,2)+pow(jetslorentz->Pt(),2)-pow(tmplorentz->Pt(),2)-pow(nu2_pt,2))/(2*tmplorentz->Pt()*nu2_pt);
+
+   // should check whether deltaeta > 1
+   float nu2_eta = acosh(chdeltaeta)+tmplorentz->Eta();
+   float nu2_phi = atan(nu2_py/nu2_px);
+   nu2lorentz->SetPtEtaPhiM(nu2_pt, nu2_eta, nu2_phi, 0);
+
+   return nu2lorentz;
+}
+
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
