@@ -44,6 +44,7 @@
 #include "TTree.h"
 #include "TFile.h"
 #include "TLorentzVector.h"
+#include "TVector2.h"
 #include "TRandom.h"
 
 #define WMass 80.385   // W mass
@@ -79,12 +80,20 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float genPhiFlat();
       EtaPhi generatenu1_etaphi();
       float nu1pt_onshellW(EtaPhi nu1_etaphi, TLorentzVector* mu1lorentz);
-      TLorentzVector* nu2lorentz_offshellW(TLorentzVector* jetlorentz, TLorentzVector* mu1lorentz, TLorentzVector* mu2lorentz, TLorentzVector*       nu1lorentz);
-      
+      void nulorentz_offshellW(TLorentzVector* jetlorentz, TLorentzVector* mu1lorentz, 
+			       TLorentzVector* mu2lorentz, TLorentzVector* nu1lorentz, 
+ 			       TLorentzVector* nu2lorentz, int control);
+      float chdeltaeta_munu_offshellW(TLorentzVector* jetslorentz,
+                                      TLorentzVector* mu1lorentz,
+                                      TLorentzVector* mu2lorentz,
+                                      TLorentzVector* nu1lorentz); 
       bool cutsCheck();
        
           
- 
+   private:
+      edm::ParameterSet cfg_;
+      // debuglevel constrol 
+      int verbose_; 
       void print();
       void printHtoWWChain();
       //virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
@@ -194,14 +203,71 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float virtualW_highM;
 
      
-
+    private:
+      bool runMMC_;
      // MMC tree branches
      
       float eta_mean;
       float eta_rms;
       float eta_gen; 
       float phi_gen;
+      TLorentzVector* mu_onshellW_lorentz;
+      TLorentzVector* mu_offshellW_lorentz;
+      TLorentzVector* jets_lorentz;
+      TLorentzVector* nu_onshellW_lorentz;
+      TLorentzVector* nu_offshellW_lorentz;
+      TLorentzVector* offshellW_lorentz;
+      TLorentzVector* onshellW_lorentz;
+      TLorentzVector* htoWW_lorentz;
+      TLorentzVector* htoBB_lorentz;
+      TLorentzVector* h2tohh_lorentz;
+       
+      float weight;
+ 
+      float mu_onshellW_Eta;
+      float mu_onshellW_Phi;
+      float mu_onshellW_Pt;
+      float mu_onshellW_E;
+      float mu_offshellW_Eta;
+      float mu_offshellW_Phi;
+      float mu_offshellW_Pt;
+      float mu_offshellW_E;
+      float nu_onshellW_Eta;
+      float nu_onshellW_Phi;
+      float nu_onshellW_Pt;
+      float nu_onshellW_E;
+      float nu_offshellW_Eta;
+      float nu_offshellW_Phi;
+      float nu_offshellW_Pt;
+      float nu_offshellW_E;
+      
+      float onshellW_Eta;
+      float onshellW_Phi;
+      float onshellW_Pt;
+      float onshellW_E;
+      float onshellW_Mass;
+      float offshellW_Eta;
+      float offshellW_Phi;
+      float offshellW_Pt;
+      float offshellW_E;
+      float offshellW_Mass;
+     
+      float htoBB_Eta;
+      float htoBB_Phi;
+      float htoBB_Pt;
+      float htoBB_E;
+      float htoBB_Mass;
+      float htoWW_Eta;
+      float htoWW_Phi;
+      float htoWW_Pt;
+      float htoWW_E;
+      float htoWW_Mass;
 
+      float h2tohh_Eta;
+      float h2tohh_Phi;
+      float h2tohh_Pt;
+      float h2tohh_E;
+      float h2tohh_Mass;
 
 };
 
@@ -217,8 +283,13 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
 // constructors and destructor
 //
 DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
-
 {
+     verbose_ = iConfig.getUntrackedParameter<int>("verbose",0);
+     runMMC_ = iConfig.getParameter<bool>("runMMC");
+
+
+
+
    //now do what ever initialization is needed
       ievent = 0;
       mu1_W1_cand = NULL;
@@ -299,6 +370,21 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       htoWW = false;
       virtualW_lowM = 25;
       virtualW_highM = 45;
+
+
+     // runMMC
+      mu_onshellW_lorentz = new TLorentzVector();
+      mu_offshellW_lorentz = new TLorentzVector();
+      jets_lorentz = new TLorentzVector();
+      nu_onshellW_lorentz = new TLorentzVector();
+      nu_offshellW_lorentz = new TLorentzVector();
+      offshellW_lorentz = new TLorentzVector();
+      onshellW_lorentz = new TLorentzVector();
+      htoWW_lorentz = new TLorentzVector();
+      htoBB_lorentz = new TLorentzVector();
+      h2tohh_lorentz = new TLorentzVector();
+      
+    
 
 }
 
@@ -582,13 +668,13 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
               h2tohh = true;
               h2tohh_cand = tmp_htoWW;
               //print();
-              printHtoWWChain();
+              if (verbose_>0) printHtoWWChain();
             }
           else {
               std::cout << "pdgId of mother htoWW " << tmp_htoWW->pdgId() << " htoBB " << tmp_htoBB->pdgId() << std::endl;  
                  }
          }
-    else if(htoWW and htobb)   
+    else if(htoWW and htobb and verbose_>0)   
        {
          std::cout << "find 2 higgs but they are not from same heavey higgs" << std::endl;
          std::cout << "mother of htoWW id " << tmp_htoWW->pdgId() <<" energy " << tmp_htoWW->energy() << " px " << tmp_htoWW->px() << std::endl;
@@ -603,7 +689,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
    if (htoWW or htobb)	evtree->Fill();
     
-   if (h2tohh) runMMC();
+   if (h2tohh && runMMC_) runMMC();
        
 }
 
@@ -699,6 +785,16 @@ DiHiggsWWAnalyzer::endJob()
 //   std::cout << "endJob, ievent  " << ievent << std::endl;
     //output->Write();
    // output->Close();
+   delete mu_onshellW_lorentz;
+   delete mu_offshellW_lorentz;
+   delete nu_onshellW_lorentz;
+   delete nu_offshellW_lorentz;
+   delete onshellW_lorentz;
+   delete offshellW_lorentz;
+   delete htoWW_lorentz;
+   delete htoBB_lorentz;
+   delete h2tohh_lorentz;
+   delete jets_lorentz;
 }
 
 
@@ -913,20 +1009,57 @@ DiHiggsWWAnalyzer::runMMC(){
    ss << "mmctree_" << ievent;
    const std::string name(ss.str());
    TTree *mmctree = fs->make<TTree>(name.c_str(), name.c_str());
+   initTree(mmctree);
+/*
    mmctree->Branch("ievent", &ievent);
    mmctree->Branch("eta_mean", &eta_mean);
    mmctree->Branch("eta_rms", &eta_rms);
    mmctree->Branch("eta_gen",&eta_gen);
    mmctree->Branch("phi_gen",&phi_gen);
-   
+   mmctree->Branch("mu_onshellW_eta", &mu_onshellW_Eta);
+   mmctree->Branch("mu_onshellW_phi", &mu_onshellW_Phi);
+   mmctree->Branch("mu_onshellW_pt", &mu_onshellW_Pt);
+   mmctree->Branch("mu_onshellW_E", &mu_onshellW_E);
+   mmctree->Branch("mu_offshellW_eta", &mu_offshellW_Eta);
+   mmctree->Branch("mu_offshellW_phi", &mu_offshellW_Phi);
+   mmctree->Branch("mu_offshellW_pt", &mu_offshellW_Pt);
+   mmctree->Branch("mu_offshellW_E", &mu_offshellW_E);
+   mmctree->Branch("nu_onshellW_eta", &nu_onshellW_Eta);
+   mmctree->Branch("nu_onshellW_phi", &nu_onshellW_Phi);
+   mmctree->Branch("nu_onshellW_pt", &nu_onshellW_Pt);
+   mmctree->Branch("nu_onshellW_E", &nu_onshellW_E);
+   mmctree->Branch("nu_offshellW_eta", &nu_offshellW_Eta);
+   mmctree->Branch("nu_offshellW_phi", &nu_offshellW_Phi);
+   mmctree->Branch("nu_offshellW_pt", &nu_offshellW_Pt);
+   mmctree->Branch("nu_offshellW_E", &nu_offshellW_E);
+   mmctree->Branch("onshellW_eta", &onshellW_Eta);
+   mmctree->Branch("onshellW_phi", &onshellW_Phi);
+   mmctree->Branch("onshellW_pt", &onshellW_Pt);
+   mmctree->Branch("onshellW_E", &onshellW_E);
+   mmctree->Branch("offshellW_eta", &offshellW_Eta);
+   mmctree->Branch("offshellW_phi", &offshellW_Phi);
+   mmctree->Branch("offshellW_pt", &offshellW_Pt);
+   mmctree->Branch("offshellW_E", &offshellW_E);
+   mmctree->Branch("htoWW_Eta", &htoWW_Eta);
+   mmctree->Branch("htoWW_Phi", &htoWW_Phi);
+   mmctree->Branch("htoWW_Pt", &htoWW_Pt);
+   mmctree->Branch("htoWW_E", &htoWW_E);
+   mmctree->Branch("htoBB_Eta", &htoBB_Eta);
+   mmctree->Branch("htoBB_Phi", &htoBB_Phi);
+   mmctree->Branch("htoBB_Pt", &htoBB_Pt);
+   mmctree->Branch("htoBB_E", &htoBB_E);
+   mmctree->Branch("h2tohh_Eta", &h2tohh_Eta);
+   mmctree->Branch("h2tohh_Phi", &h2tohh_Phi);
+   mmctree->Branch("h2tohh_Pt", &h2tohh_Pt);
+   mmctree->Branch("h2tohh_E", &h2tohh_E);
+   mmctree->Branch("weight", &weight);
+  */ 
    //initTree(mmctree);
-   int count = 10;
+   int count = 10000;
 
    eta_mean=0;
    eta_rms=1.403;
    TRandom *generator = new TRandom();
-   TLorentzVector* mu_onshellW_lorentz =  new TLorentzVector();
-   TLorentzVector* mu_offshellW_lorentz = new TLorentzVector();
    if (mu1_mother_mass > mu2_mother_mass){
    	mu_onshellW_lorentz->SetXYZT(mu1_px, mu1_py, mu1_pz, mu1_energy);
         mu_offshellW_lorentz->SetXYZT(mu2_px, mu2_py, mu2_pz, mu2_energy); }
@@ -934,27 +1067,107 @@ DiHiggsWWAnalyzer::runMMC(){
    	mu_offshellW_lorentz->SetXYZT(mu1_px, mu1_py, mu1_pz, mu1_energy);
         mu_onshellW_lorentz->SetXYZT(mu2_px, mu2_py, mu2_pz, mu2_energy);
    }
+     
+   mu_onshellW_Eta = mu_onshellW_lorentz->Eta();
+   mu_onshellW_Phi = mu_onshellW_lorentz->Phi();
+   mu_onshellW_Pt = mu_onshellW_lorentz->Pt();
+   mu_onshellW_E = mu_onshellW_lorentz->E();
+   mu_offshellW_Eta = mu_offshellW_lorentz->Eta();
+   mu_offshellW_Phi = mu_offshellW_lorentz->Phi();
+   mu_offshellW_Pt = mu_offshellW_lorentz->Pt();
+   mu_offshellW_E = mu_offshellW_lorentz->E();
 
-   TLorentzVector* jets_lorentz = new TLorentzVector(b1_px+b2_px, b1_py+b2_py, b1_pz+b2_pz, b1_energy+b2_energy);
+
+   jets_lorentz->SetXYZT(b1_px+b2_px, b1_py+b2_py, b1_pz+b2_pz, b1_energy+b2_energy);
+   htoBB_lorentz->SetXYZT(b1_px+b2_px, b1_py+b2_py, b1_pz+b2_pz, b1_energy+b2_energy);
+   htoBB_Eta = htoBB_lorentz->Eta();
+   htoBB_Phi = htoBB_lorentz->Phi();
+   htoBB_Pt = htoBB_lorentz->Pt();
+   htoBB_E = htoBB_lorentz->E();
+   htoBB_Mass = htoBB_lorentz->M();
         	
    for (int i = 0; i < count; i++){
 
-	   eta_gen = generator->Gaus(eta_mean, eta_rms); 
+	   eta_gen = generator->Uniform(-6,6); 
 	   phi_gen = generator->Uniform(-3.1415926, 3.1415926);
            float nu_onshellW_pt = nu1pt_onshellW(std::make_pair(eta_gen, phi_gen), mu_onshellW_lorentz); 
-           TLorentzVector* nu_onshellW_lorentz = new TLorentzVector();
            nu_onshellW_lorentz->SetPtEtaPhiM(nu_onshellW_pt, eta_gen, phi_gen,0);
-           TLorentzVector* nu_offshellW_lorentz(nu2lorentz_offshellW(jets_lorentz,mu_onshellW_lorentz,
-						mu_offshellW_lorentz,nu_onshellW_lorentz));
+           float chdeltaeta = chdeltaeta_munu_offshellW(jets_lorentz,mu_onshellW_lorentz,
+						        mu_offshellW_lorentz,nu_onshellW_lorentz);
+           std::cout <<" eta_gen " << eta_gen << " phi_gen "<< phi_gen << " chdeltaeta " << chdeltaeta << std::endl;
+           if (chdeltaeta <= 1) continue;
+    //       nu_offshellW_lorentz= NULL; 
+           for (int j = 1; j < 3; j++){
 	 //  int fill = mmctree->Fill();
-           std::cout <<" eta_gen " << eta_gen << " phi_gen "<< phi_gen << "nu_offshellW_eta " << nu_offshellW_lorentz->Eta() << std::endl; 
-           delete nu_onshellW_lorentz;
+                nulorentz_offshellW(jets_lorentz, mu_onshellW_lorentz,
+                                    mu_offshellW_lorentz, nu_onshellW_lorentz,
+				    nu_offshellW_lorentz, j);
+                std::cout << j << " nu_offshellW_eta " << nu_offshellW_lorentz->Eta()<<" phi " << nu_offshellW_lorentz->Phi() << std::endl; 
+
+
+           	nu_onshellW_Eta = nu_onshellW_lorentz->Eta();
+           	nu_onshellW_Phi = nu_onshellW_lorentz->Phi();
+           	nu_onshellW_Pt = nu_onshellW_lorentz->Pt();
+           	nu_onshellW_E = nu_onshellW_lorentz->E();
+
+           	nu_offshellW_Eta = nu_offshellW_lorentz->Eta();
+          	nu_offshellW_Phi = nu_offshellW_lorentz->Phi();
+          	nu_offshellW_Pt = nu_offshellW_lorentz->Pt();
+           	nu_offshellW_E = nu_offshellW_lorentz->E();
+                if (verbose_ == 0){
+                	std::cout << "mu_onshellW "; mu_onshellW_lorentz->Print();
+                	std::cout << "nu_onshellW "; nu_onshellW_lorentz->Print();
+                	std::cout << "mu_offshellW "; mu_offshellW_lorentz->Print();
+                	std::cout << "nu_offshellW "; nu_offshellW_lorentz->Print();
+                }
+
+                *onshellW_lorentz = *mu_onshellW_lorentz+*nu_onshellW_lorentz;
+                *offshellW_lorentz = *mu_offshellW_lorentz+*nu_offshellW_lorentz;
+                *htoWW_lorentz = *onshellW_lorentz+*offshellW_lorentz;
+                *h2tohh_lorentz = *htoWW_lorentz+*htoBB_lorentz;
+                if (verbose_ == 0){
+  			std::cout << " onshell W mass "<< onshellW_lorentz->M();   onshellW_lorentz->Print();
+  			std::cout << " offshell W mass "<< offshellW_lorentz->M(); offshellW_lorentz->Print();
+  			std::cout << " htoWW mass "<< htoWW_lorentz->M(); htoWW_lorentz->Print();
+  			std::cout << " htoBB mass "<< htoBB_lorentz->M(); htoBB_lorentz->Print();
+                }
+  		if (verbose_ == 0 && (h2tohh_lorentz->Pt()/h2tohh_lorentz->E())>0.0000001) {
+ 			std::cout << " h2tohh mass "<< h2tohh_lorentz->M() <<" pt " << h2tohh_lorentz->Pt();
+			h2tohh_lorentz->Print();
+                }
+           	onshellW_Eta = onshellW_lorentz->Eta();
+           	onshellW_Phi = onshellW_lorentz->Phi();
+           	onshellW_Pt = onshellW_lorentz->Pt();
+           	onshellW_E = onshellW_lorentz->E();
+           	onshellW_Mass = onshellW_lorentz->M();
+           	offshellW_Eta = offshellW_lorentz->Eta();
+           	offshellW_Phi = offshellW_lorentz->Phi();
+           	offshellW_Pt = offshellW_lorentz->Pt();
+           	offshellW_E = offshellW_lorentz->E();
+           	offshellW_Mass = offshellW_lorentz->M();
+                htoWW_Eta = htoWW_lorentz->Eta();
+                htoWW_Phi = htoWW_lorentz->Phi();
+                htoWW_Pt = htoWW_lorentz->Pt();
+                htoWW_E = htoWW_lorentz->E();
+                htoWW_Mass = htoWW_lorentz->M();
+                h2tohh_Pt = h2tohh_lorentz->Pt();
+                h2tohh_E = h2tohh_lorentz->E();
+                h2tohh_Mass = h2tohh_lorentz->M();
+                if ((h2tohh_lorentz->Pt()/h2tohh_lorentz->E())>0.0000001){
+                	h2tohh_Eta = h2tohh_lorentz->Eta();
+               		h2tohh_Phi = h2tohh_lorentz->Phi();
+                }else {
+                        h2tohh_Eta = 1000000;
+                        h2tohh_Phi = 0;
+                }
+
+                weight = 0.5;
+
+              	mmctree->Fill();
+           }
    }
 
    delete generator;
-   delete mu_onshellW_lorentz;
-   delete mu_offshellW_lorentz;
-   delete jets_lorentz;
 //   delete mmctree;
 }
 
@@ -962,19 +1175,54 @@ DiHiggsWWAnalyzer::runMMC(){
 void
 DiHiggsWWAnalyzer::initTree(TTree* mmctree){
    
-   eta_mean = 0;
-   eta_rms = 0;
-   eta_gen = 0;
-   phi_gen = 0;
-   std::stringstream ss;
-   ss << "mmctree_" << ievent;
-   const std::string name(ss.str());
-   mmctree = fs->make<TTree>(name.c_str(), name.c_str());
    mmctree->Branch("ievent", &ievent);
    mmctree->Branch("eta_mean", &eta_mean);
    mmctree->Branch("eta_rms", &eta_rms);
    mmctree->Branch("eta_gen",&eta_gen);
    mmctree->Branch("phi_gen",&phi_gen);
+   mmctree->Branch("mu_onshellW_eta", &mu_onshellW_Eta);
+   mmctree->Branch("mu_onshellW_phi", &mu_onshellW_Phi);
+   mmctree->Branch("mu_onshellW_pt", &mu_onshellW_Pt);
+   mmctree->Branch("mu_onshellW_E", &mu_onshellW_E);
+   mmctree->Branch("mu_offshellW_eta", &mu_offshellW_Eta);
+   mmctree->Branch("mu_offshellW_phi", &mu_offshellW_Phi);
+   mmctree->Branch("mu_offshellW_pt", &mu_offshellW_Pt);
+   mmctree->Branch("mu_offshellW_E", &mu_offshellW_E);
+   mmctree->Branch("nu_onshellW_eta", &nu_onshellW_Eta);
+   mmctree->Branch("nu_onshellW_phi", &nu_onshellW_Phi);
+   mmctree->Branch("nu_onshellW_pt", &nu_onshellW_Pt);
+   mmctree->Branch("nu_onshellW_E", &nu_onshellW_E);
+   mmctree->Branch("nu_offshellW_eta", &nu_offshellW_Eta);
+   mmctree->Branch("nu_offshellW_phi", &nu_offshellW_Phi);
+   mmctree->Branch("nu_offshellW_pt", &nu_offshellW_Pt);
+   mmctree->Branch("nu_offshellW_E", &nu_offshellW_E);
+   mmctree->Branch("onshellW_eta", &onshellW_Eta);
+   mmctree->Branch("onshellW_phi", &onshellW_Phi);
+   mmctree->Branch("onshellW_pt", &onshellW_Pt);
+   mmctree->Branch("onshellW_E", &onshellW_E);
+   mmctree->Branch("onshellW_Mass", &onshellW_Mass);
+   mmctree->Branch("offshellW_eta", &offshellW_Eta);
+   mmctree->Branch("offshellW_phi", &offshellW_Phi);
+   mmctree->Branch("offshellW_pt", &offshellW_Pt);
+   mmctree->Branch("offshellW_E", &offshellW_E);
+   mmctree->Branch("offshellW_Mass", &offshellW_Mass);
+   mmctree->Branch("htoWW_Eta", &htoWW_Eta);
+   mmctree->Branch("htoWW_Phi", &htoWW_Phi);
+   mmctree->Branch("htoWW_Pt", &htoWW_Pt);
+   mmctree->Branch("htoWW_E", &htoWW_E);
+   mmctree->Branch("htoWW_Mass", &htoWW_Mass);
+   mmctree->Branch("htoBB_Eta", &htoBB_Eta);
+   mmctree->Branch("htoBB_Phi", &htoBB_Phi);
+   mmctree->Branch("htoBB_Pt", &htoBB_Pt);
+   mmctree->Branch("htoBB_E", &htoBB_E);
+   mmctree->Branch("htoBB_Mass", &htoBB_Mass);
+   mmctree->Branch("h2tohh_Eta", &h2tohh_Eta);
+   mmctree->Branch("h2tohh_Phi", &h2tohh_Phi);
+   mmctree->Branch("h2tohh_Pt", &h2tohh_Pt);
+   mmctree->Branch("h2tohh_E", &h2tohh_E);
+   mmctree->Branch("h2tohh_Mass", &h2tohh_Mass);
+   mmctree->Branch("weight", &weight);
+   
    
 }
 
@@ -1027,43 +1275,97 @@ DiHiggsWWAnalyzer::nu1pt_onshellW(EtaPhi nu1_etaphi, TLorentzVector* mu1lorentz)
 //   TVector2 *numu_phi = new TVector(nu_etaphi.first(),mu1lorentz->eta());
    float deltaeta = nu1_etaphi.first - mu1lorentz->Eta();
    float deltaphi = nu1_etaphi.second - mu1lorentz->Phi();
+   
    nu1_pt = WMass*WMass/(2*mu1lorentz->Pt()*(cosh(deltaeta)-cos(deltaphi)));
- 
+   
+   std::cout << " calculate nu1_pt " << nu1_pt << " deltaeta "<< deltaeta << " deltaphi " << deltaphi << std::endl; 
    return nu1_pt;
 
 }
 
-//------------- method called to calculate lorentzvector of second nuetrinos, which is from offshell W -----------
-TLorentzVector* 
-DiHiggsWWAnalyzer::nu2lorentz_offshellW(TLorentzVector* jetslorentz, 
-                                        TLorentzVector* mu1lorentz, 
-                                        TLorentzVector* mu2lorentz, 
-                                        TLorentzVector* nu1lorentz){
+float 
+DiHiggsWWAnalyzer::chdeltaeta_munu_offshellW(TLorentzVector* jetslorentz,
+                                           TLorentzVector* mu1lorentz,
+                                           TLorentzVector* mu2lorentz,
+                                           TLorentzVector* nu1lorentz){
 
-   TLorentzVector* nu2lorentz = new TLorentzVector();
    TLorentzVector* tmplorentz = new TLorentzVector(mu1lorentz->Px()+mu2lorentz->Px()+nu1lorentz->Px(),
                                                    mu1lorentz->Py()+mu2lorentz->Py()+nu1lorentz->Py(),
                                                    mu1lorentz->Pz()+mu2lorentz->Pz()+nu1lorentz->Pz(),
                                                    mu1lorentz->Energy()+mu2lorentz->Energy()+nu1lorentz->Energy());
-   float nu2_px;
-   float nu2_py;
-   float nu2_pt;
-   
-   nu2_px = -jetslorentz->Px()-mu1lorentz->Px()-mu2lorentz->Px()-nu1lorentz->Px();
-   nu2_py = -jetslorentz->Py()-mu1lorentz->Py()-mu2lorentz->Py()-nu1lorentz->Py();
-   nu2_pt = sqrt(nu2_px*nu2_px+nu2_py*nu2_py);
 
-   float chdeltaeta;//cosh(nu2_eta-mu2_eta)
+   float nu_tmp_px;
+   float nu_tmp_py;
+   float nu_tmp_pt;
    
-   chdeltaeta = (pow(SMHMass,2)+pow(jetslorentz->Pt(),2)-pow(tmplorentz->Pt(),2)-pow(nu2_pt,2))/(2*tmplorentz->Pt()*nu2_pt);
+   nu_tmp_px = -jetslorentz->Px()-mu1lorentz->Px()-mu2lorentz->Px()-nu1lorentz->Px();
+   nu_tmp_py = -jetslorentz->Py()-mu1lorentz->Py()-mu2lorentz->Py()-nu1lorentz->Py();
+   TVector2 nu_pxpy(nu_tmp_px, nu_tmp_py);
 
-   // should check whether deltaeta > 1
-   float nu2_eta = acosh(chdeltaeta)+tmplorentz->Eta();
-   float nu2_phi = atan(nu2_py/nu2_px);
-   nu2lorentz->SetPtEtaPhiM(nu2_pt, nu2_eta, nu2_phi, 0);
+   nu_tmp_pt = nu_pxpy.Mod();
+
+   float chdeltaeta;//cosh(nu2_eta-tmp2lorenz_eta)
+   TLorentzVector* tmp2lorentz = new TLorentzVector(sqrt(pow(tmplorentz->Pt(),2)+pow(tmplorentz->M(),2)),0,tmplorentz->Pz(),tmplorentz->Energy());// construct massless lorentzvector with same pz and E as tmplorentzvector
+   
+   chdeltaeta = (pow(SMHMass,2)+pow(jetslorentz->Pt(),2)-pow(tmplorentz->M(),2)-pow(tmplorentz->Pt(),2)-pow(nu_tmp_pt,2))/(2*tmp2lorentz->Pt()*nu_tmp_pt);
+   
+   
    delete tmplorentz;
+   delete tmp2lorentz;
 
-   return nu2lorentz;
+   return chdeltaeta;
+}
+
+
+
+
+//------------- method called to calculate lorentzvector of second nuetrinos, which is from offshell W -----------
+void 
+DiHiggsWWAnalyzer::nulorentz_offshellW(TLorentzVector* jetslorentz, 
+                                        TLorentzVector* mu1lorentz, 
+                                        TLorentzVector* mu2lorentz, 
+                                        TLorentzVector* nu1lorentz, 
+                                        TLorentzVector* nu2lorentz, int control){
+
+   TLorentzVector* tmplorentz = new TLorentzVector(mu1lorentz->Px()+mu2lorentz->Px()+nu1lorentz->Px(),
+                                                   mu1lorentz->Py()+mu2lorentz->Py()+nu1lorentz->Py(),
+                                                   mu1lorentz->Pz()+mu2lorentz->Pz()+nu1lorentz->Pz(),
+                                                   mu1lorentz->Energy()+mu2lorentz->Energy()+nu1lorentz->Energy());
+   float nu_tmp_px;
+   float nu_tmp_py;
+   float nu_tmp_pt;
+   
+   nu_tmp_px = -jetslorentz->Px()-mu1lorentz->Px()-mu2lorentz->Px()-nu1lorentz->Px();
+   nu_tmp_py = -jetslorentz->Py()-mu1lorentz->Py()-mu2lorentz->Py()-nu1lorentz->Py();
+   TVector2 nu_pxpy(nu_tmp_px, nu_tmp_py);
+
+   nu_tmp_pt = nu_pxpy.Mod();
+
+   float chdeltaeta;//cosh(nu_offshellW_eta-tmp2lorentz_eta)
+   TLorentzVector* tmp2lorentz = new TLorentzVector(sqrt(pow(tmplorentz->Pt(),2)+pow(tmplorentz->M(),2)),0,tmplorentz->Pz(),tmplorentz->Energy());//construct the massless lorentzvector with same pz and E
+   
+   chdeltaeta = (pow(SMHMass,2)+pow(jetslorentz->Pt(),2)-pow(tmplorentz->M(),2)-pow(tmplorentz->Pt(),2)-pow(nu_tmp_pt,2))/(2*tmp2lorentz->Pt()*nu_tmp_pt);
+   
+   if (abs(chdeltaeta) <= 1) return;
+   std::cout << "tmplorentz mass " << tmplorentz->M(); tmplorentz->Print();
+   std::cout << "tmp2lorentz mass " << tmp2lorentz->M(); tmp2lorentz->Print();
+
+   float nu_tmp_phi = nu_pxpy.Phi_mpi_pi(nu_pxpy.Phi());
+   float deltaeta = acosh(chdeltaeta);
+   float nu_tmp_eta = (control == 1) ? (tmp2lorentz->Eta()-deltaeta) : (tmp2lorentz->Eta()+deltaeta); 
+   // should check whether deltaeta > 1
+   std::cout <<" nu_tmp_px " << nu_tmp_px << "  nu_tmp_py " << nu_tmp_py << " nu_tmp_pt " << nu_tmp_pt 
+             << " cosh(deltaeta2) " << chdeltaeta << " nu_tmp_eta " << nu_tmp_eta << " nu_tmp_phi " << nu_tmp_phi << std::endl; 
+   nu2lorentz->SetPtEtaPhiM(nu_tmp_pt, nu_tmp_eta, nu_tmp_phi, 0);
+   //std::cout << " jets lorentz"; jetslorentz->Print(); 
+   //std::cout << " mu1 lorentz "; mu1lorentz->Print();
+   //std::cout << " mu2 lorentz "; mu2lorentz->Print();
+   //std::cout << " nu1 lorentz "; nu1lorentz->Print();
+   //std::cout << " tmp lorentz "; tmplorentz->Print();
+   //std::cout << " nu2 lorentz "; nu2lorentz->Print();
+   delete tmplorentz;
+   delete tmp2lorentz;
+
 }
 
 
