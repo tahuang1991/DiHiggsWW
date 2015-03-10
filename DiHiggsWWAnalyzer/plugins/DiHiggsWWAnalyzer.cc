@@ -383,6 +383,48 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       htoWW_lorentz = new TLorentzVector();
       htoBB_lorentz = new TLorentzVector();
       h2tohh_lorentz = new TLorentzVector();
+
+
+      mu_onshellW_Eta =0;
+      mu_onshellW_Phi =0;
+      mu_onshellW_Pt =0;
+      mu_onshellW_E =0;
+      mu_offshellW_Eta =0;
+      mu_offshellW_Phi =0;
+      mu_offshellW_Pt =0;
+      mu_offshellW_E =0;
+      nu_onshellW_Eta =0;
+      nu_onshellW_Phi =0;
+      nu_onshellW_Pt =0;
+      nu_onshellW_E =0 ;
+      nu_offshellW_Eta =0;
+      nu_offshellW_Phi =0; 
+      nu_offshellW_Pt =0;
+      nu_offshellW_E =0;
+      
+      onshellW_Eta =0;
+      onshellW_Phi =0;
+      onshellW_Pt =0;
+      onshellW_E =0;
+      onshellW_Mass =0;
+      offshellW_Eta =0;
+      offshellW_Phi =0;
+      offshellW_Pt =0;
+      offshellW_E =0;
+      offshellW_Mass =0;
+     
+      htoBB_Eta =0;
+      htoBB_Phi =0;
+      htoBB_Pt =0;
+      htoBB_E =0;
+      htoBB_Mass =0;
+      htoWW_Eta =0;
+      htoWW_Phi =0;
+      htoWW_Pt =0;
+      htoWW_E =0;
+      htoWW_Mass =0;
+
+      h2tohh_Eta =0;
       
     
 
@@ -1114,24 +1156,30 @@ DiHiggsWWAnalyzer::runMMC(){
           	nu_offshellW_Phi = nu_offshellW_lorentz->Phi();
           	nu_offshellW_Pt = nu_offshellW_lorentz->Pt();
            	nu_offshellW_E = nu_offshellW_lorentz->E();
-                if (verbose_ == 0){
+
+                *onshellW_lorentz = *mu_onshellW_lorentz+*nu_onshellW_lorentz;
+                *offshellW_lorentz = *mu_offshellW_lorentz+*nu_offshellW_lorentz;
+                *htoWW_lorentz = *onshellW_lorentz+*offshellW_lorentz;
+                *h2tohh_lorentz = *htoWW_lorentz+*htoBB_lorentz;
+		if (fabs(SMHMass-htoWW_lorentz->M()) > 2) {
+			std::cout << " SMH mass " << SMHMass << " Higgs mass from MMC " << htoWW_lorentz->M() <<std::endl;
+           		verbose_ = 2;
+                 }
+                if (verbose_ > 1){
                 	std::cout << "mu_onshellW "; mu_onshellW_lorentz->Print();
                 	std::cout << "nu_onshellW "; nu_onshellW_lorentz->Print();
                 	std::cout << "mu_offshellW "; mu_offshellW_lorentz->Print();
                 	std::cout << "nu_offshellW "; nu_offshellW_lorentz->Print();
                 }
 
-                *onshellW_lorentz = *mu_onshellW_lorentz+*nu_onshellW_lorentz;
-                *offshellW_lorentz = *mu_offshellW_lorentz+*nu_offshellW_lorentz;
-                *htoWW_lorentz = *onshellW_lorentz+*offshellW_lorentz;
-                *h2tohh_lorentz = *htoWW_lorentz+*htoBB_lorentz;
-                if (verbose_ == 0){
+                if (verbose_ > 1){
   			std::cout << " onshell W mass "<< onshellW_lorentz->M();   onshellW_lorentz->Print();
   			std::cout << " offshell W mass "<< offshellW_lorentz->M(); offshellW_lorentz->Print();
   			std::cout << " htoWW mass "<< htoWW_lorentz->M(); htoWW_lorentz->Print();
   			std::cout << " htoBB mass "<< htoBB_lorentz->M(); htoBB_lorentz->Print();
+                        verbose_ = 0;
                 }
-  		if (verbose_ == 0 && (h2tohh_lorentz->Pt()/h2tohh_lorentz->E())>0.0000001) {
+  		if (verbose_ > 1 && (h2tohh_lorentz->Pt()/h2tohh_lorentz->E())>0.0000001) {
  			std::cout << " h2tohh mass "<< h2tohh_lorentz->M() <<" pt " << h2tohh_lorentz->Pt();
 			h2tohh_lorentz->Print();
                 }
@@ -1345,10 +1393,8 @@ DiHiggsWWAnalyzer::nulorentz_offshellW(TLorentzVector* jetslorentz,
    TLorentzVector* tmp2lorentz = new TLorentzVector(sqrt(pow(tmplorentz->Pt(),2)+pow(tmplorentz->M(),2)),0,tmplorentz->Pz(),tmplorentz->Energy());//construct the massless lorentzvector with same pz and E
    
    chdeltaeta = (pow(SMHMass,2)+pow(jetslorentz->Pt(),2)-pow(tmplorentz->M(),2)-pow(tmplorentz->Pt(),2)-pow(nu_tmp_pt,2))/(2*tmp2lorentz->Pt()*nu_tmp_pt);
-   
-   if (abs(chdeltaeta) <= 1) return;
-   std::cout << "tmplorentz mass " << tmplorentz->M(); tmplorentz->Print();
-   std::cout << "tmp2lorentz mass " << tmp2lorentz->M(); tmp2lorentz->Print();
+ 
+   if (fabs(chdeltaeta) <= 1) return;
 
    float nu_tmp_phi = nu_pxpy.Phi_mpi_pi(nu_pxpy.Phi());
    float deltaeta = acosh(chdeltaeta);
@@ -1357,14 +1403,26 @@ DiHiggsWWAnalyzer::nulorentz_offshellW(TLorentzVector* jetslorentz,
    std::cout <<" nu_tmp_px " << nu_tmp_px << "  nu_tmp_py " << nu_tmp_py << " nu_tmp_pt " << nu_tmp_pt 
              << " cosh(deltaeta2) " << chdeltaeta << " nu_tmp_eta " << nu_tmp_eta << " nu_tmp_phi " << nu_tmp_phi << std::endl; 
    nu2lorentz->SetPtEtaPhiM(nu_tmp_pt, nu_tmp_eta, nu_tmp_phi, 0);
-   //std::cout << " jets lorentz"; jetslorentz->Print(); 
-   //std::cout << " mu1 lorentz "; mu1lorentz->Print();
-   //std::cout << " mu2 lorentz "; mu2lorentz->Print();
-   //std::cout << " nu1 lorentz "; nu1lorentz->Print();
-   //std::cout << " tmp lorentz "; tmplorentz->Print();
-   //std::cout << " nu2 lorentz "; nu2lorentz->Print();
+   TLorentzVector* htoww_tmp = new TLorentzVector(*tmplorentz+*nu2lorentz);
+   if (abs(htoww_tmp->M()-SMHMass) >2){
+   	std::cout <<" set Higgs Mass" << SMHMass << " MMC higgs mass" << htoww_tmp->M() << std::endl;
+        htoww_tmp->Print();
+        verbose_ = 1;
+       }
+   if (verbose_ > 0){
+   	std::cout << "tmplorentz mass " << tmplorentz->M(); tmplorentz->Print();
+   	std::cout << "tmp2lorentz mass " << tmp2lorentz->M(); tmp2lorentz->Print();
+   	std::cout << " jets lorentz"; jetslorentz->Print(); 
+   	std::cout << " mu1 lorentz "; mu1lorentz->Print();
+    	std::cout << " mu2 lorentz "; mu2lorentz->Print();
+   	std::cout << " nu1 lorentz "; nu1lorentz->Print();
+   	std::cout << " tmp lorentz "; tmplorentz->Print();
+        std::cout << " nu2 lorentz "; nu2lorentz->Print();
+        verbose_ = 0;
+    }
    delete tmplorentz;
    delete tmp2lorentz;
+   delete htoww_tmp;
 
 }
 
