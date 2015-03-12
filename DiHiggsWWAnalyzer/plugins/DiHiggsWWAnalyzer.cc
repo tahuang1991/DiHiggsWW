@@ -1170,8 +1170,8 @@ DiHiggsWWAnalyzer::runMMC(){
    TRandom *generator = new TRandom();
   // later should take into consideration both possible cases
   // int onshell_control = 0;
-     
-
+        
+   
 
    jets_lorentz->SetXYZT(b1_px+b2_px, b1_py+b2_py, b1_pz+b2_pz, b1_energy+b2_energy);
    htoBB_lorentz->SetXYZT(b1_px+b2_px, b1_py+b2_py, b1_pz+b2_pz, b1_energy+b2_energy);
@@ -1345,6 +1345,7 @@ DiHiggsWWAnalyzer::initTree(TTree* mmctree){
    mmctree->Branch("h2tohh_Pt", &h2tohh_Pt);
    mmctree->Branch("h2tohh_E", &h2tohh_E);
    mmctree->Branch("h2tohh_Mass", &h2tohh_Mass);
+   mmctree->Branch("h2_Mass_FromGen", &h2tohh_mass);
    mmctree->Branch("weight", &weight);
    mmctree->Branch("control", &control);
    
