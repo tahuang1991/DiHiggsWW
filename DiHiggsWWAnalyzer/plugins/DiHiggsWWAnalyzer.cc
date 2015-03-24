@@ -97,7 +97,9 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
      const reco::Candidate* alldecendant(const reco::Candidate* cand, int id, bool first=false);
      const reco::Candidate* allancestor(const reco::Candidate* cand, int id, bool first=false);
                     
-
+    private:
+      void printCandidate(const reco::Candidate* );
+      
 
     private:
       // ----------member data ---------------------------
@@ -105,13 +107,16 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       TFile *output;
     
     private:
-      void fillbranches();  
+      void fillbranches(); 
+    private: 
       edm::Service< TFileService > fs;
       //branches of tree
       float mu1_energy;
       float mu1_px;
       float mu1_py;
       float mu1_pz;
+      float mu1_eta;
+      float mu1_phi;
       float mu1_mother_mass;
       float mu1_mother_energy;
       float mu1_mother_px;
@@ -121,12 +126,16 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float nu1_px;
       float nu1_py;
       float nu1_pz;
+      float nu1_eta;
+      float nu1_phi;
       bool Wtomu1nu1;
 
       float mu2_energy;
       float mu2_px;
       float mu2_py;
       float mu2_pz;
+      float mu2_eta;
+      float mu2_phi;
       float mu2_mother_mass;
       float mu2_mother_energy;
       float mu2_mother_px;
@@ -136,6 +145,8 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float nu2_px;
       float nu2_py;
       float nu2_pz;
+      float nu2_eta;
+      float nu2_phi;
       bool Wtomu2nu2;
      
       float htoWW_energy;
@@ -203,6 +214,8 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       mu1_px = 0.0;
       mu1_py = 0.0;
       mu1_pz = 0.0;
+      mu1_eta = 0.0;
+      mu1_phi = 0.0;
       mu1_mother_mass = 0;
       mu1_mother_energy = 0.0;
       mu1_mother_px = 0.0;
@@ -212,12 +225,16 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       nu1_px = 0.0;
       nu1_py = 0.0;
       nu1_pz = 0.0;
+      nu1_eta = 0.0;
+      nu1_phi = 0.0;
       Wtomu1nu1 = false;
 
       mu2_energy = 0.0;
       mu2_px = 0.0;
       mu2_py = 0.0;
       mu2_pz = 0.0;
+      mu2_eta = 0.0;
+      mu2_phi = 0.0;
       mu2_mother_mass = 0;
       mu2_mother_energy = 0.0;
       mu2_mother_px = 0.0;
@@ -227,6 +244,8 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       nu2_px = 0.0;
       nu2_py = 0.0;
       nu2_pz = 0.0;
+      nu2_eta = 0.0;
+      nu2_phi = 0.0;
       Wtomu2nu2 = false;
 
       htoWW_energy = 0.0;
@@ -492,7 +511,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
                        const reco::Candidate* htoBB_mother = htoBB_cand->mother();
                        while (htoWW_mother->pdgId() == 25)  htoWW_mother = htoWW_mother->mother();
                        while (htoBB_mother->pdgId() == 25)  htoBB_mother = htoBB_mother->mother();
-                       if (htoWW_mother == htoBB_mother){ 
+                       if (htoWW_mother == htoBB_mother && htoBB_mother->pdgId()==99927){ 
 				h2tohhcand = htoWW_mother;
 				htoWWcand = htoWW_cand;
 				htoBBcand = htoBB_cand;
@@ -515,6 +534,12 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         b2cand = alldecendant(htoBBcand, -5, true);
         w1cand = allancestor(mu1cand, -24, true);
 	w2cand = allancestor(mu2cand, 24, true);   
+        std::cout <<" mu1 "; printCandidate(mu1cand);	
+        std::cout <<" nu1 "; printCandidate(nu1cand);	
+        std::cout <<" mu2 "; printCandidate(mu2cand);	
+        std::cout <<" nu2 "; printCandidate(nu2cand);	
+        std::cout <<" w1 " ; printCandidate(w1cand);
+        std::cout <<" w2 " ; printCandidate(w2cand);
 
      	fillbranches();
         evtree->Fill();
@@ -536,6 +561,8 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("mu1_px",&mu1_px);
    evtree->Branch("mu1_py",&mu1_py);
    evtree->Branch("mu1_pz",&mu1_pz);
+   evtree->Branch("mu1_eta",&mu1_eta);
+   evtree->Branch("mu1_phi",&mu1_phi);
    evtree->Branch("mu1_mother_mass",&mu1_mother_mass);
    evtree->Branch("mu1_mother_energy",&mu1_mother_energy);
    evtree->Branch("mu1_mother_px",&mu1_mother_px);
@@ -545,12 +572,16 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("nu1_px",&nu1_px);
    evtree->Branch("nu1_py",&nu1_py);
    evtree->Branch("nu1_pz",&nu1_pz);
+   evtree->Branch("nu1_eta",&nu1_eta);
+   evtree->Branch("nu1_phi",&nu1_phi);
    evtree->Branch("Wtomu1nu1",&Wtomu1nu1);
 
    evtree->Branch("mu2_energy",&mu2_energy);
    evtree->Branch("mu2_px",&mu2_px);
    evtree->Branch("mu2_py",&mu2_py);
    evtree->Branch("mu2_pz",&mu2_pz);
+   evtree->Branch("mu2_eta",&mu2_eta);
+   evtree->Branch("mu2_phi",&mu2_phi);
    evtree->Branch("mu2_mother_energy",&mu2_mother_energy);
    evtree->Branch("mu2_mother_px",&mu2_mother_px);
    evtree->Branch("mu2_mother_py",&mu2_mother_py);
@@ -560,6 +591,8 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("nu2_px",&nu2_px);
    evtree->Branch("nu2_py",&nu2_py);
    evtree->Branch("nu2_pz",&nu2_pz);
+   evtree->Branch("nu2_eta",&nu2_eta);
+   evtree->Branch("nu2_phi",&nu2_phi);
    evtree->Branch("Wtomu2nu2",&Wtomu2nu2);
 
    evtree->Branch("htoWW_energy",&htoWW_energy);
@@ -721,6 +754,19 @@ DiHiggsWWAnalyzer::allancestor(const reco::Candidate* cand, int id, bool first){
 
 
 
+//---------- method called to print candidates for debug ---------------------
+void
+DiHiggsWWAnalyzer::printCandidate(const reco::Candidate* cand){
+
+   std::cout <<" Candidate id: "<< cand->pdgId() << " mass: " << cand->mass() <<" (P,E)= ("<< cand->px() <<", "<< cand->py()<<", "<< cand->pz()<<", "<< cand->energy()
+             <<")" << " status: " << cand->status() << std::endl;
+
+}
+
+
+
+
+//---------- method called to fill branches --------------------------------------------
 void 
 DiHiggsWWAnalyzer::fillbranches(){
       mu1_energy = mu1cand->energy();
@@ -736,7 +782,11 @@ DiHiggsWWAnalyzer::fillbranches(){
       nu1_px = nu1cand->px();
       nu1_py = nu1cand->py();
       nu1_pz = nu1cand->pz();
-      Wtomu1nu1 = true;
+
+      mu1_eta = mu1cand->eta();
+      mu1_phi = mu1cand->phi();
+      nu1_eta = nu1cand->eta();
+      nu1_phi = nu1cand->phi();
 
       mu2_energy = mu2cand->energy();
       mu2_px = mu2cand->px();
@@ -751,7 +801,11 @@ DiHiggsWWAnalyzer::fillbranches(){
       nu2_px = nu2cand->px();
       nu2_py = nu2cand->py();
       nu2_pz = nu2cand->pz();
-      Wtomu2nu2 = true;
+
+      mu2_eta = mu2cand->eta();
+      mu2_phi = mu2cand->phi();
+      nu2_eta = nu2cand->eta();
+      nu2_phi = nu2cand->phi();
 
       htoWW_energy = htoWWcand->energy();
       htoWW_px = htoWWcand->px();
