@@ -46,9 +46,10 @@
 #include "TLorentzVector.h"
 #include "TVector2.h"
 #include "TRandom.h"
+#include "TRandom3.h"
 
-#define WMass 80.385   // W mass
-#define SMHMass 125.03 // SM module higgs mass
+//#define WMass 80.385   // W mass
+//#define SMHMass 125.03 // SM module higgs mass
 
 
 //
@@ -81,14 +82,14 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float genEtaGuass(float mean, float rms);
       float genPhiFlat();
       EtaPhi generatenu1_etaphi();
-      float nu1pt_onshellW(EtaPhi nu1_etaphi, TLorentzVector* mu1lorentz);
+      float nu1pt_onshellW(EtaPhi nu1_etaphi, TLorentzVector* mu1lorentz, float wMass);
       bool  nulorentz_offshellW(TLorentzVector* jetlorentz, TLorentzVector* mu1lorentz, 
 			       TLorentzVector* mu2lorentz, TLorentzVector* nu1lorentz, 
- 			       TLorentzVector* nu2lorentz, int control);
+ 			       TLorentzVector* nu2lorentz, int control, float hMass);
       bool checkSolution(TLorentzVector* jetslorentz,
                           TLorentzVector* mu1lorentz,
                           TLorentzVector* mu2lorentz,
-                          TLorentzVector* nu1lorentz, int control); 
+                          TLorentzVector* nu1lorentz, int control, float hMass); 
       bool cutsCheck();
       void assignMuLorentzVec(int control);  
           
@@ -99,6 +100,7 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       void print();
       void printHtoWWChain();
       void printCandidate(const reco::Candidate* );
+      void printallDecendants(const reco::Candidate* );
       //virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
       //virtual void endRun(edm::Run const&, edm::EventSetup const&) override;
       //virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
@@ -109,12 +111,15 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       const reco::Candidate* findmudescendants(const reco::Candidate*, int& );
       const reco::Candidate* findnudescendants(const reco::Candidate*, int& );
     private:
+     bool finalStates_;
+    private:
      //decendants and ancestor
      const reco::Candidate* stabledecendant(const reco::Candidate* cand, int id);
      //const reco::Candidate* stablehtoWWdecendant(Particle p, PdgId id);
      const reco::Candidate* alldecendant(const reco::Candidate* cand, int id, bool first=false);
      const reco::Candidate* allancestor(const reco::Candidate* cand, int id, bool first=false);
-
+     bool hasMother(const reco::Candidate* cand, int id);
+     bool hasDaughter(const reco::Candidate* cand, int id);
       // ---------- Candidates in signal channel ---------------------------
 
       // ---------- Candidates in signal channel ---------------------------
@@ -206,6 +211,11 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float b2_py;
       float b2_pz;
       int b2_motherid;
+      float jets_energy;
+      float jets_px;
+      float jets_py;
+      float jets_pz;
+      float jets_mass;
 
       float htobb_energy;
       float htobb_px;
@@ -235,11 +245,16 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
     private:
       bool runMMC_;
      // MMC tree branches
-     
+    private:
+      TLorentzVector stableDecendantsLorentz(const reco::Candidate* cand); 
+  
+    private:
       float eta_mean;
       float eta_rms;
       float eta_gen; 
       float phi_gen;
+      float wmass_gen;
+      float hmass_gen;
       TLorentzVector* mu_onshellW_lorentz;
       TLorentzVector* mu_offshellW_lorentz;
       TLorentzVector* jets_lorentz;
@@ -299,6 +314,16 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float h2tohh_E;
       float h2tohh_Mass;
 
+      float eta_nuoffshellW_true;
+      float phi_nuoffshellW_true;
+      float pt_nuoffshellW_true;
+      float eta_nuonshellW_true;
+      float phi_nuonshellW_true;
+      float pt_nuonshellW_true;
+      float mass_offshellW_true;
+      float mass_onshellW_true;
+      float pt_h2tohh_true;
+
 };
 
     //
@@ -316,6 +341,7 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
 {
      verbose_ = iConfig.getUntrackedParameter<int>("verbose",0);
      runMMC_ = iConfig.getParameter<bool>("runMMC");
+     finalStates_ = iConfig.getParameter<bool>("finalStates");
 
 
    // initilize candidates pointer
@@ -382,6 +408,12 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       b2_py = 0.0;
       b2_pz = 0.0;
       b2_motherid = 0;
+      jets_energy = 0.0;
+      jets_px = 0.0;
+      jets_py = 0.0;
+      jets_pz = 0.0;
+      jets_mass = 0.0;
+
       htobb_energy = 0.0;
       htobb_px = 0.0;
       htobb_py = 0.0;
@@ -457,6 +489,17 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       htoWW_Mass =0;
 
       h2tohh_Eta =0;
+      h2tohh_Phi =0;
+      h2tohh_Pt =0;
+      h2tohh_E =0;
+      h2tohh_Mass =0;
+      eta_nuoffshellW_true = 0.0;
+      pt_nuoffshellW_true = 0.0;
+      eta_nuonshellW_true = 0.0;
+      pt_nuonshellW_true = 0.0;
+      mass_offshellW_true = 0.0;
+      mass_onshellW_true =0.0;
+      pt_h2tohh_true = 0;
       
     
 
@@ -622,8 +665,8 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     if (mu_negative and nu_negative && mu1_W1_cand == nu1_W1_cand)
        {
           Wtomu1nu1 = true;
-          std::cout << "find W1 from negative mu nu, mass " << mu1_W1_cand->mass() 
-                    << " energy " << mu1_W1_cand->energy() << std::endl;
+         // std::cout << "find W1 from negative mu nu, mass " << mu1_W1_cand->mass() 
+          //          << " energy " << mu1_W1_cand->energy() << std::endl;
     
           }
      else if (mu_negative && nu_negative)  std::cout << "find negative mu && nu but not find W1" << std::endl;
@@ -631,8 +674,8 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     if (mu_positive and nu_positive && mu2_W2_cand == nu2_W2_cand)
        {
           Wtomu2nu2 = true;
-          std::cout << "find W2 from positive mu nu, mass " << mu2_W2_cand->mass()
-                    << " energy " << mu2_W2_cand->energy() << std::endl;
+          //std::cout << "find W2 from positive mu nu, mass " << mu2_W2_cand->mass()
+           //         << " energy " << mu2_W2_cand->energy() << std::endl;
     
           }
      else if (mu_positive && nu_positive)  std::cout << "find positive mu && nu but not find W2" << std::endl;
@@ -641,11 +684,6 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
        {
          std::cout << "find 2 muons and they come from same higgs" << std::endl;
     
-          float h_energy = mu1_energy+mu2_energy+nu1_energy+nu2_energy;
-          float h_px = mu1_px+mu2_px+nu1_px+nu2_px;
-          float h_py = mu1_py+mu2_py+nu1_py+nu2_py;
-          float h_pz = mu1_pz+mu2_pz+nu1_pz+nu2_pz;
-          TLorentzVector final_p4(h_px, h_py, h_pz, h_energy);
           htoWW = true;
           //if (abs(final_p4.M()-125)>5)    
          }
@@ -659,7 +697,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     // pair b and bbar quark
     if (bquark and bbarquark and b1_htobb_cand == b2_htobb_cand)
        {
-         std::cout << "find bbar and they come from same higgs" << std::endl;
+        // std::cout << "find bbar and they come from same higgs" << std::endl;
          // const reco::Candidate* tmphiggs_bb = b1_htobb_cand->mother();
          // while (b1_htobb_cand->mother()->pdgId() == 25)  b1_htobb_cand = b1_htobb_cand->mother();
           
@@ -703,22 +741,63 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    if (h2tohh) {
         std::cout << "find h2 candidate " << std::endl;
         std::cout << "h2 candidate id " << h2tohhcand->pdgId() << " mass " << h2tohhcand->mass() << std::endl;
+        if (finalStates_){ 
     	mu1cand = stabledecendant(htoWWcand, 13);
         mu2cand = stabledecendant(htoWWcand, -13);
         nu1cand = stabledecendant(htoWWcand, -14);
         nu2cand = stabledecendant(htoWWcand, 14);
+        b1cand = alldecendant(htoBBcand, 5, false);
+        b2cand = alldecendant(htoBBcand, -5, false);
+        w1cand = allancestor(mu1cand, -24, false);
+	w2cand = allancestor(mu2cand, 24, false);   
+        }else {
+        mu1cand = findmudaughter(mu1_W1_cand);
+        nu1cand = findnudaughter(mu1_W1_cand);
+        mu2cand = findmudaughter(mu2_W2_cand);
+        nu2cand = findnudaughter(mu2_W2_cand);
+
         b1cand = alldecendant(htoBBcand, 5, true);
         b2cand = alldecendant(htoBBcand, -5, true);
         w1cand = allancestor(mu1cand, -24, true);
 	w2cand = allancestor(mu2cand, 24, true);   
-        //std::cout <<" mu1 "; printCandidate(mu1cand);	
-        //std::cout <<" nu1 "; printCandidate(nu1cand);
-        //std::cout <<" mu2 "; printCandidate(mu2cand);	
-        //std::cout <<" nu2 "; printCandidate(nu2cand);	
-        //std::cout <<" w1 " ; printCandidate(w1cand);
-        //std::cout <<" w2 " ; printCandidate(w2cand);
+        }
+        //if ()
+        std::cout <<" h2tohh "; printCandidate(h2tohhcand);
+        std::cout <<"new mu1 "; printCandidate(mu1cand);	
+        //std::cout <<"old mu1 "; printCandidate(findmudaughter(mu1_W1_cand));	
+        std::cout <<"new nu1 "; printCandidate(nu1cand);
+        //std::cout <<"old nu1 "; printCandidate(findnudaughter(mu1_W1_cand));	
+        std::cout <<"new mu2 "; printCandidate(mu2cand);	
+        //std::cout <<"old mu2 "; printCandidate(findmudaughter(mu2_W2_cand));	
+        std::cout <<"new nu2 "; printCandidate(nu2cand);	
+        //std::cout <<"old nu2 "; printCandidate(findnudaughter(mu2_W2_cand));	
+        std::cout <<" w1 " ; printCandidate(w1cand);
+        std::cout <<" w2 " ; printCandidate(w2cand);
+        std::cout <<" b1 " ; printCandidate(b1cand);
+        std::cout <<" b2 " ; printCandidate(b2cand);
+        //std::cout <<"another b1 " ; printCandidate(alldecendant(htoBBcand, 5, false));
+        //std::cout <<"another b2 " ; printCandidate(alldecendant(htoBBcand, -5, false));
+        //std::cout <<" b jet"; bjetsLorentz(b1cand).Print(); 
+        //std::cout <<" b jet"; bjetsLorentz(alldecendant(htoBBcand, 5, false)).Print(); 
+        //std::cout <<" bbar jet"; bjetsLorentz(b2cand).Print(); 
+        //std::cout <<" bbar jet"; bjetsLorentz(alldecendant(htoBBcand, -5, false)).Print(); 
+        //std::cout <<" htoWW " ; printCandidate(htoWWcand);
+        //std::cout <<" htoBB and its decendants" <<std::endl; printCandidate(htoBBcand);
+	//printallDecendants(h2tohhcand);
+        *jets_lorentz = stableDecendantsLorentz(htoBBcand);
+       
         fillbranches();
         evtree->Fill();
+        //debug
+         /* float h_energy = mu1_energy+mu2_energy+nu1_energy+nu2_energy;
+          float h_px = mu1_px+mu2_px+nu1_px+nu2_px;
+          float h_py = mu1_py+mu2_py+nu1_py+nu2_py;
+          float h_pz = mu1_pz+mu2_pz+nu1_pz+nu2_pz;
+          TLorentzVector final_p4(h_px, h_py, h_pz, h_energy);
+        if (fabs(final_p4.M()-htoWWcand->mass())>0.15) {
+		printHtoWWChain(); 
+		printallDecendants(htoWWcand);
+        }*/
    }
 
     
@@ -792,6 +871,11 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("b2_py",&b2_py);
    evtree->Branch("b2_pz",&b2_pz);
    evtree->Branch("b2_motherid",&b2_motherid);
+   evtree->Branch("jets_energy",&jets_energy);
+   evtree->Branch("jets_px",&jets_px);
+   evtree->Branch("jets_py",&jets_py);
+   evtree->Branch("jets_pz",&jets_pz);
+   evtree->Branch("jets_mass",&jets_mass);
    
    evtree->Branch("htobb_energy",&htobb_energy);
    evtree->Branch("htobb_px",&htobb_px);
@@ -921,19 +1005,25 @@ DiHiggsWWAnalyzer::fillbranches(){
       b2_px = b2cand->px();
       b2_py = b2cand->py();
       b2_pz = b2cand->pz();
+
+      jets_energy = jets_lorentz->Energy();
+      jets_px = jets_lorentz->Px();
+      jets_py = jets_lorentz->Py();
+      jets_pz = jets_lorentz->Pz();
+      jets_mass = jets_lorentz->M();
+      
       htobb_energy = htoBBcand->energy();
       htobb_px = htoBBcand->px();
       htobb_py = htoBBcand->py();
       htobb_pz = htoBBcand->pz();
       htobb_mass = htoBBcand->mass();
-
+     
       
       h2tohh_energy = h2tohhcand->energy();
       h2tohh_px = h2tohhcand->px();
       h2tohh_py = h2tohhcand->py();
       h2tohh_pz = h2tohhcand->pz();
       h2tohh_mass = h2tohhcand->mass();
-
    
    
 }
@@ -1019,7 +1109,9 @@ DiHiggsWWAnalyzer::stabledecendant(const reco::Candidate* cand, int id){
 }
 
 
-//------------ method called to find decendant with pdgid = id, if first it true, then return the candidate closest to seed
+//------------ method called to find decendant with pdgid = id, 
+//if first it true, then return the candidate closest to seed
+//if first it false, then return the candidate farthest to seed
 const reco::Candidate* 
 DiHiggsWWAnalyzer::alldecendant(const reco::Candidate* cand, int id, bool first){
    const reco::Candidate* tmp = NULL;
@@ -1027,8 +1119,10 @@ DiHiggsWWAnalyzer::alldecendant(const reco::Candidate* cand, int id, bool first)
         
 	if ((cand->daughter(i))->pdgId() == id && first && cand->pdgId() != id)
 		return 	tmp=cand->daughter(i);
-	else if ((cand->daughter(i))->pdgId() == id) 
-		return  tmp=cand->daughter(i);
+	else if ((cand->daughter(i))->pdgId() == id && !first && !hasDaughter(cand->daughter(i), id)) 
+		return  tmp=cand->daughter(i); // tmp does not has daughter with pdgid = id
+	else if ((cand->daughter(i))->pdgId() == id && !first && (cand->daughter(i))->numberOfDaughters()>1) 
+		return  tmp=cand->daughter(i);// tmp has more one daughters therefore it is final-states
         else if (alldecendant(cand->daughter(i),id, first)) 
 		return tmp=alldecendant(cand->daughter(i),id);
    }
@@ -1037,7 +1131,9 @@ DiHiggsWWAnalyzer::alldecendant(const reco::Candidate* cand, int id, bool first)
 
 }
 
-//---------- method called to find a ancestor with pdgid = id, if first is true, then return the candidate closest to seed
+//---------- method called to find a ancestor with pdgid = id, 
+//if first is true, then return the candidate closest to seed
+//if first is false, then return the candidate furthest to seed
 const reco::Candidate*
 DiHiggsWWAnalyzer::allancestor(const reco::Candidate* cand, int id, bool first){
 
@@ -1046,7 +1142,7 @@ DiHiggsWWAnalyzer::allancestor(const reco::Candidate* cand, int id, bool first){
         
 	if ((cand->mother(i))->pdgId() == id && first && cand->pdgId() != id)
 		return 	tmp=cand->mother(i);
-	else if ((cand->mother(i))->pdgId() == id) 
+	else if ((cand->mother(i))->pdgId() == id && !first && !hasMother(cand->mother(i), id)) 
 		return  tmp=cand->mother(i);
         else if (allancestor(cand->mother(i),id, first)) 
 		return tmp=allancestor(cand->mother(i),id, first);
@@ -1055,9 +1151,25 @@ DiHiggsWWAnalyzer::allancestor(const reco::Candidate* cand, int id, bool first){
 
 }
 
+//---------- method called to check whether cand has mother with pdgid = id -----------------------------------
+bool
+DiHiggsWWAnalyzer::hasMother(const reco::Candidate* cand, int id){
 
+   for (unsigned int i=0; i < cand->numberOfMothers(); i++)
+        if ((cand->mother(i))->pdgId() == id) return true;
+   return false;
 
+}
 
+//-------- method called to check whether cand has daughter with pdgid = id ------------------------------------
+bool
+DiHiggsWWAnalyzer::hasDaughter(const reco::Candidate* cand, int id){
+ 
+   for (unsigned int i=0; i < cand->numberOfDaughters(); i++)
+        if ((cand->daughter(i))->pdgId() == id) return true;
+   return false;
+
+}
 
 // ------------ method called for printing additional information, useful for debugging  ------------
 void
@@ -1221,13 +1333,24 @@ DiHiggsWWAnalyzer::printHtoWWChain(){
 void
 DiHiggsWWAnalyzer::printCandidate(const reco::Candidate* cand){
 
-   std::cout <<" Candidate id: "<< cand->pdgId() << " mass: " << cand->mass() <<" (P,E)= ("<< cand->px() <<", "<< cand->py()<<", "<< cand->pz()<<", "<< cand->energy()
-             <<")" << " status: " << cand->status() << std::endl;
+   std::cout <<" Candidate id: "<< cand->pdgId() << " mass: " << cand->mass() <<" (P,E)= ("<< cand->px() <<", "<< cand->py()<<", "<< cand->pz()<<", "<< cand->energy() <<")" <<"(Pt,E) = ("<< cand->pt() <<", "<< cand->eta() <<", "<< cand->phi()<<", "<<cand->energy()<< ")" <<" status: " << cand->status() << std::endl;
 
 }
 
+//--------- method called to print all decendants for cand -------------------
+void 
+DiHiggsWWAnalyzer::printallDecendants(const reco::Candidate* cand){
+   
+   if (cand->status() != 0 && cand->numberOfDaughters() > 0){
+        std::cout << "******************  children of id "<< cand->pdgId() <<"      *********************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfDaughters(); i++)
+        	printCandidate(cand->daughter(i));
+        std::cout << "***********************************************************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfDaughters(); i++)
+		printallDecendants(cand->daughter(i));
 
-
+    }
+}
 
 //================================================================================================================
 //
@@ -1255,38 +1378,77 @@ DiHiggsWWAnalyzer::runMMC(){
    TTree *mmctree = fs->make<TTree>(name.c_str(), name.c_str());
    initTree(mmctree);
 
-   int count = 10000;
+   int count = 100000;
 
    eta_mean=0;
    eta_rms=1.403;
-   TRandom *generator = new TRandom();
+   TRandom3 *genseed = new TRandom3();
+   genseed->SetSeed();
+   int seed = genseed->Integer(1000000000);
+   TRandom3 *generator = new TRandom3();
+   generator->SetSeed(seed+ievent);
   // later should take into consideration both possible cases
   // int onshell_control = 0;
         
-   
-
-   jets_lorentz->SetXYZT(b1_px+b2_px, b1_py+b2_py, b1_pz+b2_pz, b1_energy+b2_energy);
-   htoBB_lorentz->SetXYZT(b1_px+b2_px, b1_py+b2_py, b1_pz+b2_pz, b1_energy+b2_energy);
+   htoBB_lorentz->SetXYZT(b1_px+b2_px,b1_py+b2_py,b1_pz+b2_pz,b1_energy+b2_energy);
+  // *jets_lorentz = bjetsLorentz(htoBBcand);
+  // htoBB_lorentz = jets_lorentz;
    htoBB_Eta = htoBB_lorentz->Eta();
    htoBB_Phi = htoBB_lorentz->Phi();
    htoBB_Pt = htoBB_lorentz->Pt();
    htoBB_E = htoBB_lorentz->E();
    htoBB_Mass = htoBB_lorentz->M();
-    
+   std::cout <<" jets_lorentz "; jets_lorentz->Print();  
+   std::cout <<" htoBB_lorentz "; htoBB_lorentz->Print();  
+   if (mu1_mother_mass > mu2_mother_mass){
+	eta_nuoffshellW_true = nu2cand->eta();
+	phi_nuoffshellW_true = nu2cand->phi();
+	pt_nuoffshellW_true = nu2cand->pt();
+	eta_nuonshellW_true = nu1cand->eta();
+	phi_nuonshellW_true = nu1cand->phi();
+	pt_nuonshellW_true = nu1cand->pt();
+        mass_offshellW_true = mu2_mother_mass;
+        mass_onshellW_true = mu1_mother_mass;
+    }
+    else{
+	eta_nuoffshellW_true = nu1cand->eta();
+	phi_nuoffshellW_true = nu1cand->phi();
+	pt_nuoffshellW_true = nu1cand->pt();
+	eta_nuonshellW_true = nu2cand->eta();
+	phi_nuonshellW_true = nu2cand->phi();
+	pt_nuonshellW_true = nu2cand->pt();
+        mass_offshellW_true = mu1_mother_mass;
+        mass_onshellW_true = mu2_mother_mass;
+    }
+   pt_h2tohh_true = h2tohhcand->pt();
    float nu_onshellW_pt =0;
    for (int i = 0; i < count; i++){
 
 	   eta_gen = generator->Uniform(-6,6); 
 	   phi_gen = generator->Uniform(-3.1415926, 3.1415926);
+           wmass_gen = generator->Gaus(80.385,0.015);
+           hmass_gen = generator->Gaus(125.03,0.3);
+           //test
+           /*eta_gen = eta_nuonshellW_true;
+           phi_gen = phi_nuonshellW_true;
+           std::cout << "true eta phi of nuonshell ("<<eta_nuonshellW_true <<","<<phi_nuonshellW_true<<"), pt " <<pt_nuonshellW_true 
+		<<" mass of onshellW " << mass_onshellW_true <<" wmass_gen "<< wmass_gen  << std::endl;
+           std::cout << "true eta phi of nuoffshell ("<<eta_nuoffshellW_true <<","<<phi_nuoffshellW_true<<"), pt " <<pt_nuoffshellW_true 
+		<<" mass of offshellW " << mass_offshellW_true <<  std::endl;
+            */
            int solutions = 0;//count num of soluble case
            bool solution[4]={false, false, false, false}; //record whether the case is soluble or not
            for (int j = 0; j < 4; j++){
                  assignMuLorentzVec(j/2);
-          	 nu_onshellW_pt = nu1pt_onshellW(std::make_pair(eta_gen, phi_gen), mu_onshellW_lorentz); 
+          	 nu_onshellW_pt = nu1pt_onshellW(std::make_pair(eta_gen, phi_gen), mu_onshellW_lorentz, wmass_gen); 
           	 nu_onshellW_lorentz->SetPtEtaPhiM(nu_onshellW_pt, eta_gen, phi_gen,0);
-                 solution[j] = nulorentz_offshellW(jets_lorentz, mu_onshellW_lorentz,
+                  // should replace htoBB_lorentz by jets_lorentz if we have correct jets_lorentz
+                 //solution[j] = nulorentz_offshellW(jets_lorentz, mu_onshellW_lorentz,
+                 solution[j] = nulorentz_offshellW(htoBB_lorentz, mu_onshellW_lorentz,
 					            mu_offshellW_lorentz, nu_onshellW_lorentz,
-						   nu_offshellW_lorentz, j%2);
+						   nu_offshellW_lorentz, j%2, hmass_gen);
+                 //std::cout << " calculate nu1_pt " << nu_onshellW_pt << " eta_gen "<< eta_gen << " phi_gen " << phi_gen << std::endl; 
+                 //std::cout << j << " nu_offshellW_eta " << nu_offshellW_lorentz->Eta()<<" phi " << nu_offshellW_lorentz->Phi() << std::endl; 
                  if (solution[j]) solutions++;
            }
     //       nu_offshellW_lorentz= NULL; 
@@ -1296,12 +1458,12 @@ DiHiggsWWAnalyzer::runMMC(){
                 // reassign muons LorentzVector
                 control = j;
                 assignMuLorentzVec(j/2);
-                nu_onshellW_pt = nu1pt_onshellW(std::make_pair(eta_gen, phi_gen), mu_onshellW_lorentz); 
+                nu_onshellW_pt = nu1pt_onshellW(std::make_pair(eta_gen, phi_gen), mu_onshellW_lorentz, wmass_gen); 
           	nu_onshellW_lorentz->SetPtEtaPhiM(nu_onshellW_pt, eta_gen, phi_gen,0);
-                nulorentz_offshellW(jets_lorentz, mu_onshellW_lorentz,
+                 //nulorentz_offshellW(jets_lorentz, mu_onshellW_lorentz,
+                nulorentz_offshellW(htoBB_lorentz, mu_onshellW_lorentz,
                                     mu_offshellW_lorentz, nu_onshellW_lorentz,
-				    nu_offshellW_lorentz, j%2);
-                std::cout << j << " nu_offshellW_eta " << nu_offshellW_lorentz->Eta()<<" phi " << nu_offshellW_lorentz->Phi() << std::endl; 
+				    nu_offshellW_lorentz, j%2, hmass_gen);
 
 
                 weight = 1.0/solutions;// change weight if we consider possibility factor  like matrix elements
@@ -1330,8 +1492,8 @@ DiHiggsWWAnalyzer::runMMC(){
                 *offshellW_lorentz = *mu_offshellW_lorentz+*nu_offshellW_lorentz;
                 *htoWW_lorentz = *onshellW_lorentz+*offshellW_lorentz;
                 *h2tohh_lorentz = *htoWW_lorentz+*htoBB_lorentz;
-		if (fabs(SMHMass-htoWW_lorentz->M()) > 2) {
-			std::cout << " SMH mass " << SMHMass << " Higgs mass from MMC " << htoWW_lorentz->M() <<std::endl;
+		if (fabs(hmass_gen-htoWW_lorentz->M()) > 2) {
+			std::cout << "  hmass_gen " << hmass_gen << " Higgs mass from MMC " << htoWW_lorentz->M() <<std::endl;
            		verbose_ = 2;
                  }
                 if (verbose_ > 1){
@@ -1373,7 +1535,7 @@ DiHiggsWWAnalyzer::runMMC(){
                 if ((h2tohh_lorentz->Pt()/h2tohh_lorentz->E())>0.0000001){
                 	h2tohh_Eta = h2tohh_lorentz->Eta();
                		h2tohh_Phi = h2tohh_lorentz->Phi();
-                }else {
+                }else {//pt =0, strange case here
                         h2tohh_Eta = 1000000;
                         h2tohh_Phi = 0;
                 }
@@ -1382,7 +1544,7 @@ DiHiggsWWAnalyzer::runMMC(){
               	mmctree->Fill();
            }//end controls loop,(0,1,2,3)
    }//end of tries
-
+   delete genseed;
    delete generator;
 //   delete mmctree;
 }
@@ -1396,6 +1558,9 @@ DiHiggsWWAnalyzer::initTree(TTree* mmctree){
    mmctree->Branch("eta_rms", &eta_rms);
    mmctree->Branch("eta_gen",&eta_gen);
    mmctree->Branch("phi_gen",&phi_gen);
+   mmctree->Branch("wmass_gen",&wmass_gen);
+   mmctree->Branch("hmass_gen",&hmass_gen);
+
    mmctree->Branch("mu_onshellW_eta", &mu_onshellW_Eta);
    mmctree->Branch("mu_onshellW_phi", &mu_onshellW_Phi);
    mmctree->Branch("mu_onshellW_pt", &mu_onshellW_Pt);
@@ -1437,7 +1602,19 @@ DiHiggsWWAnalyzer::initTree(TTree* mmctree){
    mmctree->Branch("h2tohh_Pt", &h2tohh_Pt);
    mmctree->Branch("h2tohh_E", &h2tohh_E);
    mmctree->Branch("h2tohh_Mass", &h2tohh_Mass);
-   mmctree->Branch("h2_Mass_FromGen", &h2tohh_mass);
+ 
+   mmctree->Branch("eta_nuoffshellW_true", &eta_nuoffshellW_true);
+   mmctree->Branch("phi_nuoffshellW_true", &phi_nuoffshellW_true);
+   mmctree->Branch("eta_nuonshellW_true", &eta_nuonshellW_true);
+   mmctree->Branch("phi_nuonshellW_true", &phi_nuonshellW_true);
+   mmctree->Branch("pt_nuoffshellW_true", &pt_nuoffshellW_true);
+   mmctree->Branch("pt_nuonshellW_true", &pt_nuonshellW_true);
+   mmctree->Branch("mass_offshellW_true", &mass_offshellW_true);
+   mmctree->Branch("mass_onshellW_true", &mass_onshellW_true);
+   mmctree->Branch("mass_h2_true", &h2tohh_mass);
+   mmctree->Branch("pt_h2_true", &pt_h2tohh_true);
+   mmctree->Branch("mass_htoWW_true", &htoWW_mass);
+
    mmctree->Branch("weight", &weight);
    mmctree->Branch("control", &control);
    
@@ -1484,7 +1661,7 @@ DiHiggsWWAnalyzer::generatenu1_etaphi(){
 float 
 DiHiggsWWAnalyzer::genEtaGuass(float mean, float rms){
 	
-    TRandom *etaGenerator = new TRandom();
+    TRandom3 *etaGenerator = new TRandom3();
     float eta = etaGenerator->Gaus(mean, rms);
     delete etaGenerator;
      
@@ -1496,7 +1673,7 @@ DiHiggsWWAnalyzer::genEtaGuass(float mean, float rms){
 float 
 DiHiggsWWAnalyzer::genPhiFlat(){
  
-   TRandom *phiGenerator = new TRandom();
+   TRandom3 *phiGenerator = new TRandom3();
    float pi = 3.1415926;
    float phi = phiGenerator->Uniform(-pi, pi);
    delete phiGenerator;
@@ -1505,18 +1682,34 @@ DiHiggsWWAnalyzer::genPhiFlat(){
 }
 
 
+//----------- method called to calculate total lorentz vector from b bar jets ---------------
+//
+TLorentzVector
+DiHiggsWWAnalyzer::stableDecendantsLorentz(const reco::Candidate *cand){
+  
+   TLorentzVector bjets = TLorentzVector();
+   for (unsigned i = 0; i < cand->numberOfDaughters(); i++){
+	if ((cand->daughter(i))->status() == 1){
+		TLorentzVector tmp((cand->daughter(i))->px(), (cand->daughter(i))->py(), 
+				(cand->daughter(i))->pz(),(cand->daughter(i))->energy());
+                //printCandidate(cand->daughter(i));
+        	bjets = bjets+tmp; 
+	}else bjets = bjets+stableDecendantsLorentz(cand->daughter(i));
+   }
+
+   return bjets;
+}
+
 //------------- method called to calculate pt of nuetrinos from on-shell W decay ------------
 float 
-DiHiggsWWAnalyzer::nu1pt_onshellW(EtaPhi nu1_etaphi, TLorentzVector* mu1lorentz){
+DiHiggsWWAnalyzer::nu1pt_onshellW(EtaPhi nu1_etaphi, TLorentzVector* mu1lorentz, float wMass){
   
    float nu1_pt=0.0;
 //   TVector2 *numu_phi = new TVector(nu_etaphi.first(),mu1lorentz->eta());
    float deltaeta = nu1_etaphi.first - mu1lorentz->Eta();
    float deltaphi = nu1_etaphi.second - mu1lorentz->Phi();
    
-   nu1_pt = WMass*WMass/(2*mu1lorentz->Pt()*(cosh(deltaeta)-cos(deltaphi)));
-   
-//   std::cout << " calculate nu1_pt " << nu1_pt << " deltaeta "<< deltaeta << " deltaphi " << deltaphi << std::endl; 
+   nu1_pt = wMass*wMass/(2*mu1lorentz->Pt()*(cosh(deltaeta)-cos(deltaphi)));
    return nu1_pt;
 
 }
@@ -1527,7 +1720,7 @@ bool
 DiHiggsWWAnalyzer::checkSolution(TLorentzVector* jetslorentz,
                                  TLorentzVector* mu1lorentz,
                                  TLorentzVector* mu2lorentz,
-                                 TLorentzVector* nu1lorentz, int control){
+                                 TLorentzVector* nu1lorentz, int control, float hMass){
 
     
 
@@ -1549,7 +1742,7 @@ DiHiggsWWAnalyzer::checkSolution(TLorentzVector* jetslorentz,
    float chdeltaeta;//cosh(nu2_eta-tmp2lorenz_eta)
    TLorentzVector* tmp2lorentz = new TLorentzVector(sqrt(pow(tmplorentz->Pt(),2)+pow(tmplorentz->M(),2)),0,tmplorentz->Pz(),tmplorentz->Energy());// construct massless lorentzvector with same pz and E as tmplorentzvector
    
-   chdeltaeta = (pow(SMHMass,2)+pow(jetslorentz->Pt(),2)-pow(tmplorentz->M(),2)-pow(tmplorentz->Pt(),2)-pow(nu_tmp_pt,2))/(2*tmp2lorentz->Pt()*nu_tmp_pt);
+   chdeltaeta = (pow(hMass,2)+pow(jetslorentz->Pt(),2)-pow(tmplorentz->M(),2)-pow(tmplorentz->Pt(),2)-pow(nu_tmp_pt,2))/(2*tmp2lorentz->Pt()*nu_tmp_pt);
    
    
    delete tmplorentz;
@@ -1571,7 +1764,7 @@ DiHiggsWWAnalyzer::nulorentz_offshellW(TLorentzVector* jetslorentz,
                                         TLorentzVector* mu1lorentz, 
                                         TLorentzVector* mu2lorentz, 
                                         TLorentzVector* nu1lorentz, 
-                                        TLorentzVector* nu2lorentz, int control){
+                                        TLorentzVector* nu2lorentz, int control, float hMass){
 
    TLorentzVector* tmplorentz = new TLorentzVector(mu1lorentz->Px()+mu2lorentz->Px()+nu1lorentz->Px(),
                                                    mu1lorentz->Py()+mu2lorentz->Py()+nu1lorentz->Py(),
@@ -1590,21 +1783,34 @@ DiHiggsWWAnalyzer::nulorentz_offshellW(TLorentzVector* jetslorentz,
    float chdeltaeta;//cosh(nu_offshellW_eta-tmp2lorentz_eta)
    TLorentzVector* tmp2lorentz = new TLorentzVector(sqrt(pow(tmplorentz->Pt(),2)+pow(tmplorentz->M(),2)),0,tmplorentz->Pz(),tmplorentz->Energy());//fake one massless lorentzvector with same pz and E
    
-   chdeltaeta = (pow(SMHMass,2)+pow(jetslorentz->Pt(),2)-pow(tmplorentz->M(),2)-pow(tmplorentz->Pt(),2)-pow(nu_tmp_pt,2))/(2*tmp2lorentz->Pt()*nu_tmp_pt);
- 
-   if (chdeltaeta < 1.0) return false;
-
+   chdeltaeta = (pow(hMass,2)+pow(jetslorentz->Pt(),2)-pow(tmplorentz->M(),2)-pow(tmplorentz->Pt(),2)-pow(nu_tmp_pt,2))/(2*tmp2lorentz->Pt()*nu_tmp_pt);
+   if (verbose_>0){
+        std::cout << "nu2 px: " << nu_tmp_px << " py: "<< nu_tmp_py << std::endl;
+   	std::cout << "chdeltaeta " << chdeltaeta << std::endl;
+        std::cout << "tmp2lorentz "; tmp2lorentz->Print();
+   }
+   if (chdeltaeta < 1.0) {
+        delete tmplorentz;
+	delete tmp2lorentz;
+   	nu2lorentz->SetPtEtaPhiM(0, 0, 0, 0);
+	return false;
+      }
    float nu_tmp_phi = nu_pxpy.Phi_mpi_pi(nu_pxpy.Phi());
    float deltaeta = acosh(chdeltaeta);
    float nu_tmp_eta = (control == 1) ? (tmp2lorentz->Eta()-deltaeta) : (tmp2lorentz->Eta()+deltaeta);//control = j%2 
    // should check whether deltaeta > 1
-   std::cout <<"control "<< control <<" nu_tmp_px " << nu_tmp_px << "  nu_tmp_py " << nu_tmp_py << " nu_tmp_pt " << nu_tmp_pt 
-             << " cosh(deltaeta2) " << chdeltaeta << " nu_tmp_eta " << nu_tmp_eta << " nu_tmp_phi " << nu_tmp_phi << std::endl; 
-   if (fabs(nu_tmp_eta) > 7) return false;  //from experience , |nu_offshellW_Eta|<6
+  // std::cout <<"control "<< control <<" nu_tmp_px " << nu_tmp_px << "  nu_tmp_py " << nu_tmp_py << " nu_tmp_pt " << nu_tmp_pt 
+    //         << " cosh(deltaeta2) " << chdeltaeta << " nu_tmp_eta " << nu_tmp_eta << " nu_tmp_phi " << nu_tmp_phi << std::endl; 
+   if (fabs(nu_tmp_eta) > 7) {
+        delete tmplorentz;
+	delete tmp2lorentz;
+   	nu2lorentz->SetPtEtaPhiM(0, 0, 0, 0);
+	return false;  //from simulation, |nu_offshellW_Eta|<6
+    }
    nu2lorentz->SetPtEtaPhiM(nu_tmp_pt, nu_tmp_eta, nu_tmp_phi, 0);
    TLorentzVector* htoww_tmp = new TLorentzVector(*tmplorentz+*nu2lorentz);
-   if (abs(htoww_tmp->M()-SMHMass) >2){
-   	std::cout <<" set Higgs Mass" << SMHMass << " MMC higgs mass" << htoww_tmp->M() << std::endl;
+   if (abs(htoww_tmp->M()-hMass) >2){
+   	std::cout <<" set Higgs Mass" << hMass << " MMC higgs mass" << htoww_tmp->M() << std::endl;
         htoww_tmp->Print();
         verbose_ = 1;
        }
@@ -1617,8 +1823,8 @@ DiHiggsWWAnalyzer::nulorentz_offshellW(TLorentzVector* jetslorentz,
    	std::cout << " nu1 lorentz "; nu1lorentz->Print();
    	std::cout << " tmp lorentz "; tmplorentz->Print();
         std::cout << " nu2 lorentz "; nu2lorentz->Print();
-        verbose_ = 0;
     }
+       // std::cout << " nu_offshellW lorentz "; nu2lorentz->Print();
    delete tmplorentz;
    delete tmp2lorentz;
    delete htoww_tmp;
