@@ -47,6 +47,8 @@
 #include "TVector2.h"
 #include "TRandom.h"
 #include "TRandom3.h"
+#include "TF1.h"
+#include "TH1F.h"
 
 //#define WMass 80.385   // W mass
 //#define SMHMass 125.03 // SM module higgs mass
@@ -247,6 +249,16 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
      // MMC tree branches
     private:
       TLorentzVector stableDecendantsLorentz(const reco::Candidate* cand); 
+   
+    private:
+      TLorentzVector calculateMET(); 
+    private:
+      float onshellWMassRandomWalk(float x0, float step, float random);
+      float onshellWMassRandomWalk(float x0, float step, float random, TH1F* hist);
+      float onshellWMassPDF(float wmass);
+  
+    private:
+      TH1F* readoutonshellWMassPDF();
   
     private:
       float eta_mean;
@@ -258,6 +270,8 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       TLorentzVector* mu_onshellW_lorentz;
       TLorentzVector* mu_offshellW_lorentz;
       TLorentzVector* jets_lorentz;
+      TLorentzVector* met_lorentz;
+      TVector2* MMCmet_vec2;
       TLorentzVector* nu_onshellW_lorentz;
       TLorentzVector* nu_offshellW_lorentz;
       TLorentzVector* offshellW_lorentz;
@@ -308,11 +322,21 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float htoWW_E;
       float htoWW_Mass;
 
+      float MMCmet_E;
+      float MMCmet_Phi;
+      float MMCmet_Px;
+      float MMCmet_Py;
+
       float h2tohh_Eta;
       float h2tohh_Phi;
       float h2tohh_Pt;
       float h2tohh_E;
       float h2tohh_Mass;
+
+      float met;
+      float met_phi;
+      float met_px;
+      float met_py;
 
       float eta_nuoffshellW_true;
       float phi_nuoffshellW_true;
@@ -440,6 +464,8 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       mu_onshellW_lorentz = new TLorentzVector();
       mu_offshellW_lorentz = new TLorentzVector();
       jets_lorentz = new TLorentzVector();
+      met_lorentz = new TLorentzVector();
+      MMCmet_vec2 = new TVector2();
       nu_onshellW_lorentz = new TLorentzVector();
       nu_offshellW_lorentz = new TLorentzVector();
       offshellW_lorentz = new TLorentzVector();
@@ -785,6 +811,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         //std::cout <<" htoBB and its decendants" <<std::endl; printCandidate(htoBBcand);
 	//printallDecendants(h2tohhcand);
         *jets_lorentz = stableDecendantsLorentz(htoBBcand);
+        *met_lorentz = calculateMET();
        
         fillbranches();
         evtree->Fill();
@@ -888,6 +915,11 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("h2tohh_py",&h2tohh_py);
    evtree->Branch("h2tohh_pz",&h2tohh_pz);
    evtree->Branch("h2tohh_mass",&h2tohh_mass);
+
+   evtree->Branch("met",&met);
+   evtree->Branch("met_phi",&met_phi);
+   evtree->Branch("met_px",&met_px);
+   evtree->Branch("met_py",&met_py);
    
    evtree->Branch("htobb",&htobb);
    evtree->Branch("htoWW",&htoWW);
@@ -1025,6 +1057,10 @@ DiHiggsWWAnalyzer::fillbranches(){
       h2tohh_pz = h2tohhcand->pz();
       h2tohh_mass = h2tohhcand->mass();
    
+      met = met_lorentz->Energy();
+      met_phi = met_lorentz->Phi();
+      met_px = met_lorentz->Px();
+      met_py = met_lorentz->Py();
    
 }
 
@@ -1387,6 +1423,8 @@ DiHiggsWWAnalyzer::runMMC(){
    int seed = genseed->Integer(1000000000);
    TRandom3 *generator = new TRandom3();
    generator->SetSeed(seed+ievent);
+   //TF1* wmasspdf = new TF1("wmasspdf","exp(x*7.87e-3+1.69)+603.47*exp(-0.5*((x-80.1)/2.0)**2)",50,90);
+
   // later should take into consideration both possible cases
   // int onshell_control = 0;
         
@@ -1422,12 +1460,22 @@ DiHiggsWWAnalyzer::runMMC(){
     }
    pt_h2tohh_true = h2tohhcand->pt();
    float nu_onshellW_pt =0;
+   wmass_gen = 80.3;// initial value
+   float step,random01;
+   TH1F* wmasshist = readoutonshellWMassPDF(); 
    for (int i = 0; i < count; i++){
 
 	   eta_gen = generator->Uniform(-6,6); 
 	   phi_gen = generator->Uniform(-3.1415926, 3.1415926);
-           wmass_gen = generator->Gaus(80.385,0.015);
+           //wmass_gen = generator->Gaus(80.385,0.015);
            hmass_gen = generator->Gaus(125.03,0.3);
+           //generate onshell Wmass
+           step = generator->Uniform(-4,4);
+           //step = generator->Gaus(0,8);
+           random01 = generator->Uniform(0,1);
+           //wmass_gen = onshellWMassRandomWalk(wmass_gen, step, random01);
+           wmass_gen = onshellWMassRandomWalk(wmass_gen, step, random01, wmasshist);
+           //wmass_gen = wmasspdf->GetRandom(50.0,90.0);
            //test
            /*eta_gen = eta_nuonshellW_true;
            phi_gen = phi_nuonshellW_true;
@@ -1492,6 +1540,8 @@ DiHiggsWWAnalyzer::runMMC(){
                 *offshellW_lorentz = *mu_offshellW_lorentz+*nu_offshellW_lorentz;
                 *htoWW_lorentz = *onshellW_lorentz+*offshellW_lorentz;
                 *h2tohh_lorentz = *htoWW_lorentz+*htoBB_lorentz;
+                *MMCmet_vec2 = TVector2(nu_onshellW_lorentz->Px()+nu_offshellW_lorentz->Px(),
+						nu_onshellW_lorentz->Py()+nu_offshellW_lorentz->Py());
 		if (fabs(hmass_gen-htoWW_lorentz->M()) > 2) {
 			std::cout << "  hmass_gen " << hmass_gen << " Higgs mass from MMC " << htoWW_lorentz->M() <<std::endl;
            		verbose_ = 2;
@@ -1532,6 +1582,11 @@ DiHiggsWWAnalyzer::runMMC(){
                 h2tohh_Pt = h2tohh_lorentz->Pt();
                 h2tohh_E = h2tohh_lorentz->E();
                 h2tohh_Mass = h2tohh_lorentz->M();
+                MMCmet_Px = MMCmet_vec2->Px();
+                MMCmet_Py = MMCmet_vec2->Py();
+                MMCmet_E = MMCmet_vec2->Mod();
+                MMCmet_Phi = MMCmet_vec2->Phi();
+ 
                 if ((h2tohh_lorentz->Pt()/h2tohh_lorentz->E())>0.0000001){
                 	h2tohh_Eta = h2tohh_lorentz->Eta();
                		h2tohh_Phi = h2tohh_lorentz->Phi();
@@ -1541,11 +1596,13 @@ DiHiggsWWAnalyzer::runMMC(){
                 }
 
 
-              	mmctree->Fill();
+             	mmctree->Fill();
            }//end controls loop,(0,1,2,3)
+              	//mmctree->Fill();
    }//end of tries
    delete genseed;
    delete generator;
+  // delete wmasspdf;
 //   delete mmctree;
 }
 
@@ -1597,11 +1654,22 @@ DiHiggsWWAnalyzer::initTree(TTree* mmctree){
    mmctree->Branch("htoBB_Pt", &htoBB_Pt);
    mmctree->Branch("htoBB_E", &htoBB_E);
    mmctree->Branch("htoBB_Mass", &htoBB_Mass);
+   mmctree->Branch("MMCmet_E",&MMCmet_E);
+   mmctree->Branch("MMCmet_Phi",&MMCmet_Phi);
+   mmctree->Branch("MMCmet_Px",&MMCmet_Px);
+   mmctree->Branch("MMCmet_Py",&MMCmet_Py);
+
    mmctree->Branch("h2tohh_Eta", &h2tohh_Eta);
    mmctree->Branch("h2tohh_Phi", &h2tohh_Phi);
    mmctree->Branch("h2tohh_Pt", &h2tohh_Pt);
    mmctree->Branch("h2tohh_E", &h2tohh_E);
    mmctree->Branch("h2tohh_Mass", &h2tohh_Mass);
+
+
+   mmctree->Branch("met_true",&met);
+   mmctree->Branch("met_phi_true",&met_phi);
+   mmctree->Branch("met_px_true",&met_px);
+   mmctree->Branch("met_py_true",&met_py);
  
    mmctree->Branch("eta_nuoffshellW_true", &eta_nuoffshellW_true);
    mmctree->Branch("phi_nuoffshellW_true", &phi_nuoffshellW_true);
@@ -1620,6 +1688,17 @@ DiHiggsWWAnalyzer::initTree(TTree* mmctree){
    
    
 }
+
+TLorentzVector 
+DiHiggsWWAnalyzer::calculateMET(){
+
+   TLorentzVector METlorentz = TLorentzVector();
+   TVector2 met_pxpy(nu1cand->px()+nu2cand->px(), nu1cand->py()+nu2cand->py());
+   METlorentz.SetPxPyPzE(nu1cand->px()+nu2cand->px(), nu1cand->py()+nu2cand->py(),0,met_pxpy.Mod());
+
+   return METlorentz;
+}
+
 
 //------------ method called to assign muons lorenz vector --------------
 void 
@@ -1680,6 +1759,113 @@ DiHiggsWWAnalyzer::genPhiFlat(){
 
    return phi;
 }
+
+//------------ method called to readout TH1F onshellWmasspdf from root file -----------------------------
+//
+TH1F*
+DiHiggsWWAnalyzer::readoutonshellWMassPDF(){
+
+	
+   TFile* file = new TFile("/home/taohuang/work/CMSSW_7_3_1/src/DiHiggsWW/DiHiggsWWAnalyzer/plugins/onshellwmassout.root");
+   TH1F* onshellWmasspdf = (TH1F*)file->Get("onshellWmasspdf");
+   delete file;
+   return onshellWmasspdf;
+
+}
+
+//------------ method to describe onshellW mass Probability density function ------------------------------
+//
+float 
+DiHiggsWWAnalyzer::onshellWMassPDF(float mass){
+
+  // float sigma = 1.75;
+  // float mean = 80.1;
+   float p0 =7.87161e-03;
+   float p1 =1.69085;
+   float p2 =603.474 ;
+   float p = 0;
+   p = exp(mass*p0+p1)+p2*exp(-0.5*((mass-80.1)/2.00)*((mass-80.1)/2.00));
+   return p;
+}
+
+//------------ use random walk to generate random onshellW mass accroding to wmass pdf --------------
+//
+float
+DiHiggsWWAnalyzer::onshellWMassRandomWalk(float x0, float step, float random){
+
+   float xmin = 50;
+   float xmax = 90;
+   float x1 = x0+step;
+   while (x1 > xmax || x1 < xmin){
+  	if (x1 > xmax) x1 = x1-xmax+xmin;
+  	if (x1 < xmin) x1 = xmax-(xmin-x1);
+   }
+    //transition probability
+   float w = onshellWMassPDF(x1)/onshellWMassPDF(x0);
+   //std::cout <<" initial " <<x0 <<" step " << step << " x1 "<< x1 << " transition probability " << w << " random " << random << std::endl;
+   if (w >= 1.00) return x1;
+   if (w < 1.00 && random < w) return x1;
+   else return x0;
+
+}  
+
+
+//------------ use random walk to generate random onshellW mass accroding to wmass pdf --------------
+//
+float
+DiHiggsWWAnalyzer::onshellWMassRandomWalk(float x0, float step, float random, TH1F* hist){
+
+   float xmin = 50;
+   float xmax = 90;
+   //periodic boundary codition
+   while (x0 > xmax || x0 < xmin){
+        if (x0 > xmax) x0 = x0-xmax+xmin;
+        if (x0 < xmin) x0 = xmax-(xmin-x0);
+   }
+
+   float x1 = x0+step;
+   while (x1 > xmax || x1 < xmin){
+  	if (x1 > xmax) x1 = x1-xmax+xmin;
+  	if (x1 < xmin) x1 = xmax-(xmin-x1);
+   }
+    //find
+   int binx0_1,binx0_2;
+   int binx1_1,binx1_2;
+   double bincent0_1,bincont0_1;// center and content
+   double bincent1_1,bincont1_1;
+   
+   binx0_1 = hist->FindBin(x0);
+   binx1_1 = hist->FindBin(x1);
+  
+   if ((float)hist->GetBinCenter(binx0_1) < x0){
+	binx0_2 = binx0_1+1;
+   }
+   else {
+	binx0_2 = binx0_1;
+	binx0_1 = binx0_1-1;
+    }
+
+   if ((float)hist->GetBinCenter(binx1_1) < x1){
+	binx1_2 = binx1_1+1;
+    }
+   else {
+	binx1_2 = binx1_1;
+	binx1_1 = binx1_1-1;
+    }
+    bincent0_1 = hist->GetBinCenter(binx0_1);
+    bincont0_1 = hist->GetBinContent(binx0_1);
+    bincent1_1 = hist->GetBinCenter(binx1_1);
+    bincont1_1 = hist->GetBinContent(binx1_1);
+   double w0 = (x0-bincent0_1)*(bincont0_1-hist->GetBinContent(binx0_2))/(bincent0_1-hist->GetBinCenter(binx0_2))+bincont0_1;
+   double w1 = (x1-bincent1_1)*(bincont1_1-hist->GetBinContent(binx1_2))/(bincent1_1-hist->GetBinCenter(binx1_2))+bincont1_1;
+    //transition probability
+   double w = w1/w0;
+   //std::cout <<" initial " <<x0 <<" step " << step << " x1 "<< x1 << " transition probability " << w << " random " << random << std::endl;
+   if (w >= 1.00) return x1;
+   if (w < 1.00 && random < (float)w) return x1;
+   else return x0;
+
+}  
 
 
 //----------- method called to calculate total lorentz vector from b bar jets ---------------
