@@ -272,6 +272,7 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
     private:
       int iterations_;
       int seed_;
+      std::string RefPDFfile_;
       float eta_mean;
       float eta_rms;
       float eta_gen; 
@@ -382,6 +383,8 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
      weightfromonshellnupt_hist_ = iConfig.getParameter<bool>("weightfromonshellnupt_hist");
      iterations_ = iConfig.getUntrackedParameter<int>("iterations",100000);
      seed_ = iConfig.getParameter<int>("seed");
+     RefPDFfile_ = iConfig.getParameter<std::string>("RefPDFfile");
+     std::cout <<" RefPDFfile_ " << RefPDFfile_ << std::endl;
    // initilize candidates pointer
 
 
@@ -1795,7 +1798,8 @@ TH1F*
 DiHiggsWWAnalyzer::readoutonshellWMassPDF(){
 
 	
-   TFile* file = new TFile("/home/taohuang/work/CMSSW_7_3_1/src/DiHiggsWW/DiHiggsWWAnalyzer/plugins/MMCRefPDF.ROOT");
+   //TFile* file = new TFile("/home/taohuang/work/CMSSW_7_3_1/src/DiHiggsWW/DiHiggsWWAnalyzer/plugins/MMCRefPDF.ROOT");
+   TFile* file = new TFile(RefPDFfile_.c_str());
    TH1F* onshellWmasspdf = (TH1F*)file->Get("onshellWmasspdf");
    delete file;
    return onshellWmasspdf;
@@ -1809,7 +1813,8 @@ TH1F*
 DiHiggsWWAnalyzer::readoutonshellnuptPDF(){
 
 	
-   TFile* file = new TFile("/home/taohuang/work/CMSSW_7_3_1/src/DiHiggsWW/DiHiggsWWAnalyzer/plugins/MMCRefPDF.ROOT");
+   //TFile* file = new TFile("/home/taohuang/work/CMSSW_7_3_1/src/DiHiggsWW/DiHiggsWWAnalyzer/plugins/MMCRefPDF.ROOT");
+   TFile* file = new TFile(RefPDFfile_.c_str());
    TH1F* onshellWmasspdf = (TH1F*)file->Get("onshellnuptpdf");
    delete file;
    return onshellWmasspdf;

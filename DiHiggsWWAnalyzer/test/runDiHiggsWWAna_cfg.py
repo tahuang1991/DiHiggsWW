@@ -5,12 +5,12 @@ process = cms.Process("DiHiggsWWAna")
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1) )
 
 
 process.source = cms.Source("PoolSource",
     # 318 548 618 725 843
-    #skipEvents = cms.untracked.uint32(617),
+    skipEvents = cms.untracked.uint32(617),
     # replace 'myfile.root' with the source file you want to use
     fileNames = cms.untracked.vstring(
        # 'file:/fdata/hepx/store/user/taohuang/Hhh/HH-bbWW-B3-Gen-1089680.root'
@@ -34,7 +34,8 @@ process.DiHiggsWWAna = cms.EDAnalyzer('DiHiggsWWAnalyzer',
 	seed = cms.int32(random.randint(0,100000000)),#may be ignored since we use can take ievent alone as seed
         finalStates = cms.bool(False),
         weightfromonshellnupt_func = cms.bool(False),
-        weightfromonshellnupt_hist = cms.bool(True)
+        weightfromonshellnupt_hist = cms.bool(True),
+	RefPDFfile = cms.string("/home/taohuang/work/CMSSW_7_3_1/src/DiHiggsWW/DiHiggsWWAnalyzer/plugins/MMCRefPDF.ROOT")
 )
 process.dump=cms.EDAnalyzer('EventContentAnalyzer')
 
