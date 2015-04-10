@@ -259,15 +259,17 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
   
     private:
       TH1F* readoutonshellWMassPDF();
+      TH1F* readoutoffshellWMassPDF();
       TH1F* readoutonshellnuptPDF();
  
     private:
-      float weightfromonshellnupt(TH1F* pdf, float nupt); 
+      float weightfromhist(TH1F* pdf, float x); 
       float weightfromonshellnupt(float nupt); 
    
     private:
       bool weightfromonshellnupt_func_;
       bool weightfromonshellnupt_hist_;
+      bool weightfromoffshellWmass_hist_;
 
     private:
       int iterations_;
@@ -295,6 +297,7 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       int control;
       float weight;
       float weight1;//extra weight
+      float weight2;//extra weight
  
       float mu_onshellW_Eta;
       float mu_onshellW_Phi;
@@ -381,6 +384,7 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
      finalStates_ = iConfig.getParameter<bool>("finalStates");
      weightfromonshellnupt_func_ = iConfig.getParameter<bool>("weightfromonshellnupt_func");
      weightfromonshellnupt_hist_ = iConfig.getParameter<bool>("weightfromonshellnupt_hist");
+     weightfromoffshellWmass_hist_ = iConfig.getParameter<bool>("weightfromoffshellWmass_hist");
      iterations_ = iConfig.getUntrackedParameter<int>("iterations",100000);
      seed_ = iConfig.getParameter<int>("seed");
      RefPDFfile_ = iConfig.getParameter<std::string>("RefPDFfile");
@@ -1480,8 +1484,10 @@ DiHiggsWWAnalyzer::runMMC(){
    wmass_gen = 80.3;// initial value
    float step,random01;
    TH1F* wmasshist = readoutonshellWMassPDF(); 
+   TH1F* offshellWmass_hist = readoutonshellWMassPDF(); 
    TH1F* onshellnupt_hist = readoutonshellnuptPDF(); 
    onshellnupt_hist->Scale(1.0/onshellnupt_hist->GetBinContent(onshellnupt_hist->GetMaximumBin()));
+   offshellWmass_hist->Scale(1.0/offshellWmass_hist->GetBinContent(offshellWmass_hist->GetMaximumBin()));
 
 
    for (int i = 0; i < iterations_ ; i++){
@@ -1538,9 +1544,6 @@ DiHiggsWWAnalyzer::runMMC(){
 
 
                 weight = 1.0/solutions;// change weight if we consider possibility factor  like matrix elements
-                if (weightfromonshellnupt_func_) weight1 = weightfromonshellnupt(nu_onshellW_pt); 
-                if (weightfromonshellnupt_hist_) weight1 = weightfromonshellnupt(onshellnupt_hist, nu_onshellW_pt); 
-                weight1 = weight1*weight;
  		mu_onshellW_Eta = mu_onshellW_lorentz->Eta();
    		mu_onshellW_Phi = mu_onshellW_lorentz->Phi();
    		mu_onshellW_Pt = mu_onshellW_lorentz->Pt();
@@ -1611,7 +1614,12 @@ DiHiggsWWAnalyzer::runMMC(){
                 MMCmet_Py = MMCmet_vec2->Py();
                 MMCmet_E = MMCmet_vec2->Mod();
                 MMCmet_Phi = MMCmet_vec2->Phi();
- 
+
+                if (weightfromonshellnupt_func_) weight1 = weightfromonshellnupt(nu_onshellW_pt); 
+                if (weightfromonshellnupt_hist_) weight1 = weightfromhist(onshellnupt_hist, nu_onshellW_pt); 
+                if (weightfromoffshellWmass_hist_) weight2 = weightfromhist(offshellWmass_hist, offshellW_lorentz->M()); 
+                weight1 = weight1*weight;
+ 		weight2 = weight2*weight1;
                 if ((h2tohh_lorentz->Pt()/h2tohh_lorentz->E())>0.0000001){
                 	h2tohh_Eta = h2tohh_lorentz->Eta();
                		h2tohh_Phi = h2tohh_lorentz->Phi();
@@ -1639,6 +1647,7 @@ DiHiggsWWAnalyzer::initTree(TTree* mmctree){
    //
    //
    weight1 = 1.0;
+   weight2 = 1.0;
 
  
    mmctree->Branch("ievent", &ievent);
@@ -1716,6 +1725,7 @@ DiHiggsWWAnalyzer::initTree(TTree* mmctree){
 
    mmctree->Branch("weight", &weight);
    mmctree->Branch("weight1", &weight1);
+   mmctree->Branch("weight2", &weight2);
    mmctree->Branch("control", &control);
    
    
@@ -1805,6 +1815,21 @@ DiHiggsWWAnalyzer::readoutonshellWMassPDF(){
    return onshellWmasspdf;
 
 }
+
+//------------ method called to readout TH1F onshellWmasspdf from root file -----------------------------
+//
+TH1F*
+DiHiggsWWAnalyzer::readoutoffshellWMassPDF(){
+
+	
+   //TFile* file = new TFile("/home/taohuang/work/CMSSW_7_3_1/src/DiHiggsWW/DiHiggsWWAnalyzer/plugins/MMCRefPDF.ROOT");
+   TFile* file = new TFile(RefPDFfile_.c_str());
+   TH1F* offshellWmasspdf = (TH1F*)file->Get("offshellWmasspdf");
+   delete file;
+   return offshellWmasspdf;
+
+}
+
 
 
 //------------ method called to readout TH1F onshellWmasspdf from root file -----------------------------
@@ -1917,27 +1942,27 @@ DiHiggsWWAnalyzer::onshellWMassRandomWalk(float x0, float step, float random, TH
 }  
 
 
-//---------- weight solution by nupt --------------------------------------------------------
+//---------- weight solution by a histogram --------------------------------------------------------
 //
 float
-DiHiggsWWAnalyzer::weightfromonshellnupt(TH1F* hist, float nupt){
+DiHiggsWWAnalyzer::weightfromhist(TH1F* hist, float x){
 //hist should be scaled
 
    float weight = 0.0;
-   int bin1 = hist->FindBin(nupt);
-   //first make sure that nupt is within range
+   int bin1 = hist->FindBin(x);
+   //first make sure that x is within range
    if (bin1 == 0 || bin1 == hist->GetNbinsX()+1) return weight=0;
    
    float bin1content = hist->GetBinContent(bin1);
    float bin1center = hist->GetBinCenter(bin1);
    int bin2 = 0;
    
-   if ((float)hist->GetBinCenter(bin1) < nupt)  
+   if ((float)hist->GetBinCenter(bin1) < x)  
 	bin2 = bin1+1;
    else
         bin2 = bin1-1;
-   //find probability of nupt and set it as weight
-   weight = (nupt-bin1center)*(bin1content-hist->GetBinContent(bin2))/(bin1center-hist->GetBinCenter(bin2))+bin1content;
+   //find probability of x and set it as weight
+   weight = (x-bin1center)*(bin1content-hist->GetBinContent(bin2))/(bin1center-hist->GetBinCenter(bin2))+bin1content;
    return weight;
 }
 
