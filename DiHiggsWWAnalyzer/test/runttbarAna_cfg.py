@@ -1,11 +1,11 @@
 import FWCore.ParameterSet.Config as cms
 import random
 import sys
-process = cms.Process("DiHiggsWWAna")
+process = cms.Process("ttbarAna")
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
 
 
 process.source = cms.Source("PoolSource",
@@ -27,10 +27,10 @@ except:
 	print "no input seed"
 
 print "To test array jobs, randint ", random.randint(0,10000000)
-process.DiHiggsWWAna = cms.EDAnalyzer('DiHiggsWWAnalyzer',
+process.ttbarAna = cms.EDAnalyzer('ttbarAnalyzer',
 	verbose = cms.untracked.int32(0),
         finalStates = cms.bool(False),
-        runMMC = cms.bool(True),
+        runMMC = cms.bool(False),
         mmcset = cms.PSet(
 	iterations = cms.untracked.int32(100000),
 	seed = cms.int32(random.randint(0,100000000)),#may be ignored since we use can take ievent alone as seed
@@ -43,12 +43,12 @@ process.DiHiggsWWAna = cms.EDAnalyzer('DiHiggsWWAnalyzer',
 process.dump=cms.EDAnalyzer('EventContentAnalyzer')
 
 process.TFileService = cms.Service("TFileService", 
-      fileName = cms.string("/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_checksolution_0410_newframe_B3.root"),
+      fileName = cms.string("/fdata/hepx/store/user/taohuang/Hhh/ttbar_100k_test_0410_newframe_B3.root"),
       closeFileFast = cms.untracked.bool(True)
       
   )
 
-process.pDiHiggsWWAna = cms.Path(process.DiHiggsWWAna)
+process.pttbarAna = cms.Path(process.ttbarAna)
 process.pdump = cms.Path(process.dump)
-#process.schedule = cms.Schedule(process.pDiHiggsWWAna,process.pdump)
-process.schedule = cms.Schedule(process.pDiHiggsWWAna)
+#process.schedule = cms.Schedule(process.pttbarAna,process.pdump)
+process.schedule = cms.Schedule(process.pttbarAna)

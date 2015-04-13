@@ -767,9 +767,9 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
     	tex.SetNDC()
 	tex.Draw("same")
 	c1.Update()
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0406_testhadd_combined_all_B3.pdf")
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0406_testhadd_combined_all_B3.png")
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0406_testhadd_combined_all_B3.C")
+        c1.SaveAs("%s"%(tree.GetTitle())+"_0410_weight1_newframe_B3.pdf")
+        c1.SaveAs("%s"%(tree.GetTitle())+"_0410_weight1_newframe_B3.png")
+        c1.SaveAs("%s"%(tree.GetTitle())+"_0410_weight1_newframe_B3.C")
         ##########################################
         ##### fill hist_h2
         
@@ -789,7 +789,7 @@ def drawh2Mass_combined(file, cut="weight"):
     sub_list = obj.GetListOfKeys()
     sub_key = sub_list.At(1)
     hist_h2 = ROOT.TH1F("hist_h2"," ",150,200,500)
-    hist_h2true = ROOT.TH1F("hist_h2true"," ",150,250,500)
+    hist_h2true = ROOT.TH1F("hist_h2true"," ",150,200,500)
     m = 1
     while sub_key:
 	tree = sub_key.ReadObj()
@@ -817,9 +817,9 @@ def drawh2Mass_combined(file, cut="weight"):
     hist_h2.Draw()
     hist_h2true.Draw("same")
     legend.Draw("same")
-    h2Mass_c.SaveAs("MMC_h2Mass_combined_iteration1M_0406_B3.pdf") 
-    h2Mass_c.SaveAs("MMC_h2Mass_combined_iteration1M_0406_B3.png") 
-    h2Mass_c.SaveAs("MMC_h2Mass_combined_iteration1M_0406_B3.C") 
+    h2Mass_c.SaveAs("MMC_h2Mass_0410_weight1_newframe_B3.pdf") 
+    h2Mass_c.SaveAs("MMC_h2Mass_0410_weight1_newframe_B3.png") 
+    h2Mass_c.SaveAs("MMC_h2Mass_0410_weight1_newframe_B3.C") 
 
 #___________________________________________________________________________
 def geth2MassMostProba(t, cut = "weight"):
@@ -996,18 +996,21 @@ if __name__ == "__main__":
     treename = "mmctree_4204" 
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-100k-0406-mediateStates-B3-combined.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_iterations1M_0406_B3.root"
-    file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_weightnupt_hist_0403_B3.root"
+    #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_weight1_0408_B3.root"
+    file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_0410_newframe_B3.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_0406_wmass_B3.root"
     dir = "DiHiggsWWAna/%s"%treename
     #dir = "DiHiggsWWAna/"
     
+    cut_weight2 = ["weight2","weight2*(control<2)","weight2*(control>1)"]
     cut_weight1 = ["weight1","weight1*(control<2)","weight1*(control>1)"]
     cut_weight = ["weight","weight*(control<2)","weight*(control>1)"]
     #test(file, dir)
     #monitoringMMC(file,cut_weight)  
-    #monitoringMMC(file,cut_weight1)
+    monitoringMMC(file,cut_weight1)
+    #monitoringMMC(file,cut_weight2)
     #drawh2Mass_combined(file)
-    #drawh2Mass_combined(file,"weight1")
+    #drawh2Mass_combined(file,"weight2")
     title1 = "MMC PDF for M_{H}, Event 4204"
     h2massbins = "(80,260,420)"#for843 only
     
@@ -1034,7 +1037,7 @@ if __name__ == "__main__":
     #draw2D(file,dir,"nu_onshellW_phi:nu_onshellW_eta","eta_nuonshellW_true","phi_nuonshellW_true","#phi Vs #eta of nu_onshell","(50,-6,6)","#eta","(30,-3.14,3.14)","#phi","tex","etaVsphi_nuonshellW_0406_contour")
     #draw2D(file,dir,"nu_offshellW_phi:nu_offshellW_eta","eta_nuoffshellW_true","phi_nuoffshellW_true","#phi Vs #eta of nu_offshell","(50,-6,6)","#eta","(30,-3.14,3.14)","#phi","tex","etaVsphi_nuoffshellW_0406_contour")
     #draw2DAll(file,"nu_onshellW_pt:onshellW_Mass","onshell W#rightarrow #mu#nu ","(50,45,95)","M_{W}^{onshell}", "(125,0,125)","p_{T#nu}^{onshellW}","onshellnuptVsWmass","onshellnuptVsWmass")
-    draw2DAll(file,"nu_onshellW_pt:onshellW_Mass","onshell W#rightarrow #mu#nu ","(50,45,95)","M_{W}^{onshell}", "(125,0,125)","p_{T#nu}^{onshellW}","onshellnuptVsWmass","onshellnuptVsWmass","weight1")
+    #draw2DAll(file,"nu_onshellW_pt:onshellW_Mass","onshell W#rightarrow #mu#nu ","(50,45,95)","M_{W}^{onshell}", "(125,0,125)","p_{T#nu}^{onshellW}","onshellnuptVsWmass","onshellnuptVsWmass","weight1")
     """ 
     offshellWmass = "offshellW_Mass"
     titleW1 = "off-shell W mass from MMC, Event843 "
