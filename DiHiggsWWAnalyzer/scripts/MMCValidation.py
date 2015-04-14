@@ -503,7 +503,7 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
 	array_mu1_eta = array('d',[onshellmuon_eta])
 	array_mu1_phi = array('d',[onshellmuon_phi])
 	graph1_muon = ROOT.TGraph(1, array_mu1_eta,array_mu1_phi)
-        graph1_muon.SetMarkerColor(ROOT.kBlack+10)
+        graph1_muon.SetMarkerColor(ROOT.kBlack)
  	graph1_muon.SetMarkerStyle(16)
 	graph1_muon.SetMarkerSize(1)
 	
@@ -523,12 +523,21 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
 	todrawtrue10 = "eta_nuonshellW_true"
         hs_title10 = "#eta_{#nu}^{onshellW}"
 	hs10 = gethiststack(tree, todraw10, todrawtrue10, eta_bins, hs_title10, cut)
+
+	tex10 = ROOT.TLatex(0.4,0.7,"#eta_{#mu}^{onshell}=%.2f"%onshellmuon_eta)
+        tex10.SetTextSize(0.08)
+        tex10.SetTextFont(42)
+        tex10.SetNDC()
 	
 	#phi of nuonshellW	
         todraw11 = "nu_onshellW_phi"
 	todrawtrue11 = "phi_nuonshellW_true"
         hs_title11 = "#phi_{#nu}^{onshellW}"
 	hs11 = gethiststack(tree, todraw11, todrawtrue11, phi_bins, hs_title11, cut)
+	tex11 = ROOT.TLatex(0.4,0.7,"#phi_{#mu}^{onshell}=%.2f"%onshellmuon_phi)
+        tex11.SetTextSize(0.08)
+        tex11.SetTextFont(42)
+        tex11.SetNDC()
 	
 
         #pt of nu_onshellW, nu_onshellW_pt,
@@ -540,6 +549,11 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
 	hs2 = gethiststack(tree, todraw2, todrawtrue2, nupt_onshell_bins, hs_title2, cut)
 	#hs2.SetName("%s"%tree.GetTitle()+"_%s"%todraw2)
      	#hs2.Draw("nostack")
+        onshellmuon_pt =getTrueValue(tree,"mu_onshellW_pt","(400,0,200)")
+	tex2 = ROOT.TLatex(0.4,0.7,"p_{T#mu}^{onshell}=%.2f"%onshellmuon_pt)
+        tex2.SetTextSize(0.08)
+        tex2.SetTextFont(42)
+        tex2.SetNDC()
         
 
         #mass of onshellW, onshellW_Mass, 
@@ -602,7 +616,7 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
 	array_mu2_eta = array('d',[offshellmuon_eta])
 	array_mu2_phi = array('d',[offshellmuon_phi])
 	graph4_muon = ROOT.TGraph(1, array_mu2_eta,array_mu2_phi)
-        graph4_muon.SetMarkerColor(ROOT.kBlack+10)
+        graph4_muon.SetMarkerColor(ROOT.kBlack)
  	graph4_muon.SetMarkerStyle(16)
 	graph4_muon.SetMarkerSize(1)
 
@@ -616,17 +630,25 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
 #	hist4_2.SetTitleOffset(0.6)
 
 	
-	#eta of nuonshellW	
+	#eta of nuoffshellW	
         todraw12 = "nu_offshellW_eta"
 	todrawtrue12 = "eta_nuoffshellW_true"
         hs_title12 = "#eta_{#nu}^{offshellW}"
 	hs12 = gethiststack(tree, todraw12, todrawtrue12, eta_bins, hs_title12, cut)
+	tex12 = ROOT.TLatex(0.4,0.7,"#eta_{#mu}^{offshell}=%.2f"%offshellmuon_eta)
+        tex12.SetTextSize(0.08)
+        tex12.SetTextFont(42)
+        tex12.SetNDC()
 	
-	#phi of nuonshellW	
+	#phi of nuoffshellW	
         todraw13 = "nu_offshellW_phi"
 	todrawtrue13 = "phi_nuoffshellW_true"
         hs_title13 = "#phi_{#nu}^{offshellW}"
 	hs13 = gethiststack(tree, todraw13, todrawtrue13, phi_bins, hs_title13, cut)
+	tex13 = ROOT.TLatex(0.4,0.7,"#phi_{#mu}^{offshell}=%.2f"%offshellmuon_phi)
+        tex13.SetTextSize(0.08)
+        tex13.SetTextFont(42)
+        tex13.SetNDC()
         	
 
         #pt of nu_offshellW
@@ -638,6 +660,12 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
 	hs5 = gethiststack(tree, todraw5, todrawtrue5, nupt_offshell_bins, hs_title5, cut)
 	#hs5.SetName("%s"%tree.GetTitle()+"_%s"%todraw5)
      	#hs5.Draw("nostack")
+        offshellmuon_pt =getTrueValue(tree,"mu_offshellW_pt","(400,0,200)")
+	tex5 = ROOT.TLatex(0.4,0.7,"p_{T#mu}^{offshell}=%.2f"%offshellmuon_pt)
+        tex5.SetTextSize(0.08)
+        tex5.SetTextFont(42)
+        tex5.SetNDC()
+        
 
 
 	#mass of offshellW
@@ -688,49 +716,55 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
 	hist1_2.Draw("CONT3")
 	hist1_3.Draw("CONT3same")
 	graph1.Draw("psame")
-	#graph1_muon.Draw("psame")
+	graph1_muon.Draw("psame")
 
 	c1.cd(2)
      	hs10.Draw("nostack")
         hs10.GetHistogram().GetXaxis().SetTitle("%s"%hs_title10)
         hs10.GetHistogram().GetXaxis().SetTitleOffset(0.6)
         hs10.GetHistogram().GetXaxis().SetTitleSize(0.08)
+        tex10.Draw("same")
 
 	c1.cd(3)
      	hs11.Draw("nostack")
         hs11.GetHistogram().GetXaxis().SetTitle("%s"%hs_title11)
         hs11.GetHistogram().GetXaxis().SetTitleOffset(0.6)
         hs11.GetHistogram().GetXaxis().SetTitleSize(0.08)
-        
+        tex11.Draw("same")
+
 	c1.cd(4)
 	hs2.Draw("nostack")
         hs2.GetHistogram().GetXaxis().SetTitle("%s"%hs_title2)
         hs2.GetHistogram().GetXaxis().SetTitleOffset(0.6)
         hs2.GetHistogram().GetXaxis().SetTitleSize(0.08)
+        tex2.Draw("same")
 
 	c1.cd(5)
 	hist4_2.Draw("CONT3")
 	hist4_3.Draw("CONT3same")
 	graph4.Draw("psame")
-	#graph4_muon.Draw("psame")
+	graph4_muon.Draw("psame")
 
 	c1.cd(6)
      	hs12.Draw("nostack")
         hs12.GetHistogram().GetXaxis().SetTitle("%s"%hs_title12)
         hs12.GetHistogram().GetXaxis().SetTitleOffset(0.6)
         hs12.GetHistogram().GetXaxis().SetTitleSize(0.08)
+	tex12.Draw("same")
 
 	c1.cd(7)
      	hs13.Draw("nostack")
         hs13.GetHistogram().GetXaxis().SetTitle("%s"%hs_title13)
         hs13.GetHistogram().GetXaxis().SetTitleOffset(0.6)
         hs13.GetHistogram().GetXaxis().SetTitleSize(0.08)
+	tex13.Draw("same")
 
 	c1.cd(8)
      	hs5.Draw("nostack")
         hs5.GetHistogram().GetXaxis().SetTitle("%s"%hs_title5)
         hs5.GetHistogram().GetXaxis().SetTitleOffset(0.6)
         hs5.GetHistogram().GetXaxis().SetTitleSize(0.08)
+	tex5.Draw("same")
 
 	c1.cd(9)
      	hs3.Draw("nostack")
@@ -767,14 +801,14 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
     	tex.SetNDC()
 	tex.Draw("same")
 	c1.Update()
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0410_weight1_newframe_B3.pdf")
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0410_weight1_newframe_B3.png")
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0410_weight1_newframe_B3.C")
+        c1.SaveAs("%s"%(tree.GetTitle())+"_0410_weight_newframe_B3.pdf")
+        c1.SaveAs("%s"%(tree.GetTitle())+"_0410_weight_newframe_B3.png")
+        c1.SaveAs("%s"%(tree.GetTitle())+"_0410_weight_newframe_B3.C")
         ##########################################
         ##### fill hist_h2
         
-	if m>10:
-		break
+	#if m>1:
+	#	break
 	m = m+1
         sub_key = sub_list.At(m)
 
@@ -817,9 +851,9 @@ def drawh2Mass_combined(file, cut="weight"):
     hist_h2.Draw()
     hist_h2true.Draw("same")
     legend.Draw("same")
-    h2Mass_c.SaveAs("MMC_h2Mass_0410_weight1_newframe_B3.pdf") 
-    h2Mass_c.SaveAs("MMC_h2Mass_0410_weight1_newframe_B3.png") 
-    h2Mass_c.SaveAs("MMC_h2Mass_0410_weight1_newframe_B3.C") 
+    h2Mass_c.SaveAs("MMC_h2Mass_0410_weight_newframe_B3.pdf") 
+    h2Mass_c.SaveAs("MMC_h2Mass_0410_weight_newframe_B3.png") 
+    h2Mass_c.SaveAs("MMC_h2Mass_0410_weight_newframe_B3.C") 
 
 #___________________________________________________________________________
 def geth2MassMostProba(t, cut = "weight"):
@@ -976,6 +1010,9 @@ def gethiststack(tree, todraw, todrawtrue, x_bins, hs_title, cut=["weight","weig
 	hist4.SetBinContent(bin_max, max/4.0)
 #	hist4.SetBinContent(bin_max-1, max/4.0)
 	#hist4.SetBinContent(bin_max+1, max/4.0)
+        #add muon information
+    #    mutodraw = todraw.replace("nu","mu",1)
+     #   print "todraw ",todraw, " mutodraw ",mutodraw
 	hs.Add(hist1)
 	hs.Add(hist2)
 	hs.Add(hist3)
@@ -996,7 +1033,7 @@ if __name__ == "__main__":
     treename = "mmctree_4204" 
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-100k-0406-mediateStates-B3-combined.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_iterations1M_0406_B3.root"
-    #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_weight1_0408_B3.root"
+    #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_weight_0408_B3.root"
     file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_0410_newframe_B3.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_0406_wmass_B3.root"
     dir = "DiHiggsWWAna/%s"%treename
@@ -1006,8 +1043,8 @@ if __name__ == "__main__":
     cut_weight1 = ["weight1","weight1*(control<2)","weight1*(control>1)"]
     cut_weight = ["weight","weight*(control<2)","weight*(control>1)"]
     #test(file, dir)
-    #monitoringMMC(file,cut_weight)  
-    monitoringMMC(file,cut_weight1)
+    monitoringMMC(file,cut_weight)  
+    #monitoringMMC(file,cut_weight1)
     #monitoringMMC(file,cut_weight2)
     #drawh2Mass_combined(file)
     #drawh2Mass_combined(file,"weight2")

@@ -27,7 +27,8 @@ try:
 except:
 	print "no input seed"
 
-print "To test array jobs, randint ", random.randint(0,10000000)
+#print "To test array jobs, randint ", random.randint(0,10000000)
+refrootfile = os.getenv( "CMSSW_BASE" ) +"/src/DiHiggsWW/DiHiggsWWAnalyzer/plugins/MMCRefPDF.ROOT"
 process.ttbarAna = cms.EDAnalyzer('ttbarAnalyzer',
 	verbose = cms.untracked.int32(0),
         finalStates = cms.bool(False),
@@ -38,7 +39,7 @@ process.ttbarAna = cms.EDAnalyzer('ttbarAnalyzer',
         weightfromonshellnupt_func = cms.bool(False),
         weightfromonshellnupt_hist = cms.bool(True),
         weightfromoffshellWmass_hist = cms.bool(True),
-	RefPDFfile = cms.string("/uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/plugins/MMCRefPDF.ROOT")
+	RefPDFfile = cms.string("%s"%refrootfile)
         )
 )
 process.dump=cms.EDAnalyzer('EventContentAnalyzer')
