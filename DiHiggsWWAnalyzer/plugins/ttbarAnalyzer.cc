@@ -39,7 +39,9 @@
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
-
+#include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
 //headers from root lib
 #include "TTree.h"
 #include "TFile.h"
@@ -103,14 +105,15 @@ class ttbarAnalyzer : public edm::EDAnalyzer {
       void assignMuLorentzVec(int control);  
         */  
    private:
-      edm::ParameterSet cfg_;
+      //edm::ParameterSet cfg_;
       edm::ParameterSet mmcset_;
       // debuglevel constrol 
       int verbose_; 
       void print();
-      void printHtoWWChain();
+     // void printHtoWWChain();
       void printCandidate(const reco::Candidate* );
       void printallDecendants(const reco::Candidate* );
+      void printallAncestors(const reco::Candidate* );
       //virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
       //virtual void endRun(edm::Run const&, edm::EventSetup const&) override;
       //virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
@@ -596,8 +599,13 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
    std::cout << "event  " << iEvent.id().event() << std::endl;
    ievent = iEvent.id().event();
    Handle<reco::GenParticleCollection> genParticleColl;
-   iEvent.getByLabel("genParticles", genParticleColl);
-    
+   iEvent.getByLabel("prunedGenParticles", genParticleColl);
+   Handle<std::vector<pat::Muon>> muonColl;
+   iEvent.getByLabel("slimmedMuons",muonColl); 
+   Handle<std::vector<pat::Jet>> jetColl;
+   iEvent.getByLabel("slimmedJets",jetColl); 
+   Handle<std::vector<pat::MET>> metColl;
+   iEvent.getByLabel("slimmedMETs",metColl); 
       mu_positive = false;
       mu_negative = false;
       nu_positive = false;
@@ -610,13 +618,30 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       ttoWb = false;
       
       
+   for (std::vector<pat::Muon>::const_iterator it = muonColl->begin(); it != muonColl->end(); ++it){
+   
+       std::cout <<"muon id " << it->pdgId() <<" status " << it->status() <<" px " << it->px() << " py " << it->py() <<std::endl;
+   
+   }
+
+   for (std::vector<pat::Jet>::const_iterator jet = jetColl->begin(); jet != jetColl->end(); ++jet){
+   
+       std::cout <<"jet mass " << jet->mass() <<" status " << jet->status() <<" px " << jet->px() << " py " << jet->py() <<std::endl;
+   
+   }
+
+   for (std::vector<pat::MET>::const_iterator met = metColl->begin(); met != metColl->end(); ++met){
+   
+       std::cout <<"met mass " << met->mass() <<" status " << met->status() <<" px " << met->px() << " py " << met->py() <<std::endl;
+   
+   }
 
    for (reco::GenParticleCollection::const_iterator it = genParticleColl->begin(); it != genParticleColl->end(); ++it) {
 
 //particle id, (muon13),(b5),(W+24),(SM higgs25)
    // particle id  it->pdgId()
    //
-//      std::cout << "Gen paticles: id " << it->pdgId() << std::endl; 
+   //      std::cout << "Gen paticles: id " << it->pdgId() << std::endl; 
       if (it->pdgId() == 13 && it->status() == 1 && !mu_negative)
       {
 	  //mu_negative = true;
@@ -639,17 +664,6 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                  // std::cout << "mother of this higgs, id " << tmp_mu1->mother()->pdgId() << " energy " << tmp_mu1->mother()->energy() << std::endl;
               }
       }
-    /* else if (abs(it->pdgId()) == 13) //for test
-      {
-          std::cout << "find a muon, id " << it->pdgId() << " energy "<< it->energy() << " status "  << it->status() << std::endl;
-          const reco::Candidate* tmp=it->mother(); 
-          while (abs(tmp->pdgId()) == 13) tmp = tmp->mother();
-          std::cout << "above muon, id " << tmp->pdgId() << " energy " << tmp->energy()  << " status " << tmp->status() << std::endl;
-          
-          while (abs(tmp->pdgId()) == 24) tmp = tmp->mother();
-          std::cout << "above W, id " << tmp->pdgId() << " energy " << tmp->energy() <<" status " << tmp->status() << std::endl;
-         
-       }*/
       else if (it->pdgId() == -13 && it->status() == 1 && !mu_positive)
       {
          // std::cout << "find muon(+) with status 1" << std::endl;
@@ -798,34 +812,37 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         //std::cout <<"old nu2 "; printCandidate(findnudaughter(mu2_W2_cand));	
         std::cout <<" w1 " ; printCandidate(w1cand);
         std::cout <<" w2 " ; printCandidate(w2cand);
-        std::cout <<" b1 " ; printCandidate(b1cand);
-        std::cout <<" b2 " ; printCandidate(b2cand);
+        std::cout <<" b1(b) " ; printCandidate(b1cand);
+        std::cout <<" b2(bbar) " ; printCandidate(b2cand);
+        std::cout <<" t->Wb " ; printCandidate(tcand);
+        std::cout <<" tbar->Wbbar " ; printCandidate(tbarcand);
         //std::cout <<"another b1 " ; printCandidate(alldecendant(tbarcand, 5, false));
         //std::cout <<"another b2 " ; printCandidate(alldecendant(tbarcand, -5, false));
         //std::cout <<" b jet"; bjetsLorentz(b1cand).Print(); 
         //std::cout <<" b jet"; bjetsLorentz(alldecendant(tbarcand, 5, false)).Print(); 
-        //std::cout <<" bbar jet"; bjetsLorentz(b2cand).Print(); 
-        //std::cout <<" bbar jet"; bjetsLorentz(alldecendant(tbarcand, -5, false)).Print(); 
+        std::cout <<" b jet"; stableDecendantsLorentz(b1cand).Print(); 
+        std::cout <<" bbar jet"; stableDecendantsLorentz(b2cand).Print(); 
         //std::cout <<" t " ; printCandidate(tcand);
-        //std::cout <<" tbar and its decendants" <<std::endl; printCandidate(tbarcand);
+        //std::cout <<" tbar and its ancestors" <<std::endl; printallAncestors(tbarcand);
+        //std::cout <<" t and its ancestors" <<std::endl; printallAncestors(tcand);
+        //std::cout <<" tbar and its decendants" <<std::endl; printallDecendants(tbarcand);
+        //std::cout <<" t and its decendants" <<std::endl; printallDecendants(tcand);
+	const reco::Candidate* t_tmp = tcand->mother();
+	while (t_tmp->pdgId() == 6) t_tmp = t_tmp->mother();
+	const reco::Candidate* tbar_tmp = tbarcand->mother();
+	while (tbar_tmp->pdgId() == -6) tbar_tmp = tbar_tmp->mother();
+        std::cout <<" tbar_tmp and its decendants" <<std::endl; printallDecendants(tbar_tmp);
+        std::cout <<" t_tmp and its decendants" <<std::endl; printallDecendants(t_tmp);
+        
         *jets_lorentz = stableDecendantsLorentz(b1cand) + stableDecendantsLorentz(b2cand);
         met_lorentz = calculateMET();
        
         fillbranches();
         evtree->Fill();
         //debug
-         /* float h_energy = mu1_energy+mu2_energy+nu1_energy+nu2_energy;
-          float h_px = mu1_px+mu2_px+nu1_px+nu2_px;
-          float h_py = mu1_py+mu2_py+nu1_py+nu2_py;
-          float h_pz = mu1_pz+mu2_pz+nu1_pz+nu2_pz;
-          TLorentzVector final_p4(h_px, h_py, h_pz, h_energy);
-        if (fabs(final_p4.M()-tcand->mass())>0.15) {
-		printHtoWWChain(); 
-		printallDecendants(tcand);
-        }*/
-   }
+     }
+	//
 
-    
    //if (h2tohh && runMMC_) runMMC();
    if (ttoWb and tbartoWbbar and  runMMC_){
    	mu1_lorentz.SetPtEtaPhiM(mu1cand->pt(), mu1cand->eta(), mu1cand->phi(), 0);
@@ -1411,7 +1428,7 @@ ttbarAnalyzer::printCandidate(const reco::Candidate* cand){
 void 
 ttbarAnalyzer::printallDecendants(const reco::Candidate* cand){
    
-   if (cand->status() != 0 && cand->numberOfDaughters() > 0){
+   if (cand->status() != 1 && cand->numberOfDaughters() > 0){
         std::cout << "******************  children of id "<< cand->pdgId() <<"      *********************" << std::endl;
    	for (unsigned int i=0; i < cand->numberOfDaughters(); i++)
         	printCandidate(cand->daughter(i));
@@ -1421,6 +1438,22 @@ ttbarAnalyzer::printallDecendants(const reco::Candidate* cand){
 
     }
 }
+
+//--------- method called to print all mothers for cand -------------------
+void 
+ttbarAnalyzer::printallAncestors(const reco::Candidate* cand){
+  //status for beam particles?? 
+   if (cand->status() != 0 && cand->numberOfMothers() > 0){
+        std::cout << "******************  mothers of id "<< cand->pdgId() <<"      *********************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfMothers(); i++)
+        	printCandidate(cand->mother(i));
+        std::cout << "***********************************************************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfMothers(); i++)
+		printallAncestors(cand->mother(i));
+
+    }
+}
+
 
 
 /*

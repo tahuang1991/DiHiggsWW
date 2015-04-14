@@ -110,6 +110,7 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       void printHtoWWChain();
       void printCandidate(const reco::Candidate* );
       void printallDecendants(const reco::Candidate* );
+      void printallAncestors(const reco::Candidate* );
       //virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
       //virtual void endRun(edm::Run const&, edm::EventSetup const&) override;
       //virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
@@ -1490,6 +1491,21 @@ DiHiggsWWAnalyzer::printallDecendants(const reco::Candidate* cand){
     }
 }
 
+
+//--------- method called to print all Ancestors for cand -------------------
+void 
+DiHiggsWWAnalyzer::printallAncestors(const reco::Candidate* cand){
+   
+   if (cand->status() != 0 && cand->numberOfMothers() > 0){
+        std::cout << "******************  mothers of id "<< cand->pdgId() <<"      *********************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfMothers(); i++)
+        	printCandidate(cand->mother(i));
+        std::cout << "***********************************************************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfMothers(); i++)
+		printallAncestors(cand->mother(i));
+
+    }
+}
 
 /*
 //================================================================================================================
