@@ -1,0 +1,4 @@
+-jobtype=cmssw
+-use_server=0
+-cfg=crab_2023Muon_gen_sim_testscript.cfg
+-scheduler=condor

@@ -1,0 +1,280 @@
+2015-04-09 22:13:36,186 [DEBUG] 	/cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -create -cfg crab_addGen_test1.cfg
+
+2015-04-09 22:13:36,186 [INFO] 	Version 2.11.1_patch1 running on Thu Apr  9 22:13:36 2015 CST (03:13:36 UTC)
+
+crab. Working options:
+	scheduler           condor
+	job type            CMSSW
+	server              OFF
+	working directory   /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1/
+
+2015-04-09 22:13:36,186 [DEBUG] 	Downloading file [http://cmsdoc.cern.ch/cms/LCG/crab/config/] to [/uscms/home/tahuang/.cms_crab/allowed_releases.conf].
+2015-04-09 22:13:36,320 [DEBUG] 	Input whitelist: 
+2015-04-09 22:13:36,320 [DEBUG] 	Input blacklist: 
+2015-04-09 22:13:36,320 [DEBUG] 	Converted whitelist: 
+2015-04-09 22:13:36,320 [DEBUG] 	Converted blacklist: 
+2015-04-09 22:13:40,537 [INFO] 	Your domain name is fnal.gov: only local dataset will be considered
+2015-04-09 22:13:42,383 [DEBUG] 	Linux cmslpc39.fnal.gov 2.6.32-504.8.1.el6.x86_64 #1 SMP Tue Jan 27 13:39:10 CST 2015 x86_64 x86_64 x86_64 GNU/Linux
+ 
+Used properties:
+Linux cmslpc39.fnal.gov 2.6.32-504.8.1.el6.x86_64 #1 SMP Tue Jan 27 13:39:10 CST 2015 x86_64 x86_64 x86_64 GNU/Linux
+ 
+Used properties:
+   CMSSW.datasetpath : none
+   CMSSW.dbs_url : phys03
+   CMSSW.number_of_jobs : 10
+   CMSSW.output_file : HH-bbWW-Gen-100_0407_testcrab.root
+   CMSSW.pset : addGenParticles_.py
+   CMSSW.total_number_of_events : 100
+   CRAB.cfg : crab_addGen_test1.cfg
+   CRAB.create : 
+   CRAB.jobtype : cmssw
+   CRAB.scheduler : condor
+   CRAB.use_server : 0
+   GRID.proxy_server : fg-myproxy.fnal.gov
+   GRID.rb : CERN
+   GRID.retry_count : 0
+   GRID.se_white_list : T1_US_FNAL,T3_US_FNALXEN
+   GRID.virtual_organization : cms
+   USER.additional_input_file : HH-bbWW-100_0407.root
+   USER.check_user_remote_dir : 0
+   USER.copy_data : 1
+   USER.dbs_url_for_publication : https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_01_writer/servlet/DBSServlet
+   USER.publish_data : 0
+   USER.publish_data_name : addGenParticle_testcrab1
+   USER.return_data : 0
+   USER.srm_version : srmv2
+   USER.storage_element : cmseos.fnal.gov
+   USER.storage_path : /srm/v2/server?SFN=/eos/uscms/
+   USER.ui_working_dir : addGenParticle_testcrab1
+   USER.user_remote_dir : /store/user/tahuang/DiHiggs/
+End of used properties.
+
+2015-04-09 22:13:42,384 [DEBUG] 	Downloading file [http://cmsdoc.cern.ch/cms/LCG/crab/config/] to [/uscms/home/tahuang/.cms_crab/site_black_list.conf].
+2015-04-09 22:13:42,386 [DEBUG] 	Enforced black list: TAPE,srm-cms.cern.ch,cmssrm.fnal.gov,T1_RU,T1_TW,cmseos.fnal.gov,cmsdca2.fnal.gov,T2_PK_NCP,T3_US_Vanderbilt_EC2 
+2015-04-09 22:13:42,386 [INFO] 	PSN black list: TAPE,srm-cms.cern.ch,cmssrm.fnal.gov,T1_RU,T1_TW,cmseos.fnal.gov,cmsdca2.fnal.gov,T2_PK_NCP,T3_US_Vanderbilt_EC2
+2015-04-09 22:13:42,512 [DEBUG] 	CMSSW::__init__
+2015-04-09 22:13:42,512 [DEBUG] 	Scram::Scram() version is 2
+2015-04-09 22:13:42,513 [DEBUG] 	Scram::Scram() arch is slc6_amd64_gcc481
+2015-04-09 22:13:42,513 [DEBUG] 	Downloading file [https://cmssdt.cern.ch/SDT/cgi-bin] to [/uscms/home/tahuang/.cms_crab/ReleasesXML?anytype=1].
+2015-04-09 22:13:43,872 [DEBUG] 	Job splitting method: NoInput
+2015-04-09 22:13:43,873 [DEBUG] 	Splitting per events
+2015-04-09 22:13:43,873 [INFO] 	Required 10 jobs in total 
+2015-04-09 22:13:43,873 [INFO] 	Required 100 events in total 
+2015-04-09 22:13:43,873 [DEBUG] 	N jobs  10
+2015-04-09 22:13:43,874 [DEBUG] 	Check  0
+2015-04-09 22:13:43,874 [INFO] 	10 jobs can be created, each for 10 for a total of 100 events
+2015-04-09 22:13:43,916 [DEBUG] 	PsetManipulator::__init__: PSet file = addGenParticles_.py
+2015-04-09 22:13:44,144 [DEBUG] 	lib /uscms_data/d3/tahuang/CMSSW_7_2_0/lib to be tarred
+2015-04-09 22:13:44,182 [DEBUG] 	data DiHiggsWW/DiHiggsWWAnalyzer/data to be tarred
+2015-04-09 22:13:44,419 [DEBUG] 	Creator: JobType CMSSW created
+2015-04-09 22:13:44,419 [DEBUG] 	Creator: total # of jobs = 10
+2015-04-09 22:13:44,419 [DEBUG] 	Creator constructor finished
+2015-04-09 22:13:44,595 [DEBUG] 	Creator::run() called
+2015-04-09 22:13:44,596 [DEBUG] 	Scram::Scram() version is 2
+2015-04-09 22:13:44,596 [DEBUG] 	Scram::Scram() arch is slc6_amd64_gcc481
+2015-04-09 22:13:44,888 [INFO] 	output files will be staged at cmseos.fnal.gov
+       with LFN's starting with = /store/user/tahuang/DiHiggs/
+2015-04-09 22:13:44,951 [INFO] 	Creating 10 jobs, please wait...
+2015-04-09 22:13:44,952 [DEBUG] 	Creation Time: 0.356106996536
+2015-04-09 22:13:44,952 [INFO] 	Total of 10 jobs created.
+
+2015-04-09 22:17:44,615 [DEBUG] 	/cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -status -c addGenParticle_testcrab1/
+
+2015-04-09 22:17:44,616 [INFO] 	Version 2.11.1_patch1 running on Thu Apr  9 22:17:44 2015 CST (03:17:44 UTC)
+
+crab. Working options:
+	scheduler           condor
+	job type            CMSSW
+	server              OFF
+	working directory   /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1/
+
+2015-04-09 22:17:44,616 [DEBUG] 	Downloading file [http://cmsdoc.cern.ch/cms/LCG/crab/config/] to [/uscms/home/tahuang/.cms_crab/allowed_releases.conf].
+2015-04-09 22:17:44,617 [DEBUG] 	/uscms/home/tahuang/.cms_crab/0_GET_allowed_releases.conf expired, refreshing cache
+2015-04-09 22:17:44,617 [DEBUG] 	getData: 
+	url: /cms/LCG/crab/config/allowed_releases.conf
+	data: {}
+2015-04-09 22:17:45,188 [DEBUG] 	Input whitelist: 
+2015-04-09 22:17:45,188 [DEBUG] 	Input blacklist: 
+2015-04-09 22:17:45,188 [DEBUG] 	Converted whitelist: 
+2015-04-09 22:17:45,188 [DEBUG] 	Converted blacklist: 
+2015-04-09 22:17:48,725 [INFO] 	Your domain name is fnal.gov: only local dataset will be considered
+2015-04-09 22:17:50,121 [DEBUG] 	Downloading file [http://cmsdoc.cern.ch/cms/LCG/crab/config/] to [/uscms/home/tahuang/.cms_crab/site_black_list.conf].
+2015-04-09 22:17:50,121 [DEBUG] 	/uscms/home/tahuang/.cms_crab/0_GET_site_black_list.conf expired, refreshing cache
+2015-04-09 22:17:50,121 [DEBUG] 	getData: 
+	url: /cms/LCG/crab/config/site_black_list.conf
+	data: {}
+2015-04-09 22:17:50,363 [DEBUG] 	Enforced black list: TAPE,srm-cms.cern.ch,cmssrm.fnal.gov,T1_RU,T1_TW,cmseos.fnal.gov,cmsdca2.fnal.gov,T2_PK_NCP,T3_US_Vanderbilt_EC2 
+2015-04-09 22:17:50,363 [INFO] 	PSN black list: TAPE,srm-cms.cern.ch,cmssrm.fnal.gov,T1_RU,T1_TW,cmseos.fnal.gov,cmsdca2.fnal.gov,T2_PK_NCP,T3_US_Vanderbilt_EC2
+2015-04-09 22:17:50,367 [DEBUG] 	Status::run() called
+2015-04-09 22:17:50,368 [INFO] 	Checking the status of all jobs: please wait
+2015-04-09 22:17:50,410 [INFO] 	
+ID    END STATUS            ACTION       ExeExitCode JobExitCode E_HOST
+----- --- ----------------- ------------  ---------- ----------- ---------
+1     N   Created           Created                              
+2     N   Created           Created                              
+3     N   Created           Created                              
+4     N   Created           Created                              
+5     N   Created           Created                              
+6     N   Created           Created                              
+7     N   Created           Created                              
+8     N   Created           Created                              
+9     N   Created           Created                              
+10    N   Created           Created                              
+
+2015-04-09 22:17:50,466 [INFO] 	 10 Total Jobs 
+ >>>>>>>>> 10 Jobs Created 
+
+2015-04-09 22:17:50,472 [INFO] 	You can also follow the status of this task on :
+	CMS Dashboard: http://dashb-cms-job-task.cern.ch/taskmon.html#task=tahuang_addGenParticle_testcrab1_9tp27w
+	Your task name is: tahuang_addGenParticle_testcrab1_9tp27w 
+
+2015-04-09 22:17:50,472 [DEBUG] 	Status Time: 0.104857206345
+2015-04-09 22:18:03,451 [DEBUG] 	/cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -submit -c addGenParticle_testcrab1/
+
+2015-04-09 22:18:03,451 [INFO] 	Version 2.11.1_patch1 running on Thu Apr  9 22:18:03 2015 CST (03:18:03 UTC)
+
+crab. Working options:
+	scheduler           condor
+	job type            CMSSW
+	server              OFF
+	working directory   /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1/
+
+2015-04-09 22:18:03,451 [DEBUG] 	Downloading file [http://cmsdoc.cern.ch/cms/LCG/crab/config/] to [/uscms/home/tahuang/.cms_crab/allowed_releases.conf].
+2015-04-09 22:18:03,518 [DEBUG] 	Input whitelist: 
+2015-04-09 22:18:03,518 [DEBUG] 	Input blacklist: 
+2015-04-09 22:18:03,518 [DEBUG] 	Converted whitelist: 
+2015-04-09 22:18:03,518 [DEBUG] 	Converted blacklist: 
+2015-04-09 22:18:06,835 [INFO] 	Your domain name is fnal.gov: only local dataset will be considered
+2015-04-09 22:18:08,248 [DEBUG] 	Downloading file [http://cmsdoc.cern.ch/cms/LCG/crab/config/] to [/uscms/home/tahuang/.cms_crab/site_black_list.conf].
+2015-04-09 22:18:08,250 [DEBUG] 	Enforced black list: TAPE,srm-cms.cern.ch,cmssrm.fnal.gov,T1_RU,T1_TW,cmseos.fnal.gov,cmsdca2.fnal.gov,T2_PK_NCP,T3_US_Vanderbilt_EC2 
+2015-04-09 22:18:08,250 [INFO] 	PSN black list: TAPE,srm-cms.cern.ch,cmssrm.fnal.gov,T1_RU,T1_TW,cmseos.fnal.gov,cmsdca2.fnal.gov,T2_PK_NCP,T3_US_Vanderbilt_EC2
+2015-04-09 22:18:08,263 [DEBUG] 	parseRange_ None
+2015-04-09 22:18:08,278 [DEBUG] 	Scram::Scram() version is 2
+2015-04-09 22:18:08,278 [DEBUG] 	Scram::Scram() arch is slc6_amd64_gcc481
+2015-04-09 22:18:08,287 [DEBUG] 	Submitter::run() called
+2015-04-09 22:18:08,296 [DEBUG] 	nsjobs -1
+2015-04-09 22:18:08,296 [DEBUG] 	Total jobs 10
+2015-04-09 22:18:08,306 [DEBUG] 	nj_list [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+2015-04-09 22:18:08,376 [DEBUG] 	GRIDNAME: /CN=tao huang 
+2015-04-09 22:18:08,913 [DEBUG] 	Submission DashBoard Pre-Submission report: {'ApplicationVersion': 'CMSSW_7_2_0', 'taskId': 'tahuang_addGenParticle_testcrab1_9tp27w', 'resubmitter': 'user', 'tool': 'crab2', 'vo': 'cms', 'tool_ui': 'cmslpc39.fnal.gov', 'JSToolVersion': '2.11.1_patch1', 'user': 'tahuang', 'scheduler': 'condor', 'taskType': 'analysis', 'CMSUser': 'tahuang', 'jobId': 'TaskMeta', 'datasetFull': None, 'exe': 'cmsRun', 'GridName': '/CN=tao huang', 'SubmissionType': 'direct'}
+2015-04-09 22:18:08,913 [INFO] 	Checking available resources...
+2015-04-09 22:18:08,929 [INFO] 	Found  compatible site(s) for job 1
+2015-04-09 22:18:08,930 [INFO] 	1 blocks of jobs will be submitted
+2015-04-09 22:18:08,930 [DEBUG] 	Delegating proxy 
+2015-04-09 22:18:08,930 [DEBUG] 	Submitting jobs [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+2015-04-09 22:18:08,975 [INFO] 	SB requirements = 
+transfer_input_files = /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1/share/default.tgz,/uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1/share/arguments.xml,/uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1/job/CMSSW.sh
+
+2015-04-09 22:18:08,977 [INFO] 	no submissionDay in input JDL, use today= 150409
+2015-04-09 22:18:09,216 [DEBUG] 	Result of cd /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//share/.condor_temp; condor_submit /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//share/.condor_temp/tahuang_addGenParticle_testcrab1_9tp27w_job10.jdl
+0
+Submitting job(s)..........
+10 job(s) submitted to cluster 5719.
+2015-04-09 22:18:09,217 [DEBUG] 	Returning {u'tahuang_addGenParticle_testcrab1_9tp27w_job6': 'cmslpc39.fnal.gov//150409//5719.5', u'tahuang_addGenParticle_testcrab1_9tp27w_job7': 'cmslpc39.fnal.gov//150409//5719.6', u'tahuang_addGenParticle_testcrab1_9tp27w_job4': 'cmslpc39.fnal.gov//150409//5719.3', u'tahuang_addGenParticle_testcrab1_9tp27w_job5': 'cmslpc39.fnal.gov//150409//5719.4', u'tahuang_addGenParticle_testcrab1_9tp27w_job2': 'cmslpc39.fnal.gov//150409//5719.1', u'tahuang_addGenParticle_testcrab1_9tp27w_job3': 'cmslpc39.fnal.gov//150409//5719.2', u'tahuang_addGenParticle_testcrab1_9tp27w_job1': 'cmslpc39.fnal.gov//150409//5719.0', u'tahuang_addGenParticle_testcrab1_9tp27w_job8': 'cmslpc39.fnal.gov//150409//5719.7', u'tahuang_addGenParticle_testcrab1_9tp27w_job9': 'cmslpc39.fnal.gov//150409//5719.8', u'tahuang_addGenParticle_testcrab1_9tp27w_job10': 'cmslpc39.fnal.gov//150409//5719.9'}
+tahuang_addGenParticle_testcrab1_9tp27w
+cmslpc39.fnal.gov
+2015-04-09 22:18:09,229 [DEBUG] 	WMS : cmslpc39.fnal.gov
+Collection ID : tahuang_addGenParticle_testcrab1_9tp27w
+2015-04-09 22:18:09,240 [DEBUG] 	Submitted job # 1
+2015-04-09 22:18:09,240 [DEBUG] 	Submitted job # 2
+2015-04-09 22:18:09,241 [DEBUG] 	Submitted job # 3
+2015-04-09 22:18:09,241 [DEBUG] 	Submitted job # 4
+2015-04-09 22:18:09,241 [DEBUG] 	Submitted job # 5
+2015-04-09 22:18:09,241 [DEBUG] 	Submitted job # 6
+2015-04-09 22:18:09,241 [DEBUG] 	Submitted job # 7
+2015-04-09 22:18:09,241 [DEBUG] 	Submitted job # 8
+2015-04-09 22:18:09,241 [DEBUG] 	Submitted job # 9
+2015-04-09 22:18:09,241 [DEBUG] 	Submitted job # 10
+2015-04-09 22:18:09,261 [DEBUG] 	Updating [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]] state SubSuccess
+2015-04-09 22:18:09,300 [DEBUG] 	GRIDNAME: /CN=tao huang 
+2015-04-09 22:18:09,915 [DEBUG] 	Submission Time: 1.62725305557
+2015-04-09 22:18:09,915 [INFO] 	Total of 10 jobs submitted.
+2015-04-09 22:24:06,252 [DEBUG] 	/cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -status -c addGenParticle_testcrab1/
+
+2015-04-09 22:24:06,253 [INFO] 	Version 2.11.1_patch1 running on Thu Apr  9 22:24:06 2015 CST (03:24:06 UTC)
+
+crab. Working options:
+	scheduler           condor
+	job type            CMSSW
+	server              OFF
+	working directory   /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1/
+
+2015-04-09 22:24:06,256 [DEBUG] 	Downloading file [http://cmsdoc.cern.ch/cms/LCG/crab/config/] to [/uscms/home/tahuang/.cms_crab/allowed_releases.conf].
+2015-04-09 22:24:06,382 [DEBUG] 	Input whitelist: 
+2015-04-09 22:24:06,382 [DEBUG] 	Input blacklist: 
+2015-04-09 22:24:06,382 [DEBUG] 	Converted whitelist: 
+2015-04-09 22:24:06,382 [DEBUG] 	Converted blacklist: 
+2015-04-09 22:24:09,979 [INFO] 	Your domain name is fnal.gov: only local dataset will be considered
+2015-04-09 22:24:11,168 [DEBUG] 	Downloading file [http://cmsdoc.cern.ch/cms/LCG/crab/config/] to [/uscms/home/tahuang/.cms_crab/site_black_list.conf].
+2015-04-09 22:24:11,170 [DEBUG] 	Enforced black list: TAPE,srm-cms.cern.ch,cmssrm.fnal.gov,T1_RU,T1_TW,cmseos.fnal.gov,cmsdca2.fnal.gov,T2_PK_NCP,T3_US_Vanderbilt_EC2 
+2015-04-09 22:24:11,170 [INFO] 	PSN black list: TAPE,srm-cms.cern.ch,cmssrm.fnal.gov,T1_RU,T1_TW,cmseos.fnal.gov,cmsdca2.fnal.gov,T2_PK_NCP,T3_US_Vanderbilt_EC2
+2015-04-09 22:24:11,174 [DEBUG] 	Status::run() called
+2015-04-09 22:24:11,174 [INFO] 	Checking the status of all jobs: please wait
+2015-04-09 22:24:11,311 [INFO] 	
+ID    END STATUS            ACTION       ExeExitCode JobExitCode E_HOST
+----- --- ----------------- ------------  ---------- ----------- ---------
+1     N   Done              Terminated                           cmslpc39.fnal.gov
+2     N   Done              Terminated                           cmslpc39.fnal.gov
+3     N   Done              Terminated                           cmslpc39.fnal.gov
+4     N   Done              Terminated                           cmslpc39.fnal.gov
+5     N   Done              Terminated                           cmslpc39.fnal.gov
+6     N   Done              Terminated                           cmslpc39.fnal.gov
+7     N   Done              Terminated                           cmslpc39.fnal.gov
+8     N   Done              Terminated                           cmslpc39.fnal.gov
+9     N   Done              Terminated                           cmslpc39.fnal.gov
+10    N   Done              Terminated                           cmslpc39.fnal.gov
+
+2015-04-09 22:24:11,366 [INFO] 	 10 Total Jobs 
+ >>>>>>>>> 10 Jobs Done
+	Jobs terminated: retrieve them with: crab -getoutput <List of jobs>
+	List of jobs: 1-10 
+
+2015-04-09 22:24:11,374 [INFO] 	You can also follow the status of this task on :
+	CMS Dashboard: http://dashb-cms-job-task.cern.ch/taskmon.html#task=tahuang_addGenParticle_testcrab1_9tp27w
+	Your task name is: tahuang_addGenParticle_testcrab1_9tp27w 
+
+2015-04-09 22:24:11,374 [DEBUG] 	Status Time: 0.199870109558
+2015-04-09 22:24:29,554 [DEBUG] 	/cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -getoutput -c addGenParticle_testcrab1/
+
+2015-04-09 22:24:29,554 [INFO] 	Version 2.11.1_patch1 running on Thu Apr  9 22:24:29 2015 CST (03:24:29 UTC)
+
+crab. Working options:
+	scheduler           condor
+	job type            CMSSW
+	server              OFF
+	working directory   /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1/
+
+2015-04-09 22:24:29,554 [DEBUG] 	Downloading file [http://cmsdoc.cern.ch/cms/LCG/crab/config/] to [/uscms/home/tahuang/.cms_crab/allowed_releases.conf].
+2015-04-09 22:24:29,617 [DEBUG] 	Input whitelist: 
+2015-04-09 22:24:29,618 [DEBUG] 	Input blacklist: 
+2015-04-09 22:24:29,618 [DEBUG] 	Converted whitelist: 
+2015-04-09 22:24:29,618 [DEBUG] 	Converted blacklist: 
+2015-04-09 22:24:35,040 [INFO] 	Your domain name is fnal.gov: only local dataset will be considered
+2015-04-09 22:24:36,571 [DEBUG] 	Downloading file [http://cmsdoc.cern.ch/cms/LCG/crab/config/] to [/uscms/home/tahuang/.cms_crab/site_black_list.conf].
+2015-04-09 22:24:36,573 [DEBUG] 	Enforced black list: TAPE,srm-cms.cern.ch,cmssrm.fnal.gov,T1_RU,T1_TW,cmseos.fnal.gov,cmsdca2.fnal.gov,T2_PK_NCP,T3_US_Vanderbilt_EC2 
+2015-04-09 22:24:36,573 [INFO] 	PSN black list: TAPE,srm-cms.cern.ch,cmssrm.fnal.gov,T1_RU,T1_TW,cmseos.fnal.gov,cmsdca2.fnal.gov,T2_PK_NCP,T3_US_Vanderbilt_EC2
+2015-04-09 22:24:36,577 [DEBUG] 	GetOutput::run() called
+2015-04-09 22:24:36,595 [DEBUG] 	fs: Invalid argument; it is possible that /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/ is not in AFS.
+Volume Name                    Quota       Used %Used   Partition
+ while checking AFS quota. Treat as check OK
+2015-04-09 22:24:36,610 [DEBUG] 	fs: Invalid argument; it is possible that /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/ is not in AFS.
+Volume Name                  kbytes      used     avail %used
+ while checking partition. Treat as check OK
+2015-04-09 22:24:36,802 [INFO] 	Results of Jobs # 1 are in /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/
+2015-04-09 22:24:36,868 [DEBUG] 	fs: Invalid argument; it is possible that /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/ is not in AFS.
+Volume Name                    Quota       Used %Used   Partition
+ while checking AFS quota. Treat as check OK
+2015-04-09 22:24:36,872 [DEBUG] 	fs: Invalid argument; it is possible that /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/ is not in AFS.
+Volume Name                  kbytes      used     avail %used
+ while checking partition. Treat as check OK
+2015-04-09 22:24:37,022 [INFO] 	Results of Jobs # 2 are in /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/
+2015-04-09 22:24:37,043 [INFO] 	Results of Jobs # 3 are in /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/
+2015-04-09 22:24:37,064 [INFO] 	Results of Jobs # 4 are in /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/
+2015-04-09 22:24:37,084 [INFO] 	Results of Jobs # 5 are in /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/
+2015-04-09 22:24:37,104 [INFO] 	Results of Jobs # 6 are in /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/
+2015-04-09 22:24:37,124 [INFO] 	Results of Jobs # 7 are in /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/
+2015-04-09 22:24:37,158 [INFO] 	Results of Jobs # 8 are in /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/
+2015-04-09 22:24:37,204 [INFO] 	Results of Jobs # 9 are in /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/
+2015-04-09 22:24:37,271 [INFO] 	Results of Jobs # 10 are in /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/addGenParticle_testcrab1//res/
+2015-04-09 22:24:37,305 [DEBUG] 	GetOutput Time: 0.728094816208

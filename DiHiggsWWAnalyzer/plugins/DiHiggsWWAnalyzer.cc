@@ -275,6 +275,7 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
      
     private:
       bool runMMC_;
+      bool simulation_;
       MMC* thismmc;
      // MMC tree branches
      /*
@@ -403,6 +404,7 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
      mmcset_ = iConfig.getParameter<edm::ParameterSet>("mmcset"); 
      finalStates_ = iConfig.getParameter<bool>("finalStates");
      runMMC_ = iConfig.getParameter<bool>("runMMC");
+     simulation_ = iConfig.getParameter<bool>("simulation");
      /*
      weightfromonshellnupt_func_ = iConfig.getParameter<bool>("weightfromonshellnupt_func");
      weightfromonshellnupt_hist_ = iConfig.getParameter<bool>("weightfromonshellnupt_hist");
@@ -481,6 +483,7 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       jets_py = 0.0;
       jets_pz = 0.0;
       jets_mass = 0.0;
+      jets_lorentz = new TLorentzVector();
 
       htobb_energy = 0.0;
       htobb_px = 0.0;
@@ -514,7 +517,6 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
      // runMMC
       mu_onshellW_lorentz = new TLorentzVector();
       mu_offshellW_lorentz = new TLorentzVector();
-      jets_lorentz = new TLorentzVector();
       MMCmet_vec2 = new TVector2();
       nu_onshellW_lorentz = new TLorentzVector();
       nu_offshellW_lorentz = new TLorentzVector();
@@ -887,11 +889,11 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         int onshellMarker = -1;
         if (w1cand->mass() > w2cand->mass()) onshellMarker = 1;
         else onshellMarker = 2;
-        // std::cout <<" mu1 lorenz "; mu1_lorentz.Print(); 
+         std::cout <<" mu1 lorenz "; mu1_lorentz.Print(); 
         //thismmc = new MMC();
         //std::cout << "onshellMarkder  " << onshellMarker << std::endl;
 	thismmc = new MMC(&mu1_lorentz, &mu2_lorentz, &bbar_lorentz, &met_lorentz, &nu1_lorentz, &nu2_lorentz, onshellMarker, 
-	true, ievent, mmcset_, fs, verbose_);
+	simulation_, ievent, mmcset_, fs, verbose_);
         //thismmc->printTrueLorentz();
         thismmc->runMMC();	
         delete thismmc;

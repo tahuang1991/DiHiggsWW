@@ -1,0 +1,68 @@
+2015-04-09 21:55:55,119 [DEBUG] 	/cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -create -cfg crab_2023Muon_gen_sim_testscript.cfg
+
+2015-04-09 21:55:55,119 [INFO] 	Version 2.11.1_patch1 running on Thu Apr  9 21:55:55 2015 CST (02:55:55 UTC)
+
+crab. Working options:
+	scheduler           condor
+	job type            CMSSW
+	server              OFF
+	working directory   /uscms_data/d3/tahuang/CMSSW_7_2_0/src/DiHiggsWW/DiHiggsWWAnalyzer/crab/Crabtest_2023Muon_gen_sim_Pt2-50_testscript/
+
+2015-04-09 21:55:55,120 [DEBUG] 	Downloading file [http://cmsdoc.cern.ch/cms/LCG/crab/config/] to [/uscms/home/tahuang/.cms_crab/allowed_releases.conf].
+2015-04-09 21:55:55,209 [DEBUG] 	Input whitelist: 
+2015-04-09 21:55:55,210 [DEBUG] 	Input blacklist: 
+2015-04-09 21:55:55,210 [DEBUG] 	Converted whitelist: 
+2015-04-09 21:55:55,210 [DEBUG] 	Converted blacklist: 
+2015-04-09 21:55:58,626 [INFO] 	Your domain name is fnal.gov: only local dataset will be considered
+2015-04-09 21:56:00,004 [DEBUG] 	Linux cmslpc39.fnal.gov 2.6.32-504.8.1.el6.x86_64 #1 SMP Tue Jan 27 13:39:10 CST 2015 x86_64 x86_64 x86_64 GNU/Linux
+ 
+Used properties:
+Linux cmslpc39.fnal.gov 2.6.32-504.8.1.el6.x86_64 #1 SMP Tue Jan 27 13:39:10 CST 2015 x86_64 x86_64 x86_64 GNU/Linux
+ 
+Used properties:
+   CMSSW.allow_nonproductioncmssw : 1
+   CMSSW.datasetpath : none
+   CMSSW.events_per_job : 10
+   CMSSW.number_of_jobs : 10
+   CMSSW.output_file : out_sim.root
+   CMSSW.pset : SingleMuPt2_50_cfi_GEN_SIM.py
+   CRAB.cfg : crab_2023Muon_gen_sim_testscript.cfg
+   CRAB.create : 
+   CRAB.jobtype : cmssw
+   CRAB.scheduler : condor
+   CRAB.use_server : 0
+   GRID.proxy_server : fg-myproxy.fnal.gov
+   GRID.rb : CERN
+   GRID.retry_count : 0
+   GRID.se_white_list : T1_US_FNAL,T3_US_FNALXEN
+   GRID.virtual_organization : cms
+   USER.check_user_remote_dir : 0
+   USER.copy_data : 1
+   USER.dbs_url_for_publication : https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_01_writer/servlet/DBSServlet
+   USER.publish_data_name : Crabtest_2023Muon_gen_sim_Pt2-50_1M
+   USER.return_data : 0
+   USER.script_exe : simple.sh
+   USER.srm_version : srmv2
+   USER.storage_element : cmseos.fnal.gov
+   USER.storage_path : /srm/v2/server?SFN=/eos/uscms/
+   USER.ui_working_dir : Crabtest_2023Muon_gen_sim_Pt2-50_testscript
+   USER.user_remote_dir : /store/user/tahuang/Crabtest_2023Muon_gen_sim_Pt2-50_testscript
+End of used properties.
+
+2015-04-09 21:56:00,005 [DEBUG] 	Downloading file [http://cmsdoc.cern.ch/cms/LCG/crab/config/] to [/uscms/home/tahuang/.cms_crab/site_black_list.conf].
+2015-04-09 21:56:00,006 [DEBUG] 	Enforced black list: TAPE,srm-cms.cern.ch,cmssrm.fnal.gov,T1_RU,T1_TW,cmseos.fnal.gov,cmsdca2.fnal.gov,T2_PK_NCP,T3_US_Vanderbilt_EC2 
+2015-04-09 21:56:00,006 [INFO] 	PSN black list: TAPE,srm-cms.cern.ch,cmssrm.fnal.gov,T1_RU,T1_TW,cmseos.fnal.gov,cmsdca2.fnal.gov,T2_PK_NCP,T3_US_Vanderbilt_EC2
+2015-04-09 21:56:00,071 [DEBUG] 	CMSSW::__init__
+2015-04-09 21:56:00,072 [DEBUG] 	Scram::Scram() version is 2
+2015-04-09 21:56:00,072 [DEBUG] 	Scram::Scram() arch is slc6_amd64_gcc481
+2015-04-09 21:56:00,072 [DEBUG] 	Downloading file [https://cmssdt.cern.ch/SDT/cgi-bin] to [/uscms/home/tahuang/.cms_crab/ReleasesXML?anytype=1].
+2015-04-09 21:56:01,063 [DEBUG] 	Job splitting method: NoInput
+2015-04-09 21:56:01,064 [DEBUG] 	Splitting per events
+2015-04-09 21:56:01,064 [INFO] 	Required 10 events per job 
+2015-04-09 21:56:01,064 [INFO] 	Required 10 jobs in total 
+2015-04-09 21:56:01,064 [DEBUG] 	N jobs  10
+2015-04-09 21:56:01,064 [DEBUG] 	Check  0
+2015-04-09 21:56:01,064 [INFO] 	10 jobs can be created, each for 10 for a total of 100 events
+2015-04-09 21:56:01,098 [DEBUG] 	PsetManipulator::__init__: PSet file = SingleMuPt2_50_cfi_GEN_SIM.py
+2015-04-09 21:56:01,602 [DEBUG] 	ERROR: Your config file is not valid python: No module named GeometryExtended2023Muon_cff
+

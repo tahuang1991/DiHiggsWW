@@ -116,7 +116,7 @@ class MMC{
     private:
       TLorentzVector* mmc_mu1_lorentz;
       TLorentzVector* mmc_mu2_lorentz;
-      TLorentzVector* mmc_bbar_lorentz;
+      TLorentzVector* mmc_bbbar_lorentz;
       TLorentzVector* nu1_lorentz_true;
       TLorentzVector* nu2_lorentz_true;
       TLorentzVector* onshellW_lorentz_true;

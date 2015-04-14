@@ -8,16 +8,15 @@
 #include "DiHiggsWW/DiHiggsWWAnalyzer/src/MMC.h"
 
 //constructor
-MMC::MMC(TLorentzVector* mu1_lorentz, TLorentzVector* mu2_lorentz, TLorentzVector* bbar_lorentz,TLorentzVector* met_lorentz, 
+MMC::MMC(TLorentzVector* mu1_lorentz, TLorentzVector* mu2_lorentz, TLorentzVector* bbbar_lorentz,TLorentzVector* met_lorentz, 
 	 TLorentzVector* nu1_lorentz, TLorentzVector* nu2_lorentz, int onshellMarker_,// only for simulation 
          bool simulation_, int ievent, edm::ParameterSet& mmcset_, edm::Service< TFileService > fs, int verbose_
 	)
 {
 
-
    mmc_mu1_lorentz = mu1_lorentz;
    mmc_mu2_lorentz = mu2_lorentz;
-   mmc_bbar_lorentz = bbar_lorentz;
+   mmc_bbbar_lorentz = bbbar_lorentz;
 
    simulation = simulation_;
    onshellMarker = onshellMarker_;
@@ -38,7 +37,7 @@ MMC::MMC(TLorentzVector* mu1_lorentz, TLorentzVector* mu2_lorentz, TLorentzVecto
         else std::cout <<" onshellMarker input error"  << std::endl;
 
         htoWW_lorentz_true = new TLorentzVector(*offshellW_lorentz_true + *onshellW_lorentz_true);
-        htoBB_lorentz_true = new TLorentzVector(*mmc_bbar_lorentz);
+        htoBB_lorentz_true = new TLorentzVector(*mmc_bbbar_lorentz);
         h2tohh_lorentz_true = new TLorentzVector(*htoWW_lorentz_true + *htoBB_lorentz_true); 
    }
    mmcmet_vec2 = new TVector2(met_lorentz->Px(),met_lorentz->Py());
@@ -64,10 +63,10 @@ MMC::MMC(TLorentzVector* mu1_lorentz, TLorentzVector* mu2_lorentz, TLorentzVecto
    offshellW_lorentz = new TLorentzVector();
    onshellW_lorentz = new TLorentzVector();
    htoWW_lorentz = new TLorentzVector();
-   htoBB_lorentz = new TLorentzVector(*htoBB_lorentz_true);
+   htoBB_lorentz = new TLorentzVector(*mmc_bbbar_lorentz);
    h2tohh_lorentz = new TLorentzVector();
    met_vec2 = new TVector2();
-
+  
 
 }
 
@@ -138,18 +137,22 @@ MMC::runMMC(){
 
   // later should take into consideration both possible cases
   // int onshell_control = 0;
-        
+   std::cout <<" start runMMC "  << std::endl; 
    float nu_onshellW_pt =0;
    wmass_gen = 80.3;// initial value
    float step,random01;
    TH1F* wmasshist = readoutonshellWMassPDF(); 
    TH1F* offshellWmass_hist = readoutoffshellWMassPDF(); 
    TH1F* onshellnupt_hist = readoutonshellnuptPDF(); 
+   //std::cout <<" rescale priori distribution 1" << std::endl;
+   //std::cout <<" onshellnupt max content " <<onshellnupt_hist->GetBinContent(onshellnupt_hist->GetMaximumBin()) << std::endl;
+   //std::cout <<" offshellWmass max content " << offshellWmass_hist->GetBinContent(offshellWmass_hist->GetMaximumBin()) << std::endl;
    onshellnupt_hist->Scale(1.0/onshellnupt_hist->GetBinContent(onshellnupt_hist->GetMaximumBin()));
    offshellWmass_hist->Scale(1.0/offshellWmass_hist->GetBinContent(offshellWmass_hist->GetMaximumBin()));
+   //std::cout <<" rescale priori distribution 2" << std::endl;
    
-   //printTrueLorentz();
-
+   printTrueLorentz();
+   
    for (int i = 0; i < iterations_ ; i++){
 
 	   eta_gen = generator->Uniform(-6,6); 
@@ -331,6 +334,27 @@ MMC::initTree(TTree* mmctree){
    	mass_htoWW_true = htoWW_lorentz_true->M();
    	pt_h2tohh_true = h2tohh_lorentz_true->Pt();
    	mass_h2tohh_true = h2tohh_lorentz_true->M();
+   }
+   else {
+	eta_nuoffshellW_true = -1;
+	phi_nuoffshellW_true = -1;
+	pt_nuoffshellW_true = -1;
+	eta_nuonshellW_true = -1;
+	phi_nuonshellW_true = -1;
+	pt_nuonshellW_true = -1;
+   
+        mass_offshellW_true = -1;
+        mass_onshellW_true = -1;
+   	mass_htoWW_true = -1;
+   	pt_h2tohh_true = -1;
+   	mass_h2tohh_true = -1;
+   
+   
+   
+   
+   
+   
+   
    }
 
 
@@ -824,15 +848,17 @@ MMC::printTrueLorentz(){
     std::cout <<"  print out lorentz vector pass to MMC " << std::endl;
     if (simulation) std::cout <<" onshell channel is " << onshellMarker << std::endl;
     std::cout <<" mu1 " ; mmc_mu1_lorentz->Print();
-    if (simulation) std::cout <<" nu1 "; nu1_lorentz_true->Print();
     std::cout <<" mu2 " ; mmc_mu2_lorentz->Print();
-    if (simulation) std::cout <<" nu2 "; nu2_lorentz_true->Print();
-    if (simulation) std::cout <<" onshellW "; onshellW_lorentz_true->Print();  
-    if (simulation) std::cout <<"offshellW "; offshellW_lorentz_true->Print();  
-    if (simulation) std::cout <<" htoWW "; htoWW_lorentz_true->Print();
-    if (simulation) std::cout <<" htoBB "; htoBB_lorentz_true->Print();
-    if (simulation) std::cout <<" h2tohh, pz " <<h2tohh_lorentz_true->Pz() << " Mass " << h2tohh_lorentz_true->M() << std::endl;
-
+    std::cout <<"bbbar " ; mmc_bbbar_lorentz->Print();
+    if (simulation) {
+        std::cout <<" nu1 "; nu1_lorentz_true->Print();
+	std::cout <<" nu2 "; nu2_lorentz_true->Print();
+        std::cout <<" onshellW "; onshellW_lorentz_true->Print();  
+        std::cout <<"offshellW "; offshellW_lorentz_true->Print();  
+        std::cout <<" htoWW "; htoWW_lorentz_true->Print();
+        std::cout <<" htoBB "; htoBB_lorentz_true->Print();
+        std::cout <<" h2tohh, pz " <<h2tohh_lorentz_true->Pz() << " Mass " << h2tohh_lorentz_true->M() << std::endl;
+    }
 }
 
 

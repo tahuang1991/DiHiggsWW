@@ -1,0 +1,14 @@
+150409_214551: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -create -cfg crab_addGen_test1.cfg
+150409_214744: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -create -cfg crab_addGen_test1.cfg
+150409_214817: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -create -cfg crab_addGen_test1.cfg
+150409_214843: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -submit -c addGenParticle_testcrab1/
+150409_215437: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -create -cfg crab_2023Muon_gen_sim_testscript.cfg
+150409_215510: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -submit -c Crabtest_2023Muon_gen_sim_Pt2-50_testscript/
+150409_215555: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -create -cfg crab_2023Muon_gen_sim_testscript.cfg
+150409_220110: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -status -c addGenParticle_testcrab1/
+150409_220212: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -getoutput -c addGenParticle_testcrab1/
+150409_221335: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -create -cfg crab_addGen_test1.cfg
+150409_221744: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -status -c addGenParticle_testcrab1/
+150409_221803: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -submit -c addGenParticle_testcrab1/
+150409_222406: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -status -c addGenParticle_testcrab1/
+150409_222429: /cvmfs/cms.cern.ch/crab/CRAB_2_11_1_patch1/python/crab.py -getoutput -c addGenParticle_testcrab1/

@@ -6,7 +6,8 @@ process = cms.Process("GENP")
 process.load('Configuration.StandardSequences.Services_cff')
 
 process.source = cms.Source("PoolSource",
-	fileNames = cms.untracked.vstring('file:/fdata/hepx/store/user/taohuang/Hhh/SMH-BBWW.root')
+	fileNames = cms.untracked.vstring('file:/eos/uscms/store/user/tahuang/DiHiggs/HH-bbWW-10k_0408.root')
+	#fileNames = cms.untracked.vstring('file:HH-bbWW-100_0407.root')
 )
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
@@ -16,7 +17,7 @@ process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.threshold = 'INFO'
 
 process.GEN = cms.OutputModule("PoolOutputModule",
-	fileName = cms.untracked.string('/fdata/hepx/store/user/taohuang/Hhh/SMH-BBWW-Gen-1k.root')
+	fileName = cms.untracked.string('/eos/uscms/store/user/tahuang/DiHiggs/HH-bbWW-Gen-10k_0408.root')
 )
 
 process.load('PhysicsTools.HepMCCandAlgos.genParticles_cfi')
