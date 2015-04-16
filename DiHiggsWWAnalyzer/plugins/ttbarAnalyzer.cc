@@ -129,8 +129,8 @@ class ttbarAnalyzer : public edm::EDAnalyzer {
      //decendants and ancestor
      const reco::Candidate* stabledecendant(const reco::Candidate* cand, int id);
      //const reco::Candidate* stabletdecendant(Particle p, PdgId id);
-     const reco::Candidate* alldecendant(const reco::Candidate* cand, int id, bool first=false);
-     const reco::Candidate* allancestor(const reco::Candidate* cand, int id, bool first=false);
+     const reco::Candidate* finddecendant(const reco::Candidate* cand, int id, bool first=false);
+     const reco::Candidate* findancestor(const reco::Candidate* cand, int id, bool first=false);
      bool hasMother(const reco::Candidate* cand, int id);
      bool hasDaughter(const reco::Candidate* cand, int id);
       // ---------- Candidates in signal channel ---------------------------
@@ -797,20 +797,20 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         mu2cand = stabledecendant(mu2_t_cand, -13);
         nu1cand = stabledecendant(mu1_tbar_cand, -14);
         nu2cand = stabledecendant(mu2_t_cand, 14);
-        b1cand = alldecendant(b1_t_cand, 5, false);
-        b2cand = alldecendant(b2_tbar_cand, -5, false);
-        w1cand = allancestor(mu1cand, -24, false);
-	w2cand = allancestor(mu2cand, 24, false);   
+        b1cand = finddecendant(b1_t_cand, 5, false);
+        b2cand = finddecendant(b2_tbar_cand, -5, false);
+        w1cand = findancestor(mu1cand, -24, false);
+	w2cand = findancestor(mu2cand, 24, false);   
         }else {
         mu1cand = findmudaughter(mu1_W1_cand);
         nu1cand = findnudaughter(mu1_W1_cand);
         mu2cand = findmudaughter(mu2_W2_cand);
         nu2cand = findnudaughter(mu2_W2_cand);
 
-        b1cand = alldecendant(b1_t_cand, 5, true);
-        b2cand = alldecendant(b2_tbar_cand, -5, true);
-        w1cand = allancestor(mu1cand, -24, true);
-	w2cand = allancestor(mu2cand, 24, true);   
+        b1cand = finddecendant(b1_t_cand, 5, true);
+        b2cand = finddecendant(b2_tbar_cand, -5, true);
+        w1cand = findancestor(mu1cand, -24, true);
+	w2cand = findancestor(mu2cand, 24, true);   
         }
         //if ()
         std::cout <<"new mu1 "; printCandidate(mu1cand);	
@@ -827,10 +827,10 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         std::cout <<" b2(bbar) " ; printCandidate(b2cand);
         std::cout <<" t->Wb " ; printCandidate(tcand);
         std::cout <<" tbar->Wbbar " ; printCandidate(tbarcand);
-        //std::cout <<"another b1 " ; printCandidate(alldecendant(tbarcand, 5, false));
-        //std::cout <<"another b2 " ; printCandidate(alldecendant(tbarcand, -5, false));
+        //std::cout <<"another b1 " ; printCandidate(finddecendant(tbarcand, 5, false));
+        //std::cout <<"another b2 " ; printCandidate(finddecendant(tbarcand, -5, false));
        //std::cout <<" b jet"; bjetsLorentz(b1cand).Print(); 
-        //std::cout <<" b jet"; bjetsLorentz(alldecendant(tbarcand, 5, false)).Print(); 
+        //std::cout <<" b jet"; bjetsLorentz(finddecendant(tbarcand, 5, false)).Print(); 
         std::cout <<" b jet"; stableDecendantsLorentz(b1cand).Print(); 
         std::cout <<" bbar jet"; stableDecendantsLorentz(b2cand).Print(); 
         //std::cout <<" t " ; printCandidate(tcand);
@@ -1194,7 +1194,7 @@ ttbarAnalyzer::stabledecendant(const reco::Candidate* cand, int id){
 //if first it true, then return the candidate closest to seed
 //if first it false, then return the candidate farthest to seed
 const reco::Candidate* 
-ttbarAnalyzer::alldecendant(const reco::Candidate* cand, int id, bool first){
+ttbarAnalyzer::finddecendant(const reco::Candidate* cand, int id, bool first){
    const reco::Candidate* tmp = NULL;
    for (unsigned int i=0; i < cand->numberOfDaughters(); i++){
         
@@ -1204,8 +1204,8 @@ ttbarAnalyzer::alldecendant(const reco::Candidate* cand, int id, bool first){
 		return  tmp=cand->daughter(i); // tmp does not has daughter with pdgid = id
 	else if ((cand->daughter(i))->pdgId() == id && !first && (cand->daughter(i))->numberOfDaughters()>1) 
 		return  tmp=cand->daughter(i);// tmp has more one daughters therefore it is final-states
-        else if (alldecendant(cand->daughter(i),id, first)) 
-		return tmp=alldecendant(cand->daughter(i),id);
+        else if (finddecendant(cand->daughter(i),id, first)) 
+		return tmp=finddecendant(cand->daughter(i),id);
    }
     
     return tmp;
@@ -1216,7 +1216,7 @@ ttbarAnalyzer::alldecendant(const reco::Candidate* cand, int id, bool first){
 //if first is true, then return the candidate closest to seed
 //if first is false, then return the candidate furthest to seed
 const reco::Candidate*
-ttbarAnalyzer::allancestor(const reco::Candidate* cand, int id, bool first){
+ttbarAnalyzer::findancestor(const reco::Candidate* cand, int id, bool first){
 
    const reco::Candidate* tmp = NULL;
    for (unsigned int i=0; i < cand->numberOfMothers(); i++){
@@ -1225,8 +1225,8 @@ ttbarAnalyzer::allancestor(const reco::Candidate* cand, int id, bool first){
 		return 	tmp=cand->mother(i);
 	else if ((cand->mother(i))->pdgId() == id && !first && !hasMother(cand->mother(i), id)) 
 		return  tmp=cand->mother(i);
-        else if (allancestor(cand->mother(i),id, first)) 
-		return tmp=allancestor(cand->mother(i),id, first);
+        else if (findancestor(cand->mother(i),id, first)) 
+		return tmp=findancestor(cand->mother(i),id, first);
    }
    return tmp;
 
@@ -1295,149 +1295,6 @@ ttbarAnalyzer::print() {
 
 }
 
-
-/*
-//------------- method called for printing h->WW->mumununu chain -------------------------
-void 
-ttbarAnalyzer::printHtoWWChain(){
-          
-    float h_energy = mu1_energy+mu2_energy+nu1_energy+nu2_energy;
-    float h_px = mu1_px+mu2_px+nu1_px+nu2_px;
-    float h_py = mu1_py+mu2_py+nu1_py+nu2_py;
-    float h_pz = mu1_pz+mu2_pz+nu1_pz+nu2_pz;
-          
-    TLorentzVector final_p4(h_px, h_py, h_pz, h_energy);
-    
-    float h_energy_bb = b1_energy+b2_energy; 
-    float h_px_bb = b1_px+b2_px; 
-    float h_py_bb = b1_py+b2_py;
-    float h_pz_bb = b1_pz+b2_pz;
-    TLorentzVector h_bb_p4(h_px_bb,h_py_bb,h_pz_bb,h_energy_bb);
-
-    TLorentzVector h2_final_tot(final_p4+h_bb_p4); 
-    if (t){
-             
-               TLorentzVector h_p4(t_px, t_py, t_pz, t_energy);
-               TLorentzVector WW_p4(mu1_W1_cand->px()+mu2_W2_cand->px(),mu1_W1_cand->py()+mu2_W2_cand->py(), 
-                                    mu1_W1_cand->pz()+mu2_W2_cand->pz(),mu1_W1_cand->energy()+mu2_W2_cand->energy());
-               std::cout << "invariant mass from h_p4: " << h_p4.M() 
-                         << "	, from WW_p4 " << WW_p4.M() 
-                         << "	, from final_p4 " << final_p4.M() << std::endl;
-               if (abs(WW_p4.M()-h_p4.M())>1)  std::cout << "h->WW, invariant mass reconstruction discrepancy ? " << std::endl; 
-               std::cout <<  " H -> WW " << std::endl;
-               const reco::Candidate* tmp_cand1 = NULL;
-               const reco::Candidate* tmp_cand2 = NULL;
-               
-               for (unsigned int n = 0; n<mu1_tbar_cand->numberOfDaughters(); n++){                                  
-                      if ((mu1_tbar_cand->daughter(n))->pdgId()==-24) tmp_cand1 =  mu1_tbar_cand->daughter(n);
-                      if ((mu1_tbar_cand->daughter(n))->pdgId()== 24) tmp_cand2 =  mu1_tbar_cand->daughter(n);
-                      if (n >= 2) std::cout << "h has more 2 daughters, id " << (mu1_tbar_cand->daughter(n))->pdgId() << std::endl;
-                  }
-               while (tmp_cand1 != mu1_W1_cand || tmp_cand2 != mu2_W2_cand){
-                TLorentzVector W1_p4(tmp_cand1->px(),tmp_cand1->py(),tmp_cand1->pz(), tmp_cand1->energy());
-                TLorentzVector W2_p4(tmp_cand2->px(),tmp_cand2->py(),tmp_cand2->pz(), tmp_cand2->energy());
-                TLorentzVector tmp_WW_p4(W1_p4+W2_p4);
-                std::cout <<"W- num of daughters "<< tmp_cand1->numberOfDaughters() << " W-mass " << W1_p4.M() << " W1 four momentum "; W1_p4.Print();
-                std::cout <<"W+ num of daughters "<< tmp_cand2->numberOfDaughters() << " W+mass " << W2_p4.M() << " W2 four momentum "; W2_p4.Print();
-                std::cout << "Total invariant mass " << tmp_WW_p4.M() <<" tmp_WW four momentum "; tmp_WW_p4.Print(); 
-                //if (tmp_cand1 != mu1_W1_cand) {
-                     for (unsigned int i = 0; i<tmp_cand1->numberOfDaughters(); i++){
-                          std::cout << " daughter of W- , id " << tmp_cand1->daughter(i)->pdgId() << "  status " << tmp_cand1->daughter(i)->status() <<std::endl; 
-                          TLorentzVector dau_W1_p4(tmp_cand1->daughter(i)->px(),tmp_cand1->daughter(i)->py(),tmp_cand1->daughter(i)->pz(),tmp_cand1->daughter(i)->energy());
-                          std::cout << " four momentum "; dau_W1_p4.Print();
-                          if (tmp_cand1->daughter(i)->pdgId() == -24) tmp_cand1 = tmp_cand1->daughter(i);  
-                          }
-                // }
-                //if (tmp_cand2 != mu2_W2_cand) {
-                     for (unsigned int j = 0; j<tmp_cand2->numberOfDaughters(); j++){
-                          std::cout << " daughter of W+ , id " << tmp_cand2->daughter(j)->pdgId() << "  status " << tmp_cand2->daughter(j)->status() <<std::endl; 
-                          TLorentzVector dau_W2_p4(tmp_cand2->daughter(j)->px(),tmp_cand2->daughter(j)->py(),tmp_cand2->daughter(j)->pz(),tmp_cand2->daughter(j)->energy());
-                          std::cout << " four momentum "; dau_W2_p4.Print();
-                          if (tmp_cand2->daughter(j)->pdgId() == 24) tmp_cand2 = tmp_cand2->daughter(j);  
-                          }
-                // }
-               }
-               std::cout << "WW -> mumununu" << std::endl;
-               while (tmp_cand1->status() != 1 || tmp_cand2->status() != 1){
-                     
-                     std::cout << "-------------  begin of this loop ----------------------" << std::endl;
-     
-                     int size1 = tmp_cand1->numberOfDaughters();
-                     int size2 = tmp_cand2->numberOfDaughters();
-                     int muon1 = -1;
-                     int muon2 = -1;
-                     float px=0;
-                     float py=0;
-                     float pz=0;
-                     float energy=0;
-                      if (tmp_cand1->pdgId() == 13)  {
-                             //std::cout << "cand1 reaches final states, status of particle " << tmp_cand1->status() << std::endl;
-                             px += nu1_px;
-                             py += nu1_py;
-                             pz += nu1_pz;
-                             energy += nu1_energy;
-                             }
-                     std::cout << "cand1, id"<< tmp_cand1->pdgId() << " status " << tmp_cand1->status() <<" size of daughters " << size1 << std::endl; 
-                     std::cout << " daughters of " << ((tmp_cand1->pdgId()==-24)?"W-  ":"muon- ") << std::endl;
-                       for (int i = 0; i < size1; i++){
-                             const Candidate * d1 = tmp_cand1->daughter(i); 
-                             std::cout << "daughter id " << d1->pdgId() << "  status " << d1->status() << std::endl;
-                             if (d1->pdgId() == 13 ) muon1 = i;
-                             printCandidate(d1);
-                             px += d1->px();
-                             py += d1->py();
-                             pz += d1->pz();
-                             energy += d1->energy(); 
-                   }
-                      TLorentzVector cand1_lorentz(px, py, pz, energy); 
-                      std::cout << " W- mass from W- Candidate " << mu1_mother_mass << " from mu-,nu " << cand1_lorentz.M() << std::endl;
-                      if (muon1 != -1 && tmp_cand1->status() != 1) tmp_cand1 = tmp_cand1->daughter(muon1);
-                      float px2 = 0.0;
-                      float py2 = 0.0;
-                      float pz2 = 0.0;
-                      float energy2 = 0.0;
-                      if (tmp_cand2->pdgId() == -13)  {
-                           //  std::cout << "cand2 reaches final states, status of particle "<< tmp_cand2->status() << std::endl;
-                             px2 += nu2_px;
-                             py2 += nu2_py;
-                             pz2 += nu2_pz;
-                             energy2 += nu2_energy;
-                             }
-                     std::cout << "cand2, id" << tmp_cand2->pdgId() <<" status " << tmp_cand2->status() <<" size of daughters " << size2 << std::endl; 
-                     std::cout << " daughters of " << ((tmp_cand2->pdgId()==24)?"W+  ":"muon+ ") << std::endl;
-                       for (int j = 0; j < size2; j++){
-                             const Candidate * d2 = tmp_cand2->daughter(j); 
-                             std::cout << "daughter id " << d2->pdgId() << "  status " << d2->status() << std::endl;
-                             if (d2->pdgId() == -13 ) muon2 = j;
-                             printCandidate(d2);
-                             px2 += d2->px();
-                             py2 += d2->py();
-                             pz2 += d2->pz();
-                             energy2 += d2->energy(); 
-                   }
-                      TLorentzVector cand2_lorentz(px2, py2, pz2, energy2); 
-                      std::cout << " W+ mass from W+ Candidate " << mu2_mother_mass << " from mu+,nu " << cand2_lorentz.M() << std::endl;
-                      if (muon2 != -1 && tmp_cand2->status() != 1) tmp_cand2 = tmp_cand2->daughter(muon2);
-                     TLorentzVector tmp = cand1_lorentz+cand2_lorentz;
-                     std::cout <<"Total px " << tmp.Px() << " py " << tmp.Py() << " pz " << tmp.Pz() << " E " << tmp.Energy() << std::endl;
-                     std::cout << " invariant mass from daughters of WW " << tmp.M() << std::endl;  
-                     std::cout << "For Next loop status of cand1 " << tmp_cand1->status()  << "	cand2 " << tmp_cand2->status() << std::endl; 
-                     std::cout << "-------------  end of this loop ----------------------" << std::endl;
-              } 
-            if (h2tohh){	
-			std::cout <<"t invariant mass " << final_p4.M() <<" four momentum " << std::endl; 
-                        final_p4.Print();
-                        std::cout <<"tbar invariant mass " << h_bb_p4.M() << " four momentum " << std::endl;
-                        h_bb_p4.Print();
-                        std::cout <<"h2tohh invariant mass " << h2_final_tot.M() <<" total momentum " << std::endl;
-                        h2_final_tot.Print();
-			} 
-
-        }//end if (t)
-
-}
-
-*/
 
 //---------- method called to print candidates for debug ---------------------
 void

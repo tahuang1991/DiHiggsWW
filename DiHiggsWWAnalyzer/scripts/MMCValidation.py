@@ -816,26 +816,32 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
 #____________________________________________________________________________
 def drawh2Mass_combined(file, cut="weight"):
 
-    f = ROOT.TFile(file)
-    list = f.GetListOfKeys()
-    key = list.At(0)
-    obj = key.ReadObj() #DiHiggsWWAna
-    sub_list = obj.GetListOfKeys()
-    sub_key = sub_list.At(1)
+
+    num = gettreenum(file)
+    print "num of trees ", num
     hist_h2 = ROOT.TH1F("hist_h2"," ",150,200,500)
     hist_h2true = ROOT.TH1F("hist_h2true"," ",150,200,500)
     m = 1
-    while sub_key:
+    while m<num:
+    	f = ROOT.TFile(file)
+    	list = f.GetListOfKeys()
+    	key = list.At(0)
+    	obj = key.ReadObj() #DiHiggsWWAna
+    	sub_list = obj.GetListOfKeys()
+    	sub_key = sub_list.At(m)
 	tree = sub_key.ReadObj()
-	print "tree title ",tree.GetTitle()," entries ", tree.GetEntries()
-	hist_h2.Fill(geth2MassMostProba(tree,cut))
-	hist_h2true.Fill(getTrueValue(tree,"mass_h2_true","(400,200,600)"))
-        h2_mass_reconstructed = geth2MassMostProba(tree,cut)
+	print  "m ",m," tree title ",tree.GetTitle()," entries ", tree.GetEntries()
         h2_mass_true = getTrueValue(tree,"mass_h2_true","(400,200,600)")
-	if (abs(h2_mass_reconstructed-h2_mass_true)>5 or h2_mass_reconstructed > 450 or h2_mass_reconstructed < 250):
-		print tree.GetTitle()," reconstructed mass  ", h2_mass_reconstructed, " true mass ", h2_mass_true
+        h2_mass_reconstructed = geth2MassMostProba(tree,cut)
+ 	hist_h2.Fill(h2_mass_reconstructed)
+	hist_h2true.Fill(h2_mass_true)
+     #   if m>380:
+#		break;    
+	#if (abs(h2_mass_reconstructed-h2_mass_true)>5 or h2_mass_reconstructed > 450 or h2_mass_reconstructed < 250):
+	#	print tree.GetTitle()," reconstructed mass  ", h2_mass_reconstructed, " true mass ", h2_mass_true
         m = m+1
-	sub_key = sub_list.At(m)
+	#sub_key = sub_list.At(m)
+	f.Close()
     h2Mass_c = ROOT.TCanvas()
     hist_h2.SetLineColor(ROOT.kRed)
     hist_h2.GetXaxis().SetTitle("M_{H}")
@@ -851,16 +857,19 @@ def drawh2Mass_combined(file, cut="weight"):
     hist_h2.Draw()
     hist_h2true.Draw("same")
     legend.Draw("same")
-    h2Mass_c.SaveAs("MMC_h2Mass_0410_weight_newframe_B3.pdf") 
-    h2Mass_c.SaveAs("MMC_h2Mass_0410_weight_newframe_B3.png") 
-    h2Mass_c.SaveAs("MMC_h2Mass_0410_weight_newframe_B3.C") 
+    h2Mass_c.SaveAs("MMC_h2Mass_0414_weight_1M_B3.pdf") 
+    h2Mass_c.SaveAs("MMC_h2Mass_0414_weight_1M_B3.png") 
+    h2Mass_c.SaveAs("MMC_h2Mass_0414_weight_1M_B3.C") 
 
 #___________________________________________________________________________
 def geth2MassMostProba(t, cut = "weight"):
 
-    b1 = ROOT.TH1F("b1","b1",400,200,600)
-    t.Draw("h2tohh_Mass>>b1",cut)
-    return b1.GetXaxis().GetBinCenter(b1.GetMaximumBin())
+    name = t.GetTitle()
+    b1 = ROOT.TH1F("%s"%name,"b1",400,200,600)
+    t.Draw("h2tohh_Mass>>%s"%name,cut)
+    mass = b1.GetXaxis().GetBinCenter(b1.GetMaximumBin())
+    del b1
+    return mass
 
 #____________________________________________________________________________
 def getTrueValue(t,var, x_bins):
@@ -876,6 +885,7 @@ def getTrueValue(t,var, x_bins):
    # c.SaveAs("getTrueVaule_%s"%var+"_contour.png")
     value = b1.GetXaxis().GetBinCenter(b1.GetMaximumBin())
     #print "xaxis", var, "b1 maximum", b1.GetMaximumBin()," value", value
+    del b1
     return value
     
 
@@ -891,6 +901,7 @@ def test(file, dir):
     c1 = ROOT.gROOT.GetClass(key.GetClassName())
     obj = key.ReadObj()
     sub_list = obj.GetListOfKeys()
+    print "length of sub_list", len(sub_list)
     sub_key = sub_list.At(0)
     i = 0
     while sub_key:
@@ -898,20 +909,25 @@ def test(file, dir):
 #	tree.Print()
         i = i+1
         sub_key = sub_list.At(i)
+    print "i ", i
     print "key getclassname ", key.GetClassName()
     print "c1 ",c1
     print "obj  ", obj
     print "sub_key ", sub_key
     print "sub_list 1", sub_list.At(1)
     print "dir ", dir, "  t ", t, " tree ", tree.GetTitle() 
-    pt_h2_bins = "(100,0,0.00001)"
-    todraw8 = "h2tohh_Pt"
-    todrawtrue8 = "pt_h2_true"
-    hs_title8 = "p_{TH}"
-    hs8 = gethiststack(tree, todraw8,todrawtrue8, pt_h2_bins, hs_title8)
-    c = ROOT.TCanvas() 
-    hs8.Draw("nostack")
-    c.SaveAs("gethiststack_contour.png")
+
+#______________________________________________________________________________
+def gettreenum(file):
+	
+    f = ROOT.TFile(file)
+    List = f.GetListOfKeys()
+    key = List.At(0)
+    obj = key.ReadObj()
+    sub_list = obj.GetListOfKeys()
+    i = len(sub_list)
+    f.Close()
+    return i
 
 #______________________________________________________________________________
 def hist_1D(tree, todraw, x_bins, cut,i):
@@ -1034,8 +1050,8 @@ if __name__ == "__main__":
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-100k-0406-mediateStates-B3-combined.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_iterations1M_0406_B3.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_weight_0408_B3.root"
-    file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_0410_newframe_B3.root"
-    #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_0406_wmass_B3.root"
+    #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_0410_newframe_B3.root"
+    file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-1M-0413-mediateStates-B3-1416552-combined.root"
     dir = "DiHiggsWWAna/%s"%treename
     #dir = "DiHiggsWWAna/"
     
@@ -1043,11 +1059,11 @@ if __name__ == "__main__":
     cut_weight1 = ["weight1","weight1*(control<2)","weight1*(control>1)"]
     cut_weight = ["weight","weight*(control<2)","weight*(control>1)"]
     #test(file, dir)
-    monitoringMMC(file,cut_weight)  
+    #monitoringMMC(file,cut_weight)  
     #monitoringMMC(file,cut_weight1)
     #monitoringMMC(file,cut_weight2)
     #drawh2Mass_combined(file)
-    #drawh2Mass_combined(file,"weight2")
+    #drawh2Mass_combined(file,"weight1")
     title1 = "MMC PDF for M_{H}, Event 4204"
     h2massbins = "(80,260,420)"#for843 only
     

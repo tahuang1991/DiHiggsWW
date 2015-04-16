@@ -126,8 +126,8 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
      //decendants and ancestor
      const reco::Candidate* stabledecendant(const reco::Candidate* cand, int id);
      //const reco::Candidate* stablehtoWWdecendant(Particle p, PdgId id);
-     const reco::Candidate* alldecendant(const reco::Candidate* cand, int id, bool first=false);
-     const reco::Candidate* allancestor(const reco::Candidate* cand, int id, bool first=false);
+     const reco::Candidate* finddecendant(const reco::Candidate* cand, int id, bool first=false);
+     const reco::Candidate* findancestor(const reco::Candidate* cand, int id, bool first=false);
      bool hasMother(const reco::Candidate* cand, int id);
      bool hasDaughter(const reco::Candidate* cand, int id);
       // ---------- Candidates in signal channel ---------------------------
@@ -834,20 +834,20 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         mu2cand = stabledecendant(htoWWcand, -13);
         nu1cand = stabledecendant(htoWWcand, -14);
         nu2cand = stabledecendant(htoWWcand, 14);
-        b1cand = alldecendant(htoBBcand, 5, false);
-        b2cand = alldecendant(htoBBcand, -5, false);
-        w1cand = allancestor(mu1cand, -24, false);
-	w2cand = allancestor(mu2cand, 24, false);   
+        b1cand = finddecendant(htoBBcand, 5, false);
+        b2cand = finddecendant(htoBBcand, -5, false);
+        w1cand = findancestor(mu1cand, -24, false);
+	w2cand = findancestor(mu2cand, 24, false);   
         }else {
         mu1cand = findmudaughter(mu1_W1_cand);
         nu1cand = findnudaughter(mu1_W1_cand);
         mu2cand = findmudaughter(mu2_W2_cand);
         nu2cand = findnudaughter(mu2_W2_cand);
 
-        b1cand = alldecendant(htoBBcand, 5, true);
-        b2cand = alldecendant(htoBBcand, -5, true);
-        w1cand = allancestor(mu1cand, -24, true);
-	w2cand = allancestor(mu2cand, 24, true);   
+        b1cand = finddecendant(htoBBcand, 5, true);
+        b2cand = finddecendant(htoBBcand, -5, true);
+        w1cand = findancestor(mu1cand, -24, true);
+	w2cand = findancestor(mu2cand, 24, true);   
         }
         //if ()
         std::cout <<" h2tohh "; printCandidate(h2tohhcand);
@@ -863,12 +863,12 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         std::cout <<" w2 " ; printCandidate(w2cand);
         std::cout <<" b1 " ; printCandidate(b1cand);
         std::cout <<" b2 " ; printCandidate(b2cand);
-        //std::cout <<"another b1 " ; printCandidate(alldecendant(htoBBcand, 5, false));
-        //std::cout <<"another b2 " ; printCandidate(alldecendant(htoBBcand, -5, false));
+        //std::cout <<"another b1 " ; printCandidate(finddecendant(htoBBcand, 5, false));
+        //std::cout <<"another b2 " ; printCandidate(finddecendant(htoBBcand, -5, false));
         //std::cout <<" b jet"; bjetsLorentz(b1cand).Print(); 
-        //std::cout <<" b jet"; bjetsLorentz(alldecendant(htoBBcand, 5, false)).Print(); 
+        //std::cout <<" b jet"; bjetsLorentz(finddecendant(htoBBcand, 5, false)).Print(); 
         //std::cout <<" bbar jet"; bjetsLorentz(b2cand).Print(); 
-        //std::cout <<" bbar jet"; bjetsLorentz(alldecendant(htoBBcand, -5, false)).Print(); 
+        //std::cout <<" bbar jet"; bjetsLorentz(finddecendant(htoBBcand, -5, false)).Print(); 
         //std::cout <<" htoWW " ; printCandidate(htoWWcand);
         //std::cout <<" htoBB and its decendants" <<std::endl; printCandidate(htoBBcand);
 	//printallDecendants(h2tohhcand);
@@ -1240,7 +1240,7 @@ DiHiggsWWAnalyzer::stabledecendant(const reco::Candidate* cand, int id){
 //if first it true, then return the candidate closest to seed
 //if first it false, then return the candidate farthest to seed
 const reco::Candidate* 
-DiHiggsWWAnalyzer::alldecendant(const reco::Candidate* cand, int id, bool first){
+DiHiggsWWAnalyzer::finddecendant(const reco::Candidate* cand, int id, bool first){
    const reco::Candidate* tmp = NULL;
    for (unsigned int i=0; i < cand->numberOfDaughters(); i++){
         
@@ -1250,8 +1250,8 @@ DiHiggsWWAnalyzer::alldecendant(const reco::Candidate* cand, int id, bool first)
 		return  tmp=cand->daughter(i); // tmp does not has daughter with pdgid = id
 	else if ((cand->daughter(i))->pdgId() == id && !first && (cand->daughter(i))->numberOfDaughters()>1) 
 		return  tmp=cand->daughter(i);// tmp has more one daughters therefore it is final-states
-        else if (alldecendant(cand->daughter(i),id, first)) 
-		return tmp=alldecendant(cand->daughter(i),id);
+        else if (finddecendant(cand->daughter(i),id, first)) 
+		return tmp=finddecendant(cand->daughter(i),id);
    }
     
     return tmp;
@@ -1262,7 +1262,7 @@ DiHiggsWWAnalyzer::alldecendant(const reco::Candidate* cand, int id, bool first)
 //if first is true, then return the candidate closest to seed
 //if first is false, then return the candidate furthest to seed
 const reco::Candidate*
-DiHiggsWWAnalyzer::allancestor(const reco::Candidate* cand, int id, bool first){
+DiHiggsWWAnalyzer::findancestor(const reco::Candidate* cand, int id, bool first){
 
    const reco::Candidate* tmp = NULL;
    for (unsigned int i=0; i < cand->numberOfMothers(); i++){
@@ -1271,8 +1271,8 @@ DiHiggsWWAnalyzer::allancestor(const reco::Candidate* cand, int id, bool first){
 		return 	tmp=cand->mother(i);
 	else if ((cand->mother(i))->pdgId() == id && !first && !hasMother(cand->mother(i), id)) 
 		return  tmp=cand->mother(i);
-        else if (allancestor(cand->mother(i),id, first)) 
-		return tmp=allancestor(cand->mother(i),id, first);
+        else if (findancestor(cand->mother(i),id, first)) 
+		return tmp=findancestor(cand->mother(i),id, first);
    }
    return tmp;
 
