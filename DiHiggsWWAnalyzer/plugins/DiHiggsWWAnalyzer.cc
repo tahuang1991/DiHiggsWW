@@ -164,7 +164,8 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       TLorentzVector nu1_lorentz;
       TLorentzVector nu2_lorentz;
       TLorentzVector met_lorentz;
-      TLorentzVector jets_lorentz;
+      TLorentzVector bjet_lorentz;
+      TLorentzVector bbarjet_lorentz;
 
     private:
       TLorentzVector stableDecendantsLorentz(const reco::Candidate* cand); 
@@ -238,11 +239,16 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float b2_py;
       float b2_pz;
       int b2_motherid;
-      float jets_energy;
-      float jets_px;
-      float jets_py;
-      float jets_pz;
-      float jets_mass;
+      float bjet_energy;
+      float bjet_px;
+      float bjet_py;
+      float bjet_pz;
+      float bjet_mass;
+      float bbarjet_energy;
+      float bbarjet_px;
+      float bbarjet_py;
+      float bbarjet_pz;
+      float bbarjet_mass;
 
       float met;
       float met_phi;
@@ -479,12 +485,16 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       b2_py = 0.0;
       b2_pz = 0.0;
       b2_motherid = 0;
-      jets_energy = 0.0;
-      jets_px = 0.0;
-      jets_py = 0.0;
-      jets_pz = 0.0;
-      jets_mass = 0.0;
-      //jets_lorentz = new TLorentzVector();
+      bjet_energy = 0.0;
+      bjet_px = 0.0;
+      bjet_py = 0.0;
+      bjet_pz = 0.0;
+      bjet_mass = 0.0;
+      bbarjet_energy = 0.0;
+      bbarjet_px = 0.0;
+      bbarjet_py = 0.0;
+      bbarjet_pz = 0.0;
+      bbarjet_mass = 0.0;
 
       htobb_energy = 0.0;
       htobb_px = 0.0;
@@ -862,7 +872,8 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         //std::cout <<" htoWW " ; printCandidate(htoWWcand);
         //std::cout <<" htoBB and its decendants" <<std::endl; printCandidate(htoBBcand);
 	//printallDecendants(h2tohhcand);
-        jets_lorentz = stableDecendantsLorentz(htoBBcand);
+        bjet_lorentz = stableDecendantsLorentz(b1cand);
+        bbarjet_lorentz = stableDecendantsLorentz(b2cand);
         met_lorentz = calculateMET();
        
         fillbranches();
@@ -968,11 +979,16 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("b2_py",&b2_py);
    evtree->Branch("b2_pz",&b2_pz);
    evtree->Branch("b2_motherid",&b2_motherid);
-   evtree->Branch("jets_energy",&jets_energy);
-   evtree->Branch("jets_px",&jets_px);
-   evtree->Branch("jets_py",&jets_py);
-   evtree->Branch("jets_pz",&jets_pz);
-   evtree->Branch("jets_mass",&jets_mass);
+   evtree->Branch("bjet_energy",&bjet_energy);
+   evtree->Branch("bjet_px",&bjet_px);
+   evtree->Branch("bjet_py",&bjet_py);
+   evtree->Branch("bjet_pz",&bjet_pz);
+   evtree->Branch("bjet_mass",&bjet_mass);
+   evtree->Branch("bbarjet_energy",&bbarjet_energy);
+   evtree->Branch("bbarjet_px",&bbarjet_px);
+   evtree->Branch("bbarjet_py",&bbarjet_py);
+   evtree->Branch("bbarjet_pz",&bbarjet_pz);
+   evtree->Branch("bbarjet_mass",&bbarjet_mass);
    
    evtree->Branch("htobb_energy",&htobb_energy);
    evtree->Branch("htobb_px",&htobb_px);
@@ -1108,11 +1124,16 @@ DiHiggsWWAnalyzer::fillbranches(){
       b2_py = b2cand->py();
       b2_pz = b2cand->pz();
 
-      jets_energy = jets_lorentz.Energy();
-      jets_px = jets_lorentz.Px();
-      jets_py = jets_lorentz.Py();
-      jets_pz = jets_lorentz.Pz();
-      jets_mass = jets_lorentz.M();
+      bjet_energy = bjet_lorentz.Energy();
+      bjet_px = bjet_lorentz.Px();
+      bjet_py = bjet_lorentz.Py();
+      bjet_pz = bjet_lorentz.Pz();
+      bjet_mass = bjet_lorentz.M();
+      bbarjet_energy = bbarjet_lorentz.Energy();
+      bbarjet_px = bbarjet_lorentz.Px();
+      bbarjet_py = bbarjet_lorentz.Py();
+      bbarjet_pz = bbarjet_lorentz.Pz();
+      bbarjet_mass = bbarjet_lorentz.M();
       
       htobb_energy = htoBBcand->energy();
       htobb_px = htoBBcand->px();
