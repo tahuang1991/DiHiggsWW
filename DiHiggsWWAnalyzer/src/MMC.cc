@@ -151,7 +151,7 @@ MMC::runMMC(){
    offshellWmass_hist->Scale(1.0/offshellWmass_hist->GetBinContent(offshellWmass_hist->GetMaximumBin()));
    //std::cout <<" rescale priori distribution 2" << std::endl;
    
-   printTrueLorentz();
+  // printTrueLorentz();
    
    for (int i = 0; i < iterations_ ; i++){
 

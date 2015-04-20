@@ -1,16 +1,17 @@
 import FWCore.ParameterSet.Config as cms
 import random
 import sys
+import os
 process = cms.Process("ttbarAna")
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )
 
 
 process.source = cms.Source("PoolSource",
     # 318 548 618 725 843
-    #skipEvents = cms.untracked.uint32(617),
+    #skipEvents = cms.untracked.uint32(115),
     # replace 'myfile.root' with the source file you want to use
     fileNames = cms.untracked.vstring(
        # 'file:/fdata/hepx/store/user/taohuang/Hhh/HH-bbWW-B3-Gen-1089680.root'
@@ -18,6 +19,11 @@ process.source = cms.Source("PoolSource",
 	'file:/eos/uscms/store/mc/Phys14DR/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola/MINIAODSIM/PU20bx25_PHYS14_25_V1-v1/00000/A65DBF1F-3174-E411-91A9-002481E94B26.root'
     )
 )
+
+#inputfiles
+from DiHiggsWW.DiHiggsWWAnalyzer.InputFileHelpers import *
+inputdir = ['/eos/uscms/store/mc/Phys14DR/TTJets_MSDecaysCKM_central_Tune4C_13TeV-madgraph-tauola/MINIAODSIM/PU20bx25_PHYS14_25_V1-v1/00000/']
+process = useInputDir(process, inputdir, True)
 
 
 try:
@@ -30,9 +36,11 @@ except:
 #print "To test array jobs, randint ", random.randint(0,10000000)
 refrootfile = os.getenv( "CMSSW_BASE" ) +"/src/DiHiggsWW/DiHiggsWWAnalyzer/plugins/MMCRefPDF.ROOT"
 process.ttbarAna = cms.EDAnalyzer('ttbarAnalyzer',
+       # SkipEvent = cms.untracked.vstring('ProductNotFound'),
 	verbose = cms.untracked.int32(0),
         finalStates = cms.bool(False),
-        runMMC = cms.bool(False),
+        runMMC = cms.bool(True),
+	simulation = cms.bool(True),
         mmcset = cms.PSet(
 	iterations = cms.untracked.int32(100000),
 	seed = cms.int32(random.randint(0,100000000)),#may be ignored since we use can take ievent alone as seed

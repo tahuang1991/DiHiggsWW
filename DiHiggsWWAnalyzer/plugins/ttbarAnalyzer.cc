@@ -125,6 +125,7 @@ class ttbarAnalyzer : public edm::EDAnalyzer {
       const reco::Candidate* findnudescendants(const reco::Candidate*, int& );
     private:
      bool finalStates_;
+     bool simulation_;
     private:
      //decendants and ancestor
      const reco::Candidate* stabledecendant(const reco::Candidate* cand, int id);
@@ -401,6 +402,7 @@ ttbarAnalyzer::ttbarAnalyzer(const edm::ParameterSet& iConfig)
      mmcset_ = iConfig.getParameter<edm::ParameterSet>("mmcset"); 
      finalStates_ = iConfig.getParameter<bool>("finalStates");
      runMMC_ = iConfig.getParameter<bool>("runMMC");
+     simulation_ = iConfig.getParameter<bool>("simulation");
      /*
      weightfromonshellnupt_func_ = iConfig.getParameter<bool>("weightfromonshellnupt_func");
      weightfromonshellnupt_hist_ = iConfig.getParameter<bool>("weightfromonshellnupt_hist");
@@ -631,19 +633,19 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       
    for (std::vector<pat::Muon>::const_iterator it = muonColl->begin(); it != muonColl->end(); ++it){
    
-       std::cout <<"muon id " << it->pdgId() <<" status " << it->status() <<" px " << it->px() << " py " << it->py() <<std::endl;
+   //    std::cout <<"muon id " << it->pdgId() <<" status " << it->status() <<" px " << it->px() << " py " << it->py() <<std::endl;
    
    }
 
    for (std::vector<pat::Jet>::const_iterator jet = jetColl->begin(); jet != jetColl->end(); ++jet){
    
-       std::cout <<"jet mass " << jet->mass() <<" status " << jet->status() <<" px " << jet->px() << " py " << jet->py() <<std::endl;
+     //  std::cout <<"jet mass " << jet->mass() <<" status " << jet->status() <<" px " << jet->px() << " py " << jet->py() <<std::endl;
    
    }
 
    for (std::vector<pat::MET>::const_iterator met = metColl->begin(); met != metColl->end(); ++met){
    
-       std::cout <<"met mass " << met->mass() <<" status " << met->status() <<" px " << met->px() << " py " << met->py() <<std::endl;
+       //std::cout <<"met mass " << met->mass() <<" status " << met->status() <<" px " << met->px() << " py " << met->py() <<std::endl;
    
    }
 
@@ -812,6 +814,18 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         w1cand = findancestor(mu1cand, -24, true);
 	w2cand = findancestor(mu2cand, 24, true);   
         }
+
+        //bjet_lorentz = stableDecendantsLorentz(b1cand);
+        //bbarjet_lorentz = stableDecendantsLorentz(b2cand);
+        bjet_lorentz.SetXYZT(b1cand->px(), b1cand->py(), b1cand->pz(), b1cand->energy());
+        bbarjet_lorentz.SetXYZT(b2cand->px(), b2cand->py(), b2cand->pz(), b2cand->energy());
+   	mu1_lorentz.SetPtEtaPhiM(mu1cand->pt(), mu1cand->eta(), mu1cand->phi(), 0);
+   	nu1_lorentz.SetPtEtaPhiM(nu1cand->pt(), nu1cand->eta(), nu1cand->phi(), 0);
+        mu2_lorentz.SetPtEtaPhiM(mu2cand->pt(), mu2cand->eta(), mu2cand->phi(), 0); 
+        nu2_lorentz.SetPtEtaPhiM(nu2cand->pt(), nu2cand->eta(), nu2cand->phi(), 0); 
+        met_lorentz = calculateMET();
+
+        /*
         //if ()
         std::cout <<"new mu1 "; printCandidate(mu1cand);	
         //std::cout <<"old mu1 "; printCandidate(findmudaughter(mu1_W1_cand));	
@@ -825,6 +839,8 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         std::cout <<" w2 " ; printCandidate(w2cand);
         std::cout <<" b1(b) " ; printCandidate(b1cand);
         std::cout <<" b2(bbar) " ; printCandidate(b2cand);
+        std::cout <<" bjet, mass "<<bjet_lorentz.M(); bjet_lorentz.Print();
+        std::cout <<" bbarjet, mass "<<bbarjet_lorentz.M(); bbarjet_lorentz.Print();
         std::cout <<" t->Wb " ; printCandidate(tcand);
         std::cout <<" tbar->Wbbar " ; printCandidate(tbarcand);
         //std::cout <<"another b1 " ; printCandidate(finddecendant(tbarcand, 5, false));
@@ -842,13 +858,18 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	while (t_tmp->pdgId() == 6) t_tmp = t_tmp->mother();
 	const reco::Candidate* tbar_tmp = tbarcand->mother();
 	while (tbar_tmp->pdgId() == -6) tbar_tmp = tbar_tmp->mother();
-        std::cout <<" tbar_tmp and its decendants" <<std::endl; printallDecendants(tbar_tmp);
-        std::cout <<" t_tmp and its decendants" <<std::endl; printallDecendants(t_tmp);
-        
+        //std::cout <<" tbar_tmp and its decendants" <<std::endl; printallDecendants(tbar_tmp);
+        //std::cout <<" t_tmp and its decendants" <<std::endl; printallDecendants(t_tmp);
+	*/
+        /*if (fabs(TLorentzVector(mu1_lorentz+nu1_lorentz+bbarjet_lorentz).M()-tbarcand->mass())>0.5 or  
+        fabs(TLorentzVector(mu2_lorentz+nu2_lorentz+bjet_lorentz).M()-tcand->mass())>0.5  ) 
+	 {
+	        std::cout << "reconstructed t mass " << TLorentzVector(mu1_lorentz+nu1_lorentz+bbarjet_lorentz).M() <<std::endl;
+		std::cout <<" reconstructed tbar mass"<< TLorentzVector(mu2_lorentz+nu2_lorentz+bjet_lorentz).M() << std::endl;
+	        printallDecendants(t_tmp);
+	 
+	 }*/
         //std::cout <<" tbar and its decendants" <<std::endl; printCandidate(tbarcand);
-        bjet_lorentz = stableDecendantsLorentz(b1cand);
-        bbarjet_lorentz = stableDecendantsLorentz(b2cand);
-        met_lorentz = calculateMET();
        
         fillbranches();
         evtree->Fill();
@@ -858,10 +879,6 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
    //if (h2tohh && runMMC_) runMMC();
    if (ttoWb and tbartoWbbar and  runMMC_){
-   	mu1_lorentz.SetPtEtaPhiM(mu1cand->pt(), mu1cand->eta(), mu1cand->phi(), 0);
-   	nu1_lorentz.SetPtEtaPhiM(nu1cand->pt(), nu1cand->eta(), nu1cand->phi(), 0);
-        mu2_lorentz.SetPtEtaPhiM(mu2cand->pt(), mu2cand->eta(), mu2cand->phi(), 0); 
-        nu2_lorentz.SetPtEtaPhiM(nu2cand->pt(), nu2cand->eta(), nu2cand->phi(), 0); 
         bbar_lorentz.SetXYZT(b1cand->px()+b2cand->px(), b1cand->py()+b2cand->py(), b1cand->pz()+b2cand->pz(), b1cand->energy()+b2cand->energy());
         int onshellMarker = -1;
         if (w1cand->mass() > w2cand->mass()) onshellMarker = 1;
@@ -870,7 +887,7 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         //thismmc = new MMC();
         //std::cout << "onshellMarkder  " << onshellMarker << std::endl;
 	thismmc = new MMC(&mu1_lorentz, &mu2_lorentz, &bbar_lorentz, &met_lorentz, &nu1_lorentz, &nu2_lorentz, onshellMarker, 
-	true, ievent, mmcset_, fs, verbose_);
+	simulation_, ievent, mmcset_, fs, verbose_);
         //thismmc->printTrueLorentz();
         thismmc->runMMC();	
         delete thismmc;
