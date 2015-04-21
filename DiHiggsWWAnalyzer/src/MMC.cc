@@ -351,13 +351,12 @@ MMC::initTree(TTree* mmctree){
    
    
    
-   
-   
-   
-   
    }
 
-
+   met = mmcmet_vec2->Mod(); 
+   met_px = mmcmet_vec2->Px();
+   met_py = mmcmet_vec2->Px();
+   met_phi = mmcmet_vec2->Phi();
 
    mmctree->Branch("ievent", &iev);
    mmctree->Branch("eta_mean", &eta_mean);
