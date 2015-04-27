@@ -41,6 +41,7 @@
 #include "TRandom3.h"
 #include "TF1.h"
 #include "TH1F.h"
+#include "TH2F.h"
 
 typedef std::pair<float, float> EtaPhi;
 
@@ -87,16 +88,18 @@ class MMC{
     private:
       TH1F* readoutonshellWMassPDF();
       TH1F* readoutoffshellWMassPDF();
+      TH2F* readoutonoffshellWMassPDF();
       TH1F* readoutonshellnuptPDF();
  
     private:
       float weightfromhist(TH1F* pdf, float x); 
+      float weightfromhist(TH2F* pdf, float x, float y); 
       float weightfromonshellnupt(float nupt); 
    
     private:
       bool weightfromonshellnupt_func_;
       bool weightfromonshellnupt_hist_;
-      bool weightfromoffshellWmass_hist_;
+      bool weightfromonoffshellWmass_hist_;
    
     private:
       TLorentzVector calculateMET(); 

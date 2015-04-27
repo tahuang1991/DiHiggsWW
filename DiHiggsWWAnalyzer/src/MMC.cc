@@ -47,7 +47,7 @@ MMC::MMC(TLorentzVector* mu1_lorentz, TLorentzVector* mu2_lorentz, TLorentzVecto
 
    weightfromonshellnupt_func_ = mmcset_.getParameter<bool>("weightfromonshellnupt_func");
    weightfromonshellnupt_hist_ = mmcset_.getParameter<bool>("weightfromonshellnupt_hist");
-   weightfromoffshellWmass_hist_ = mmcset_.getParameter<bool>("weightfromoffshellWmass_hist");
+   weightfromonoffshellWmass_hist_ = mmcset_.getParameter<bool>("weightfromonoffshellWmass_hist");
    iterations_ = mmcset_.getUntrackedParameter<int>("iterations",100000);
    seed_ = mmcset_.getParameter<int>("seed");
    RefPDFfile_ = mmcset_.getParameter<std::string>("RefPDFfile");
@@ -142,13 +142,12 @@ MMC::runMMC(){
    wmass_gen = 80.3;// initial value
    float step,random01;
    TH1F* wmasshist = readoutonshellWMassPDF(); 
-   TH1F* offshellWmass_hist = readoutoffshellWMassPDF(); 
+   TH2F* onoffshellWmass_hist = readoutonoffshellWMassPDF(); 
    TH1F* onshellnupt_hist = readoutonshellnuptPDF(); 
    //std::cout <<" rescale priori distribution 1" << std::endl;
    //std::cout <<" onshellnupt max content " <<onshellnupt_hist->GetBinContent(onshellnupt_hist->GetMaximumBin()) << std::endl;
-   //std::cout <<" offshellWmass max content " << offshellWmass_hist->GetBinContent(offshellWmass_hist->GetMaximumBin()) << std::endl;
    onshellnupt_hist->Scale(1.0/onshellnupt_hist->GetBinContent(onshellnupt_hist->GetMaximumBin()));
-   offshellWmass_hist->Scale(1.0/offshellWmass_hist->GetBinContent(offshellWmass_hist->GetMaximumBin()));
+   onoffshellWmass_hist->Scale(1.0/onoffshellWmass_hist->GetBinContent(onoffshellWmass_hist->GetMaximumBin()));
    //std::cout <<" rescale priori distribution 2" << std::endl;
    
   // printTrueLorentz();
@@ -165,7 +164,7 @@ MMC::runMMC(){
            random01 = generator->Uniform(0,1);
            //wmass_gen = onshellWMassRandomWalk(wmass_gen, step, random01);
            wmass_gen = onshellWMassRandomWalk(wmass_gen, step, random01, wmasshist);
-	  
+	    
            //wmass_gen = wmasspdf->GetRandom(50.0,90.0);
            //test
            //eta_gen = eta_nuonshellW_true;
@@ -279,7 +278,7 @@ MMC::runMMC(){
 
                 if (weightfromonshellnupt_func_) weight1 = weightfromonshellnupt(nu_onshellW_pt); 
                 if (weightfromonshellnupt_hist_) weight1 = weightfromhist(onshellnupt_hist, nu_onshellW_pt); 
-                if (weightfromoffshellWmass_hist_) weight2 = weightfromhist(offshellWmass_hist, offshellW_lorentz->M()); 
+                if (weightfromonoffshellWmass_hist_) weight2 = weightfromhist(onoffshellWmass_hist, wmass_gen, offshellW_lorentz->M()); 
                 weight1 = weight1*weight;
  		weight2 = weight2*weight1;
                 if ((h2tohh_lorentz->Pt()/h2tohh_lorentz->E())>0.0000001){
@@ -554,6 +553,20 @@ MMC::readoutoffshellWMassPDF(){
 }
 
 
+//------------ method called to readout TH2F onoffshellWmasspdf from root file -----------------------------
+//
+TH2F*
+MMC::readoutonoffshellWMassPDF(){
+
+	
+   //TFile* file = new TFile("/home/taohuang/work/CMSSW_7_3_1/src/DiHiggsWW/MMC/plugins/MMCRefPDF.ROOT");
+   TFile* file = new TFile(RefPDFfile_.c_str());
+   TH2F* onoffshellWmasspdf = (TH2F*)file->Get("onoffshellWmasspdf");
+   delete file;
+   return onoffshellWmasspdf;
+
+}
+
 
 //------------ method called to readout TH1F onshellWmasspdf from root file -----------------------------
 //
@@ -675,19 +688,30 @@ MMC::weightfromhist(TH1F* hist, float x){
    int bin1 = hist->FindBin(x);
    //first make sure that x is within range
    if (bin1 == 0 || bin1 == hist->GetNbinsX()+1) return weight=0;
-   
-   float bin1content = hist->GetBinContent(bin1);
-   float bin1center = hist->GetBinCenter(bin1);
-   int bin2 = 0;
-   
-   if ((float)hist->GetBinCenter(bin1) < x)  
-	bin2 = bin1+1;
-   else
-        bin2 = bin1-1;
-   //find probability of x and set it as weight
-   weight = (x-bin1center)*(bin1content-hist->GetBinContent(bin2))/(bin1center-hist->GetBinCenter(bin2))+bin1content;
+
+   weight = hist->Interpolate(x);
    return weight;
 }
+
+//---------- weight solution by a 2d histogram --------------------------------------------------------
+//
+float
+MMC::weightfromhist(TH2F* hist, float x, float y){
+//hist should be scaled
+
+   float weight = 0.0;
+   int bin1 = hist->GetXaxis()->FindBin(x);
+   int bin2 = hist->GetYaxis()->FindBin(y);
+   //first make sure that x is within range
+   if (bin1 == 0 || bin1 == hist->GetNbinsX()+1) return weight=0;
+   if (bin2 == 0 || bin2 == hist->GetNbinsY()+1) return weight=0;
+
+   weight = hist->GetBinContent(bin1, bin2);
+
+   return weight;
+
+}
+
 
 //---------- weight solution by nupt --------------------------------------------------------
 //
