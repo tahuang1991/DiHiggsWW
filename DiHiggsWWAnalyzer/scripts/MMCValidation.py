@@ -1,5 +1,7 @@
 from array import *
 import ROOT
+import math
+
 
 ROOT.gROOT.SetBatch(1)
 #gStyle from TStyle
@@ -435,69 +437,43 @@ def draw_combined(file,todraw,todrawtrue,x_bins,tex,pic_name):
 #____________________________________________________________________________
 def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"]):
 
-    f = ROOT.TFile(file)
-    list = f.GetListOfKeys()
-    key = list.At(0)
-    obj = key.ReadObj() #DiHiggsWWAna
-    sub_list = obj.GetListOfKeys()
-    sub_key = sub_list.At(1)
-
+    num = gettreenum(file)
     #cut = ["weight*(nu_onshellW_pt>10)","weight*(control<2&&nu_onshellW_pt>10)","weight*(control>1&&nu_onshellW_pt>10)"]
     #cut = ["weight","weight*(control<2)","weight*(control>1)"]
    # cut_weight1 = ["weight1","weight1*(control<2)","weight1*(control>1)"]
     c1 = ROOT.TCanvas("c1","c1",1200,900)
     n = 0
     m = 1
-    while sub_key:
+    while m<num:
+    	f = ROOT.TFile(file)
+    	list = f.GetListOfKeys()
+    	key = list.At(0)
+    	obj = key.ReadObj() #DiHiggsWWAna
+    	sub_list = obj.GetListOfKeys()
+    	sub_key = sub_list.At(m)
 	tree = sub_key.ReadObj()
+        #h2_mass_true = getTrueValue(tree,"mass_h2_true","(400,200,600)")
+#        h2_mass_reconstructed = geth2MassMostProba(tree,cut[0]) 
+#        if (h2_mass_reconstructed < 450 and h2_mass_reconstructed > 250):
+#		m = m+1
+#		f.Close()
+#		continue
+    
 	#eta-phi of nu_onshellW contour plot, nu_onshellW_ete/phi
         #mmctree_618->Draw("nu_onshellW_phi:nu_onshellW_eta>>th2","control<2")
         eta_bins = "(50,-6,6)"
         phi_bins = "(40,-3.1415,3.1415)"
 	todraw1 = "nu_onshellW_phi:nu_onshellW_eta"
-        hist1_1 = hist_2D(tree, todraw1, eta_bins, phi_bins, cut,0)
-	hist1_1.SetLineColor(ROOT.kRed)
         
-        hist1_2 = hist_2D(tree, todraw1, eta_bins, phi_bins, cut,1)
-        hist1_2.SetLineColor(ROOT.kBlue)
-        
-        hist1_3 = hist_2D(tree, todraw1, eta_bins, phi_bins, cut,2)
-        hist1_3.SetLineColor(ROOT.kGreen)#3
-        hist1_3max = hist1_3.GetBinContent(hist1_3.GetMaximumBin())
-        hist1_2max = hist1_2.GetBinContent(hist1_2.GetMaximumBin())
-        hist1max = max(hist1_3max, hist1_2max)
-        array_contour1 = array('d',[hist1max])
-        i = 0.8
-        while i > 0.0:
-		array_contour1.append(hist1max*i) 
-	 	i = i-0.1
-        """
-        if (hist1max*i > hist1_3max):
-		array_contour1.append(hist1_3max)
-		array_contour1.append(hist1_3max*0.75)
-		array_contour1.append(hist1_3max*0.5)
-		array_contour1.append(hist1_3max*0.25)
-        if (hist1max*i > hist1_2max):
-		array_contour1.append(hist1_2max)
-		array_contour1.append(hist1_2max*0.75)
-		array_contour1.append(hist1_2max*0.5)
-		array_contour1.append(hist1_2max*0.25)
-        """
-        hist1_2.SetContour(len(array_contour1), array_contour1) 
-        hist1_3.SetContour(len(array_contour1), array_contour1) 
-
-        
-        #hist3.SetFillColor(46)
-      #  hist3.SetFillStyle(4050)
-        #hist3.Draw("sameE3") 
-	var_x1 = getTrueValue(tree,"eta_nuonshellW_true","(200,-6,6)")
-	var_y1 = getTrueValue(tree,"phi_nuonshellW_true","(200,-3.1415,3.1415)")
-	array_x = array('d',[var_x1])
-	array_y = array('d',[var_y1])
-	graph1 = ROOT.TGraph(1, array_x,array_y)
-        graph1.SetMarkerColor(ROOT.kMagenta)
- 	graph1.SetMarkerStyle(15)
-	graph1.SetMarkerSize(1)
+        todrawtrue1 = "phi_nuonshellW_true:eta_nuonshellW_true"
+        hs_title1 = "#phi_{#nu}^{onshellW} Vs #eta_{#nu}^{onshellW}"
+        hs_Xtitle1 = "#eta_{#nu}^{onshellW}"
+        hs_Ytitle1 = "#phi_{#nu}^{onshellW}"
+        hs1 = gethiststack_2d(tree, todraw1, todrawtrue1, eta_bins, phi_bins, hs_title1, cut)
+        hist1_true = hist_2D(tree, todrawtrue1, eta_bins, phi_bins, cut,1)
+        hist1_true.SetMarkerStyle(7) 
+        hist1_true.SetMarkerSize(1)
+        hist1_true.SetMarkerColor(ROOT.kMagenta)
 	onshellmuon_eta = getTrueValue(tree,"mu_onshellW_eta","(200,-6,6)")
 	onshellmuon_phi = getTrueValue(tree,"mu_onshellW_phi","(200,-3.1415,3.1415)")
 	array_mu1_eta = array('d',[onshellmuon_eta])
@@ -506,15 +482,6 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
         graph1_muon.SetMarkerColor(ROOT.kBlack)
  	graph1_muon.SetMarkerStyle(16)
 	graph1_muon.SetMarkerSize(1)
-	
-        hist1_2.GetXaxis().SetTitle("#eta_{#nu}^{onshellW}")
-        hist1_2.GetXaxis().SetTitleSize(0.08)
-        hist1_2.GetXaxis().SetTitleOffset(0.6)
-        hist1_2.GetYaxis().SetTitle("#phi_{#nu}^{onshellW}")
-        hist1_2.GetYaxis().SetTitleSize(0.08)
-        hist1_2.GetYaxis().SetTitleOffset(0.6)
-        hist1_2.SetTitle(" ")
-        #hist1_2.SetTitleOffset(0.6)
 
 
 	#"nu_onshellW_phi:nu_onshellW_eta"
@@ -570,47 +537,15 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
         #eta-phi of nu_offshellW
 	#c1.cd(4)
 	todraw4 = "nu_offshellW_phi:nu_offshellW_eta"
-        hist4_1 = hist_2D(tree, todraw4, eta_bins, phi_bins, cut,0)
-	hist4_1.SetLineColor(ROOT.kRed)
-         
-        hist4_2 = hist_2D(tree, todraw4, eta_bins, phi_bins, cut,1)
-        hist4_2.SetLineColor(ROOT.kBlue)
-        hist4_3 = hist_2D(tree, todraw4, eta_bins, phi_bins, cut,2)
-        hist4_3.SetLineColor(ROOT.kGreen)#3
-        hist4_3max = hist4_3.GetBinContent(hist4_3.GetMaximumBin())
-        hist4_2max = hist4_2.GetBinContent(hist4_2.GetMaximumBin())
-        hist4max = max(hist4_2max, hist4_3max)
-        array_contour4 = array('d',[hist4max])
-        i = 0.8
-        while i > 0.0:
-		array_contour4.append(hist4max*i) 
-	 	i = i-0.1
-        """
-        if (hist4max*i > hist4_3max):
-		array_contour4.append(hist4_3max)
-		array_contour4.append(hist4_3max*0.75)
-		array_contour4.append(hist4_3max*0.5)
-		array_contour4.append(hist4_3max*0.25)
-        if (hist4max*i > hist4_2max):
-		array_contour4.append(hist4_2max)
-		array_contour4.append(hist4_2max*0.75)
-		array_contour4.append(hist4_2max*0.5)
-		array_contour4.append(hist4_2max*0.25)
-        """
-#        print array_contour4
-        hist4_2.SetContour(len(array_contour4), array_contour4) 
-        hist4_3.SetContour(len(array_contour4), array_contour4) 
-        #hist3.SetFillColor(46)
-      #  hist3.SetFillStyle(4050)
-        #hist3.Draw("sameE3") 
-	var_x4 = getTrueValue(tree,"eta_nuoffshellW_true","(200,-6,6)")
-	var_y4 = getTrueValue(tree,"phi_nuoffshellW_true","(200,-3.1415,3.1415)")
-	array_x4 = array('d',[var_x4])
-	array_y4 = array('d',[var_y4])
-	graph4 = ROOT.TGraph(1, array_x4,array_y4)
-        graph4.SetMarkerColor(ROOT.kMagenta)
- 	graph4.SetMarkerStyle(15)
-	graph4.SetMarkerSize(1)
+        todrawtrue4 = "phi_nuoffshellW_true:eta_nuoffshellW_true"
+        hs_title4 = "#phi_{#nu}^{offshellW} Vs #eta_{#nu}^{offshellW}"
+        hs_Xtitle4 = "#eta_{#nu}^{offshellW}"
+        hs_Ytitle4 = "#phi_{#nu}^{offshellW}"
+        hs4 = gethiststack_2d(tree, todraw4, todrawtrue4, eta_bins, phi_bins, hs_title4, cut)
+        hist4_true = hist_2D(tree, todrawtrue4, eta_bins, phi_bins, cut,1)
+        hist4_true.SetMarkerStyle(7) 
+        hist4_true.SetMarkerSize(1)
+        hist4_true.SetMarkerColor(ROOT.kMagenta)
 	offshellmuon_eta = getTrueValue(tree,"mu_offshellW_eta","(200,-6,6)")
 	offshellmuon_phi = getTrueValue(tree,"mu_offshellW_phi","(200,-3.1415,3.1415)")
 	array_mu2_eta = array('d',[offshellmuon_eta])
@@ -619,16 +554,6 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
         graph4_muon.SetMarkerColor(ROOT.kBlack)
  	graph4_muon.SetMarkerStyle(16)
 	graph4_muon.SetMarkerSize(1)
-
-        hist4_2.GetXaxis().SetTitle("#eta_{#nu}^{offshellW}")
-        hist4_2.GetXaxis().SetTitleSize(0.08)
-        hist4_2.GetXaxis().SetTitleOffset(0.6)
-        hist4_2.GetYaxis().SetTitle("#phi_{#nu}^{offshellW}")
-        hist4_2.GetYaxis().SetTitleSize(0.08)
-        hist4_2.GetYaxis().SetTitleOffset(0.6)
-        hist4_2.SetTitle("  ")
-#	hist4_2.SetTitleOffset(0.6)
-
 	
 	#eta of nuoffshellW	
         todraw12 = "nu_offshellW_eta"
@@ -709,13 +634,68 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
 #	hs14 = gethiststack(tree, todraw9,todrawtrue9, h2mass_bins, hs_title9,cut_weight1)
        # hs9.GetHistogram().GetXaxis().SetTitleSize(0.06)
 	#hs9.SetName("%s"%tree.GetTitle()+"_%s"%todraw9)
+        
+        todraw14 = "onshellW_Mass:h2tohh_Mass"
+        todrawtrue14 = "mass_onshellW_true:mass_h2_true"
+        hs_title14 = "M_{W}^{onshell} Vs M_{H}"
+        hs_Xtitle14 = "M_{H}"
+        hs_Ytitle14 = "M_{W}^{onshell}"
+        hs14 = gethiststack_2d(tree, todraw14, todrawtrue14, h2mass_bins, wmass_onshell_bins, hs_title14, cut)
+        hist14_true = hist_2D(tree, todrawtrue14, h2mass_bins, wmass_onshell_bins, cut,1)
+        hist14_true.SetMarkerStyle(7) 
+        hist14_true.SetMarkerSize(1)
+        hist14_true.SetMarkerColor(ROOT.kMagenta)
+        
+        
+        todraw15 = "offshellW_Mass:h2tohh_Mass"
+        todrawtrue15 = "mass_offshellW_true:mass_h2_true"
+        hs_title15 = "M_{W}^{offshell} Vs M_{H}"
+        hs_Xtitle15 = "M_{H}"
+        hs_Ytitle15 = "M_{W}^{offshell}"
+        hs15 = gethiststack_2d(tree, todraw15, todrawtrue15, h2mass_bins, wmass_offshell_bins, hs_title15, cut)
+        hist15_true = hist_2D(tree, todrawtrue15, h2mass_bins, wmass_offshell_bins, cut,1)
+        hist15_true.SetMarkerStyle(7) 
+        hist15_true.SetMarkerSize(1)
+        hist15_true.SetMarkerColor(ROOT.kMagenta)
+        
+        
+        todraw16 = "nu_onshellW_pt:h2tohh_Mass"
+        todrawtrue16 = "pt_nuonshellW_true:mass_h2_true"
+        hs_title16 = "p_{T#nu}^{onshell} Vs M_{H}"
+        hs_Xtitle16 = "M_{H}"
+        hs_Ytitle16 = "p_{T#nu}^{onshell}"
+        hs16 = gethiststack_2d(tree, todraw16, todrawtrue16, h2mass_bins, nupt_onshell_bins, hs_title16, cut)
+        hist16_true = hist_2D(tree, todrawtrue16, h2mass_bins, nupt_onshell_bins, cut,1)
+        hist16_true.SetMarkerStyle(7) 
+        hist16_true.SetMarkerSize(1)
+        hist16_true.SetMarkerColor(ROOT.kMagenta)
+        
+        
+        todraw17 = "nu_offshellW_pt:h2tohh_Mass"
+        todrawtrue17 = "pt_nuoffshellW_true:mass_h2_true"
+        hs_title17 = "p_{T#nu}^{offshell} Vs M_{H}"
+        hs_Xtitle17 = "M_{H}"
+        hs_Ytitle17 = "p_{T#nu}^{offshell}"
+        hs17 = gethiststack_2d(tree, todraw17, todrawtrue17, h2mass_bins, nupt_offshell_bins, hs_title17, cut)
+        hist17_true = hist_2D(tree, todrawtrue17, h2mass_bins, nupt_offshell_bins, cut,1)
+        hist17_true.SetMarkerStyle(7) 
+        hist17_true.SetMarkerSize(1)
+        hist17_true.SetMarkerColor(ROOT.kMagenta)
+        
+
 	#tot
 	c1.Clear()
-	c1.Divide(4,3)
+	c1.Divide(4,4)
 	c1.cd(1)
-	hist1_2.Draw("CONT3")
-	hist1_3.Draw("CONT3same")
-	graph1.Draw("psame")
+     	hs1.Draw("nostackcolz")
+        hs1.GetHistogram().GetXaxis().SetTitle("%s"%hs_Xtitle1)
+        hs1.GetHistogram().GetYaxis().SetTitle("%s"%hs_Ytitle1)
+        hs1.GetHistogram().GetXaxis().SetTitleOffset(0.6)
+        hs1.GetHistogram().GetXaxis().SetTitleSize(0.08)
+        hist1_true.Draw("same")
+	#hist1_2.Draw("CONT3")
+	#hist1_3.Draw("CONT3same")
+	#graph1.Draw("psame")
 	graph1_muon.Draw("psame")
 
 	c1.cd(2)
@@ -740,9 +720,15 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
         tex2.Draw("same")
 
 	c1.cd(5)
-	hist4_2.Draw("CONT3")
-	hist4_3.Draw("CONT3same")
-	graph4.Draw("psame")
+	#hist4_2.Draw("CONT3")
+	#hist4_3.Draw("CONT3same")
+	#graph4.Draw("psame")
+     	hs4.Draw("nostackcolz")
+        hs4.GetHistogram().GetXaxis().SetTitle("%s"%hs_Xtitle4)
+        hs4.GetHistogram().GetYaxis().SetTitle("%s"%hs_Ytitle4)
+        hs4.GetHistogram().GetXaxis().SetTitleOffset(0.6)
+        hs4.GetHistogram().GetXaxis().SetTitleSize(0.08)
+        hist4_true.Draw("same")
 	graph4_muon.Draw("psame")
 
 	c1.cd(6)
@@ -790,27 +776,61 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
         hs9.GetHistogram().GetXaxis().SetTitle("%s"%hs_title9)
         hs9.GetHistogram().GetXaxis().SetTitleOffset(0.6)
         hs9.GetHistogram().GetXaxis().SetTitleSize(0.08)
+       
+        c1.cd(13)
+     	hs14.Draw("nostackcolz")
+        hs14.GetHistogram().GetXaxis().SetTitle("%s"%hs_Xtitle14)
+        hs14.GetHistogram().GetYaxis().SetTitle("%s"%hs_Ytitle14)
+        hs14.GetHistogram().GetXaxis().SetTitleOffset(0.6)
+        hs14.GetHistogram().GetXaxis().SetTitleSize(0.08)
+        hist14_true.Draw("same")
+
+        c1.cd(14)
+     	hs15.Draw("nostackcolz")
+        hs15.GetHistogram().GetXaxis().SetTitle("%s"%hs_Xtitle15)
+        hs15.GetHistogram().GetYaxis().SetTitle("%s"%hs_Ytitle15)
+        hs15.GetHistogram().GetXaxis().SetTitleOffset(0.6)
+        hs15.GetHistogram().GetXaxis().SetTitleSize(0.08)
+        hist15_true.Draw("same")
+
+        c1.cd(15)
+     	hs16.Draw("nostackcolz")
+        hs16.GetHistogram().GetXaxis().SetTitle("%s"%hs_Xtitle16)
+        hs16.GetHistogram().GetYaxis().SetTitle("%s"%hs_Ytitle16)
+        hs16.GetHistogram().GetXaxis().SetTitleOffset(0.6)
+        hs16.GetHistogram().GetXaxis().SetTitleSize(0.08)
+        hist16_true.Draw("same")
+
+        c1.cd(16)
+     	hs17.Draw("nostackcolz")
+        hs17.GetHistogram().GetXaxis().SetTitle("%s"%hs_Xtitle17)
+        hs17.GetHistogram().GetYaxis().SetTitle("%s"%hs_Ytitle17)
+        hs17.GetHistogram().GetXaxis().SetTitleOffset(0.6)
+        hs17.GetHistogram().GetXaxis().SetTitleSize(0.08)
+        hist17_true.Draw("same")
+
 	c1.Update()
 
         c1.cd()
-        met = getTrueValue(tree,"met_true","(300,0,150)")
-    	tex = ROOT.TLatex(0.15,.954,"Performance of MMC,#slash{E}_{T}=%.2f"%met+", %s"%(tree.GetTitle()))
+        met = getTrueValue(tree,"met_true","(400,0,200)")
+    #    print "met ", met
+    	tex = ROOT.TLatex(0.15,.958,"Performance of MMC,#slash{E}_{T}=%.2f"%met+", %s"%(tree.GetTitle()))
     	#tex = ROOT.TLatex(0.25,.954,"Performance of MMC"+", %s"%(tree.GetTitle()))
     	tex.SetTextSize(0.04)
     	tex.SetTextFont(42)
     	tex.SetNDC()
 	tex.Draw("same")
 	c1.Update()
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0410_weight_newframe_B3.pdf")
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0410_weight_newframe_B3.png")
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0410_weight_newframe_B3.C")
+        c1.SaveAs("%s"%(tree.GetTitle())+"_0428_%s_B3.pdf"%cut[0])
+        c1.SaveAs("%s"%(tree.GetTitle())+"_0428_%s_B3.png"%cut[0])
+        c1.SaveAs("%s"%(tree.GetTitle())+"_0428_%s_B3.C"%cut[0])
         ##########################################
         ##### fill hist_h2
         
-	#if m>1:
-	#	break
+	if m>200:
+		break
 	m = m+1
-        sub_key = sub_list.At(m)
+        f.Close()
 
 
 #____________________________________________________________________________
@@ -821,6 +841,31 @@ def drawh2Mass_combined(file, cut="weight"):
     print "num of trees ", num
     hist_h2 = ROOT.TH1F("hist_h2"," ",150,200,500)
     hist_h2true = ROOT.TH1F("hist_h2true"," ",150,200,500)
+    hist_h2Mass_RMS = ROOT.TH2F("hist_h2Mass_RMS"," ",150,200,500,100,0,200)
+    hist_h2Mass_RMS2 = ROOT.TH2F("hist_h2Mass_RMS2"," ",150,200,500,100,0,100)
+    hist_h2Mass_deltaR = ROOT.TH2F("hist_h2Mass_deltaR"," ",150,200,500,60,0,6)
+    hist_h2Mass_mean = ROOT.TH2F("hist_h2Mass_mean"," ",150,200,500,150,200,500)
+    hist_h2Mass_integral = ROOT.TH2F("hist_h2Mass_integral"," ",150,200,500,120,0,12000)
+    hist_h2Mass_met = ROOT.TH2F("hist_h2Mass_met"," ",150,200,500,50,0,200)
+    hist_h2Mass_muonshellpt = ROOT.TH2F("hist_h2Mass_nuoffshellpt"," ",150,200,500,80,0,160)
+    hist_h2Mass_muoffshellpt = ROOT.TH2F("hist_h2Mass_nuonshellpt"," ",150,200,500,80,0,160)
+    hist_h2.SetXTitle("M_{H}")
+    hist_h2Mass_RMS.SetXTitle("reconstruced M_{H}")
+    hist_h2Mass_RMS.SetYTitle("MMC RMS")
+    hist_h2Mass_RMS2.SetXTitle("reconstructed M_{H}")
+    hist_h2Mass_RMS2.SetYTitle("MMC M_{H}/RMS")
+    hist_h2Mass_deltaR.SetXTitle("reconstructed M_{H}")
+    hist_h2Mass_deltaR.SetYTitle("#DeltaR_{#nu1,#nu2}")
+    hist_h2Mass_mean.SetXTitle("reconstructed M_{H}")
+    hist_h2Mass_mean.SetYTitle("average M_{H}")
+    hist_h2Mass_integral.SetXTitle("reconstructed M_{H}")
+    hist_h2Mass_integral.SetYTitle("integral over M_{H}")
+    hist_h2Mass_met.SetXTitle("reconstructed M_{H}")
+    hist_h2Mass_met.SetYTitle("#slash{E}_{T}")
+    hist_h2Mass_muonshellpt.SetXTitle("reconstructed M_{H}")
+    hist_h2Mass_muonshellpt.SetYTitle("p_{T#mu}^{onshell}")
+    hist_h2Mass_muoffshellpt.SetXTitle("reconstructed M_{H}")
+    hist_h2Mass_muoffshellpt.SetYTitle("p_{T#mu}^{offshell}")
     m = 1
     while m<num:
     	f = ROOT.TFile(file)
@@ -830,18 +875,47 @@ def drawh2Mass_combined(file, cut="weight"):
     	sub_list = obj.GetListOfKeys()
     	sub_key = sub_list.At(m)
 	tree = sub_key.ReadObj()
-	print  "m ",m," tree title ",tree.GetTitle()," entries ", tree.GetEntries()
-        h2_mass_true = getTrueValue(tree,"mass_h2_true","(400,200,600)")
+        h2_mass_true = getTrueValue(tree,"mass_h2_true","(800,200,1000)")
+    	name = tree.GetTitle()+"_h2Mass"
+   	b1 = ROOT.TH1F("%s"%name,"b1",800,200,1000)
+    	tree.Draw("h2tohh_Mass>>%s"%name,cut)
+        h2_mass_mean = b1.GetMean()
+        h2_mass_integral = b1.Integral(0,800+1)
         h2_mass_reconstructed = geth2MassMostProba(tree,cut)
- 	hist_h2.Fill(h2_mass_reconstructed)
-	hist_h2true.Fill(h2_mass_true)
-     #   if m>380:
+        h2_mass_reco_rms = getRMSh2Mass(tree,cut)
+	nu1_eta = getTrueValue(tree,"eta_nuonshellW_true","(200,-6,6)")
+	nu1_phi = getTrueValue(tree,"phi_nuonshellW_true","(200,-3.1415,3.1415)")
+	nu2_eta = getTrueValue(tree,"eta_nuoffshellW_true","(200,-6,6)")
+	nu2_phi = getTrueValue(tree,"phi_nuoffshellW_true","(200,-3.1415,3.1415)")
+        met = getTrueValue(tree,"met_true","(400,0,200)")
+        onshellmuon_pt =getTrueValue(tree,"mu_onshellW_pt","(400,0,200)")
+        offshellmuon_pt =getTrueValue(tree,"mu_offshellW_pt","(400,0,200)")
+        deltaphi = math.fabs(nu1_phi-nu2_phi)
+        if deltaphi > math.pi :
+		deltaphi = 2*math.pi - deltaphi
+        deltaeta = nu1_eta-nu2_eta
+        deltaR = math.sqrt(deltaphi*deltaphi + deltaeta*deltaeta)
+#	print  " tree title ",tree.GetTitle()," entries ", tree.GetEntries()," rms ",h2_mass_reco_rms 
+    #    if m>10:
 #		break;    
-	#if (abs(h2_mass_reconstructed-h2_mass_true)>5 or h2_mass_reconstructed > 450 or h2_mass_reconstructed < 250):
-	#	print tree.GetTitle()," reconstructed mass  ", h2_mass_reconstructed, " true mass ", h2_mass_true
+	#if (abs(h2_mass_reconstructed-h2_mass_true)>30 or h2_mass_reconstructed > 450 or h2_mass_reconstructed < 250):
+	#	print "m ",m," ",tree.GetTitle()," reconstructed mass  ", h2_mass_reconstructed, " true mass ", h2_mass_true
+ 	hist_h2Mass_RMS.Fill(h2_mass_reconstructed, h2_mass_reco_rms)	
+ 	hist_h2Mass_RMS2.Fill(h2_mass_reconstructed, h2_mass_reconstructed/h2_mass_reco_rms)	
+        hist_h2Mass_deltaR.Fill(h2_mass_reconstructed, deltaR)
+        hist_h2Mass_mean.Fill(h2_mass_reconstructed, h2_mass_mean)
+        hist_h2Mass_integral.Fill(h2_mass_reconstructed, h2_mass_integral)
+        hist_h2Mass_met.Fill(h2_mass_reconstructed, met)
+        hist_h2Mass_muonshellpt.Fill(h2_mass_reconstructed, onshellmuon_pt)
+        hist_h2Mass_muoffshellpt.Fill(h2_mass_reconstructed, offshellmuon_pt)
+       	hist_h2.Fill(h2_mass_reconstructed)
+	hist_h2true.Fill(h2_mass_true)
         m = m+1
 	#sub_key = sub_list.At(m)
 	f.Close()
+    
+    h2massout = ROOT.TFile("h2mass_%s"%cut+"out.root","recreate")
+    h2massout.cd()
     h2Mass_c = ROOT.TCanvas()
     hist_h2.SetLineColor(ROOT.kRed)
     hist_h2.GetXaxis().SetTitle("M_{H}")
@@ -857,22 +931,71 @@ def drawh2Mass_combined(file, cut="weight"):
     hist_h2.Draw()
     hist_h2true.Draw("same")
     legend.Draw("same")
-    h2Mass_c.SaveAs("MMC_h2Mass_0414_weight_1M_B3.pdf") 
-    h2Mass_c.SaveAs("MMC_h2Mass_0414_weight_1M_B3.png") 
-    h2Mass_c.SaveAs("MMC_h2Mass_0414_weight_1M_B3.C") 
+    h2Mass_c.SaveAs("MMC_h2Mass_0428_%s_1M_B3.pdf"%cut) 
+    h2Mass_c.SaveAs("MMC_h2Mass_0428_%s_1M_B3.png"%cut) 
+    h2Mass_c.SaveAs("MMC_h2Mass_0428_%s_1M_B3.C"%cut) 
+    h2Mass_c.Write()
+ 
+    h2_c2 = ROOT.TCanvas("h2_c2","h2_c2",800,600)
+    h2_c2.cd()
+    h2_c2.Divide(3,3)
+    h2_c2.cd(1)
+    hist_h2.Draw()
+    hist_h2true.Draw("same")
+    legend.Draw("same")
+    h2_c2.cd(2) 
+    hist_h2Mass_RMS.Draw("colz")
+    h2_c2.cd(3)
+    hist_h2Mass_RMS2.Draw("colz")
+    h2_c2.cd(4)
+    hist_h2Mass_deltaR.Draw("colz")
+    h2_c2.cd(5)
+    hist_h2Mass_mean.Draw("colz")
+    h2_c2.cd(6)
+    hist_h2Mass_integral.Draw("colz")
+    h2_c2.cd(7)
+    hist_h2Mass_met.Draw("colz")
+    h2_c2.cd(8)
+    hist_h2Mass_muonshellpt.Draw("colz")
+    h2_c2.cd(9)
+    hist_h2Mass_muoffshellpt.Draw("colz")
+
+    h2_c2.cd()
+    h2_c2.SaveAs("MMC_h2Mass_combined_0428_%s_1M_B3.pdf"%cut)
+    h2_c2.SaveAs("MMC_h2Mass_combined_0428_%s_1M_B3.png"%cut)
+    h2_c2.SaveAs("MMC_h2Mass_combined_0428_%s_1M_B3.C"%cut)
+    h2_c2.Write() 
+    hist_h2.Write()
+    hist_h2true.Write()
+    hist_h2Mass_RMS.Write()
+    hist_h2Mass_RMS2.Write()
+    hist_h2Mass_deltaR.Write()
+    h2massout.Write()
+    h2massout.Close()
 
 #___________________________________________________________________________
 def geth2MassMostProba(t, cut = "weight"):
-
+ 
     name = t.GetTitle()
-    b1 = ROOT.TH1F("%s"%name,"b1",400,200,600)
+    b1 = ROOT.TH1F("%s"%name,"b1",800,200,1000)
     t.Draw("h2tohh_Mass>>%s"%name,cut)
+    #print "maxbin ",b1.GetMaximumBin()
+
     mass = b1.GetXaxis().GetBinCenter(b1.GetMaximumBin())
     del b1
     return mass
 
+#___________________________________________________________________________
+def getRMSh2Mass(t, cut = "weight"):
+ 
+    name = t.GetTitle()
+    b1 = ROOT.TH1F("%s"%name,"b1",800,200,1000)
+    t.Draw("h2tohh_Mass>>%s"%name,cut)
+    #print "maxbin ",b1.GetMaximumBin()
+    return b1.GetRMS()
+
 #____________________________________________________________________________
-def getTrueValue(t,var, x_bins):
+def getTrueValue(t,var, x_bins, cut="control<2"):
    
     c = ROOT.TCanvas() 
     xBins = int(x_bins[1:-1].split(',')[0])
@@ -880,7 +1003,7 @@ def getTrueValue(t,var, x_bins):
     xmaxBin = float(x_bins[1:-1].split(',')[2])
     name = "tmp_%s"%var
     b1 = ROOT.TH1F("%s"%name,"b1",xBins,xminBin,xmaxBin)
-    t.Draw("%s"%var+">>%s"%name)
+    t.Draw("%s"%var+">>%s"%name, cut)
     b1.Draw()
    # c.SaveAs("getTrueVaule_%s"%var+"_contour.png")
     value = b1.GetXaxis().GetBinCenter(b1.GetMaximumBin())
@@ -994,7 +1117,7 @@ def offshellWMass_hist(tree, x_bins, cut,i):
 
     return hist 
 #______________________________________________________________________________________
-def gethiststack(tree, todraw, todrawtrue, x_bins, hs_title, cut=["weight","weight*(control<2)","weight*(control>1)"]):
+def gethiststack(tree, todraw, todrawtrue, x_bins, hs_title, cut):
  
 
 #        cut = ["weight","weight*(control<2)","weight*(control>1)"]
@@ -1034,13 +1157,65 @@ def gethiststack(tree, todraw, todrawtrue, x_bins, hs_title, cut=["weight","weig
 	hs.Add(hist3)
         hs.Add(hist4)
          
-	
+
     	#c = ROOT.TCanvas() 
     #	hs.Draw("nostack")
     #	c.SaveAs("gethiststack_%s"%todraw+"_%s"%tree.GetTitle()+"_contour.png")
 	#hs.SetTitleOffset(0.8)
         return hs   
      #   c1.SaveAs("contour_%d"%(n%9)+".png") 
+
+#______________________________________________________________________________________
+def gethiststack_2d(tree, todraw, todrawtrue, x_bins, y_bins, hs_title, cut):
+ 
+
+#        cut = ["weight","weight*(control<2)","weight*(control>1)"]
+        #cut = ["weight*(nu_onshellW_pt>10)","weight*(control<2&&nu_onshellW_pt>10)","weight*(control>1&&nu_onshellW_pt>10)"]
+        
+	name = "hs_%s"%tree.GetTitle()+"_%s"%todraw.replace(":","_")+"_%s"%cut[0]
+        #hs = ROOT.THStack("hs_%s"%tree.GetTitle()+"%s"%todraw,"%s"%hs_title);
+        hs = ROOT.THStack("%s"%name,"  ");
+
+        hist1 = hist_2D(tree, todraw, x_bins, y_bins, cut,0)
+        hist2 = hist_2D(tree, todraw, x_bins, y_bins, cut,1)
+        hist2.SetLineColor(ROOT.kBlue)
+        hist2.SetLineWidth(2)
+        #hist2.Draw("CONT3")
+        #truevars = todrawtrue.split(':')
+        #truevars = todrawtrue.split(':') 
+   
+        hist3 = hist_2D(tree, todraw, x_bins, y_bins, cut,2)
+        hist3.SetLineColor(ROOT.kGreen)
+        hist3.SetLineWidth(2)
+        #hist3.Draw("CONT3same") 
+        hist3max = hist3.GetBinContent(hist3.GetMaximumBin())
+        hist2max = hist2.GetBinContent(hist2.GetMaximumBin())
+        hist1max = max(hist3max, hist2max)
+        array_contour1 = array('d',[hist1max])
+        i = 0.8
+        while i > 0.0:
+		array_contour1.append(hist1max*i) 
+	 	i = i-0.1
+        hist2.SetContour(len(array_contour1), array_contour1) 
+        hist3.SetContour(len(array_contour1), array_contour1) 
+       
+        hist4 = hist_2D(tree, todrawtrue, x_bins, y_bins, cut,1)
+ 	hist4.SetMarkerStyle(15)
+	hist4.SetMarkerSize(1)
+
+
+	hs.Add(hist1)
+	#hs.Add(hist3)
+	#hs.Add(hist4)
+         
+	
+  #  	c = ROOT.TCanvas() 
+ #  	hs.Draw("nostackCONT3")
+#    	c.SaveAs("gethiststack2d_%s"%todraw.replace(":","_")+"_%s"%tree.GetTitle()+"_contour.png")
+	#hs.SetTitleOffset(0.8)
+        return hs   
+     #   c1.SaveAs("contour_%d"%(n%9)+".png") 
+
 
 
 #_______________________________________________________________________________
@@ -1050,8 +1225,8 @@ if __name__ == "__main__":
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-100k-0406-mediateStates-B3-combined.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_iterations1M_0406_B3.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_weight_0408_B3.root"
-    #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_0410_newframe_B3.root"
-    file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-1M-0413-mediateStates-B3-1416552-combined.root"
+    #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_finalStates_checksolution_0428_B3.root"
+    file = "/fdata/hepx/store/user/taohuang/Hhh/0427_onoffshellWmass/DiHiggs-1M-0427-mediateStates-B3-1511752.root"
     dir = "DiHiggsWWAna/%s"%treename
     #dir = "DiHiggsWWAna/"
     
@@ -1062,8 +1237,9 @@ if __name__ == "__main__":
     #monitoringMMC(file,cut_weight)  
     #monitoringMMC(file,cut_weight1)
     #monitoringMMC(file,cut_weight2)
-    #drawh2Mass_combined(file)
-    #drawh2Mass_combined(file,"weight1")
+    drawh2Mass_combined(file)
+    drawh2Mass_combined(file,"weight1")
+    drawh2Mass_combined(file,"weight2")
     title1 = "MMC PDF for M_{H}, Event 4204"
     h2massbins = "(80,260,420)"#for843 only
     
@@ -1082,65 +1258,3 @@ if __name__ == "__main__":
     pic2 = "evt843_h2Mass_incorrect_0406_contour"
    # draw1D(file, dir, h2tohhmass, title1, h2massbins_2, h2mass, cut,0, tex2, pic2)
 
-    h2massbins_3 = "(70,270,340)"#for843 only
-    cut2 = " "
-    tex3 = "inclduing both pairs (muon candidates, muon lorentzVec in MMC)"
-    pic3 = "evt843_h2Mass_both_0406_contour"
-  #  draw1D(file, dir, h2tohhmass, title1, h2massbins_3, h2mass, cut,2, tex3, pic3)
-    #draw2D(file,dir,"nu_onshellW_phi:nu_onshellW_eta","eta_nuonshellW_true","phi_nuonshellW_true","#phi Vs #eta of nu_onshell","(50,-6,6)","#eta","(30,-3.14,3.14)","#phi","tex","etaVsphi_nuonshellW_0406_contour")
-    #draw2D(file,dir,"nu_offshellW_phi:nu_offshellW_eta","eta_nuoffshellW_true","phi_nuoffshellW_true","#phi Vs #eta of nu_offshell","(50,-6,6)","#eta","(30,-3.14,3.14)","#phi","tex","etaVsphi_nuoffshellW_0406_contour")
-    #draw2DAll(file,"nu_onshellW_pt:onshellW_Mass","onshell W#rightarrow #mu#nu ","(50,45,95)","M_{W}^{onshell}", "(125,0,125)","p_{T#nu}^{onshellW}","onshellnuptVsWmass","onshellnuptVsWmass")
-    #draw2DAll(file,"nu_onshellW_pt:onshellW_Mass","onshell W#rightarrow #mu#nu ","(50,45,95)","M_{W}^{onshell}", "(125,0,125)","p_{T#nu}^{onshellW}","onshellnuptVsWmass","onshellnuptVsWmass","weight1")
-    """ 
-    offshellWmass = "offshellW_Mass"
-    titleW1 = "off-shell W mass from MMC, Event843 "
-
-    offshellWmassbins = "(50,0,50)"
-    pic_offshellW = "offshellW_combined_0406_contour"
-    drawoffshellWmass_combined(file, offshellWmassbins, pic_offshellW)
-    
-    offshellnu_eta = "nu_offshellW_eta"
-    offshellnu_eta_true = "eta_nuoffshellW_true"
-    nuetabins= "(100,-7,7)"
-    pic_offshellnu_eta = "offshellW_nueta_0406_contour"
-    tex_offshellnu_eta = "ensembles of allowable solutions for #eta_{#nu}^{offshellW}"
-    draw_combined(file, offshellnu_eta, offshellnu_eta_true, nuetabins, tex_offshellnu_eta, pic_offshellnu_eta)
-
-    onshellnu_eta = "nu_onshellW_eta"
-    onshellnu_eta_true = "eta_nuonshellW_true"
-    pic_onshellnu_eta = "onshellW_nueta_0406_contour"
-    tex_onshellnu_eta = "ensembles of allowable solutions for #eta_{#nu}^{onshellW}"
-    draw_combined(file, onshellnu_eta, onshellnu_eta_true, nuetabins, tex_onshellnu_eta, pic_onshellnu_eta)
- 
-    offshellnu_pt = "nu_offshellW_pt"
-    offshellnu_pt_true = "pt_nuoffshellW_true"
-    nuptbins = "(60,0,120)"
-    pic_offshellnu_pt = "offshellW_nupt_0406_contour"
-    tex_offshellnu_pt = "ensembles of allowable solutions for p_{T}_{#nu}^{offshellW}"
-    draw_combined(file, offshellnu_pt, offshellnu_pt_true, nuptbins, tex_offshellnu_pt, pic_offshellnu_pt)
-    
-    onshellnu_pt = "nu_onshellW_pt"
-    onshellnu_pt_true = "pt_nuonshellW_true"
-    nuptbins = "(60,0,120)"
-    pic_onshellnu_pt = "onshellW_nupt_0406_contour"
-    tex_onshellnu_pt = "ensembles of allowable solutions for p_{T}_{#nu}^{onshellW}"
-    draw_combined(file, onshellnu_pt, onshellnu_pt_true, nuptbins, tex_onshellnu_pt, pic_onshellnu_pt)
-    
-
-    offshellWmass_x = "off-shell W mass"
-    cutW1 = "control<2"
-    texW1 = "correctly pair (muon candidates, muon lorentzVec in MMC)"
-    picW1 = "evt843_offshellWmass_correct_0406_contour"
-  #  draw1D(file, dir, offshellWmass, titleW1, offshellWmassbins, offshellWmass_x, cutW1, texW1, picW1)
-
-    cutW2 = "control>2"
-    texW2 = "incorrectly pair (muon candidates, muon lorentzVec in MMC)"
-    picW2 = "evt843_offshellWmass_incorrect_0406_contour"
-  #  draw1D(file, dir, offshellWmass, titleW1, offshellWmassbins, offshellWmass_x, cutW2, texW2, picW2)
-
-    cutW3 = ""
-    texW3 = "incluing both pairs (muon candidates, muon lorentzVec in MMC)"
-    picW3 = "evt843_offshellWmass_both_0406_contour"
-   # draw1D(file, dir, offshellWmass, titleW1, offshellWmassbins, offshellWmass_x, cutW1, texW3, picW3)
-
-    """

@@ -267,7 +267,9 @@ if __name__ == "__main__":
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-1M-B3-1071409.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_correctnu_0324_B3.root"
     file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-1M-0402-mediateStates-B3-1387077.root"
+    file1 = "/fdata/hepx/store/user/taohuang/Hhh/htoWWAna/htoWWAna-1M-0413-mediateStates-B3-combined.root"
     dir = "DiHiggsWWAna/evtree"
+    dir1 = "htoWWAna/evtree"
   
     #htoWW_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz)**2)"
     
@@ -281,18 +283,13 @@ if __name__ == "__main__":
     
     htoBB_mass = "sqrt((b1_energy+b2_energy)**2-(b1_px+b2_px)**2-(b1_py+b2_py)**2-(b1_pz+b2_pz)**2)"
     htoBB_cut = "h2tohh"
-    #draw1D(file,dir,htoBB_mass,hmass_bins1,"reconstructed mass of h#rightarrow BB", htoBB_cut,"htoBB_mass_1M_mediateStates_0325")
    
     h2toh1h1_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy+b1_energy+b2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px+b1_px+b2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py+b1_py+b2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz+b1_pz+b2_pz)**2)"
     h2toh1h1_cut = "h2tohh"
     h2mass_bins_6 = "(200,400,600)"
     h2mass_bins_3 = "(200,250,450)"
-    #draw1D(file,dir,h2toh1h1_mass,h2mass_bins_3,"reconstructed mass of h2#rightarrow BB#mu#nu#mu#nu", h2toh1h1_cut,"h2toh1h1_mass_1M_mediateStates_0325")
     
     htoWW_mass1 = "sqrt((mu1_mother_energy+mu2_mother_energy)**2-(mu1_mother_px+mu2_mother_px)**2-(mu1_mother_py+mu2_mother_py)**2-(mu1_mother_pz+mu2_mother_pz)**2)"
-    #draw1D(file,dir,htoWW_mass1,hmass_bins1," reconstructed mass of h#rightarrow WW, reconstruction from (WW)", htoWW_cut,"htoWW_median_mass_1M_mediateStates_0325")
-    #draw1D(file,dir,"htoWW_mass",hmass_bins1,"true h mass from  h candidates in generation", htoWW_cut,"htoWW_mass_100k_Gen_0324")
-    #draw1D(file,dir,"h2tohh_mass",h2mass_bins_3,"true h2 mass from h2 candidates in generation", htoWW_cut,"h2_mass_100k_Gen_0324")
 
 #draw jets mass and draw h2 reconstruction mass from jets and muons neutrinos
     jets_mass_bins = "(200, 100,400)"
@@ -304,8 +301,8 @@ if __name__ == "__main__":
     #draw1D(file,dir,met,met_bins,"Simulated #slash{E}_{T}", "1","MET_1M_mediateStates_0325")
     
 ### as a reference for monitoring plots in MMC
-    wmass_offshell_bins = "(120,0.0,60.0)" 
-    wmass_onshell_bins = "(80,50.0,90.0)" 
+    wmass_offshell_bins = "(65,0.0,65.0)" 
+    wmass_onshell_bins = "(60,40.0,100.0)" 
     eta_bins = "(30,-6,6)"
     nu1_eta = "nu1_eta"
     nu2_eta = "nu2_eta"
@@ -318,30 +315,21 @@ if __name__ == "__main__":
     onshellW_1_cut = "mu1_mother_mass>mu2_mother_mass"
     offshellW_1_cut = "mu2_mother_mass>mu1_mother_mass"
     onshellWmass_pdfname = "onshellWmasspdf"
-    draw1D_combined(file,dir,onshellWmass_pdfname,"mu1_mother_mass","mu2_mother_mass", wmass_onshell_bins,"Simulated M_{W}^{onshell}",onshellW_1_cut,offshellW_1_cut,"onshellW_mass_1M_mediateStates_0325")
+    draw1D_combined(file1,dir1,onshellWmass_pdfname,"w1_mass","w2_mass", wmass_onshell_bins,"Simulated M_{W}^{onshell}","w1_mass>w2_mass","w1_mass<w2_mass","onshellW_mass_1M_mediateStates_0325")
 
 
     onshell_nupt_pdfname = "onshellnuptpdf"
     draw1D_combined(file,dir,onshell_nupt_pdfname, nu1_pt, nu2_pt, onshell_nupt_bins,"Simulated p_{T#nu}^{onshellW}",onshellW_1_cut,offshellW_1_cut,"onshell_nupt_1M_mediateStates_0325")
-    #draw1D(file,dir,"mu1_mother_mass", wmass_offshell_bins,"Simulated M_{W}^{offshell}, pdgid = -24", offshellW_1_cut,"offshellW1_mass_1M_mediateStates_0325")
-    #draw1D(file,dir,"mu2_mother_mass", wmass_offshell_bins,"Simulated M_{W}^{offshell}, pdgid = 24 ", onshellW_1_cut,"offshellW2_mass_1M_mediateStates_0325")
-    #draw1D(file,dir,"nu1_eta",eta_bins,"Simulated #eta_{#nu}^{offshellW}, pdgid = -14",offshellW_1_cut,"offshell_nu1_eta_1M_mediateStates_0325")
-    #draw1D(file,dir,"nu1_eta",eta_bins,"Simulated #eta_{#nu}^{onshellW}, pdgid = -14",onshellW_1_cut,"onshell_nu1_eta_1M_mediateStates_0325")
-    #draw1D(file,dir,"nu2_eta",eta_bins,"Simulated #eta_{#nu}^{offshellW}, pdgid = 14",onshellW_1_cut,"offshell_nu2_eta_1M_mediateStates_0325")
-    #draw1D(file,dir,"nu2_eta",eta_bins,"Simulated #eta_{#nu}^{onshellW}, pdgid = 14",offshellW_1_cut,"onshell_nu2_eta_1M_mediateStates_0325")
-    #draw1D(file,dir,nu1_pt, offshell_nupt_bins,"Simulated p_{T#nu}^{offshellW}, pdgid = -14",offshellW_1_cut,"offshell_nu1_pt_1M_mediateStates_0325")
-    #draw1D(file,dir,nu1_pt, onshell_nupt_bins,"Simulated p_{T#nu}^{onshellW}, pdgid = -14",onshellW_1_cut,"onshell_nu1_pt_1M_mediateStates_0325")
-    #draw1D(file,dir,nu2_pt, offshell_nupt_bins,"Simulated p_{T#nu}^{offshellW}, pdgid = 14",onshellW_1_cut,"offshell_nu2_pt_1M_mediateStates_0325")
-    #draw1D(file,dir,nu2_pt, onshell_nupt_bins,"Simulated p_{T#nu}^{onshellW}, pdgid = 14",offshellW_1_cut,"onshell_nu2_pt_1M_mediateStates_0325")
     delta_phi = "(25,-3.1415,3.1415)"
     delta_eta = "(50,-5.0,5.0)"
     #deltaR1(file,dir,delta_eta,delta_phi,h2toh1h1_cut,"h2toh1h1_0223")
     #deltaR2(file,dir,delta_eta,delta_phi,h2toh1h1_cut,"h2toh1h1_0223")
-   
-    onoffshellWmass1 = "mu1_mother_mass:mu2_mother_mass"
-    onoffshellWmass2 = "mu2_mother_mass:mu1_mother_mass"
+    #htoWW mass 
+    onoffshellWmass1 = "w1_mass:w2_mass"
+    onoffshellWmass2 = "w2_mass:w1_mass"
     onoffshellWmass_pdfname ="onoffshellWmasspdf" 
-    draw2D_combined(file,dir, onoffshellWmass_pdfname, onoffshellWmass2, onoffshellWmass1, wmass_onshell_bins,wmass_offshell_bins,"Simulated M_{W}^{onshell}","Simulated M_{W}^{offshell}",onshellW_1_cut,offshellW_1_cut,"onshellVsoffshell_Wmass_1M_mediateStates_0325")
+    
+    draw2D_combined(file1,dir1, onoffshellWmass_pdfname, onoffshellWmass2, onoffshellWmass1, wmass_onshell_bins,wmass_offshell_bins,"Simulated M_{W}^{onshell}","Simulated M_{W}^{offshell}","w1_mass>w2_mass","w1_mass<w2_mass","onshellVsoffshell_Wmass_1M_mediateStates_0325")
 
     
     onshellnuptVsWmass1 = "sqrt(nu1_px**2+nu1_py**2):mu1_mother_mass"
@@ -358,7 +346,7 @@ if __name__ == "__main__":
     rootfile2 = "%s"%onshellnuptVsWmass_pdfname+"out.root"
     rootfile3 = "%s"%onshellWmass_pdfname+"out.root"
     rootfile4 = "%s"%onshell_nupt_pdfname+"out.root"
-    os.system("hadd -f MMCRefPDF.ROOT %s"%rootfile1+" %s"%rootfile2+" %s"%rootfile3+" %s"%rootfile4) 
+    os.system("hadd -f MMCRefPDF.ROOT  %s"%rootfile1+" %s"%rootfile2+" %s"%rootfile3+" %s"%rootfile4) 
     os.system("rm %s"%rootfile1) 
     os.system("rm %s"%rootfile2) 
     os.system("rm %s"%rootfile3) 
