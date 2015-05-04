@@ -93,7 +93,7 @@ class MMC{
  
     private:
       float weightfromhist(TH1F* pdf, float x); 
-      float weightfromhist(TH2F* pdf, float x, float y); 
+      float weightfromhist(TH2F* pdf, float x, float y, bool whole=true); 
       float weightfromonshellnupt(float nupt); 
    
     private:
@@ -154,6 +154,7 @@ class MMC{
       float weight;
       float weight1;//extra weight
       float weight2;//extra weight
+      float weight3;//extra weight
  
       float mu_onshellW_Eta;
       float mu_onshellW_Phi;

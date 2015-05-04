@@ -279,8 +279,10 @@ MMC::runMMC(){
                 if (weightfromonshellnupt_func_) weight1 = weightfromonshellnupt(nu_onshellW_pt); 
                 if (weightfromonshellnupt_hist_) weight1 = weightfromhist(onshellnupt_hist, nu_onshellW_pt); 
                 if (weightfromonoffshellWmass_hist_) weight2 = weightfromhist(onoffshellWmass_hist, wmass_gen, offshellW_lorentz->M()); 
+		if (weightfromonoffshellWmass_hist_) weight3 = weightfromhist(onoffshellWmass_hist, wmass_gen, offshellW_lorentz->M(), false);
                 weight1 = weight1*weight;
  		weight2 = weight2*weight1;
+                weight3 = weight1*weight3;
                 if ((h2tohh_lorentz->Pt()/h2tohh_lorentz->E())>0.0000001){
                 	h2tohh_Eta = h2tohh_lorentz->Eta();
                		h2tohh_Phi = h2tohh_lorentz->Phi();
@@ -309,6 +311,7 @@ MMC::initTree(TTree* mmctree){
    //
    weight1 = 1.0;
    weight2 = 1.0;
+   weight3 = 1.0;
 
    if (simulation and onshellMarker == 1){
 	eta_nuoffshellW_true = nu2_lorentz_true->Eta();
@@ -433,6 +436,7 @@ MMC::initTree(TTree* mmctree){
    mmctree->Branch("weight", &weight);
    mmctree->Branch("weight1", &weight1);
    mmctree->Branch("weight2", &weight2);
+   mmctree->Branch("weight3", &weight3);
    mmctree->Branch("control", &control);
    
    
@@ -696,7 +700,7 @@ MMC::weightfromhist(TH1F* hist, float x){
 //---------- weight solution by a 2d histogram --------------------------------------------------------
 //
 float
-MMC::weightfromhist(TH2F* hist, float x, float y){
+MMC::weightfromhist(TH2F* hist, float x, float y, bool whole){
 //hist should be scaled
 
    float weight = 0.0;
@@ -705,10 +709,14 @@ MMC::weightfromhist(TH2F* hist, float x, float y){
    //first make sure that x is within range
    if (bin1 == 0 || bin1 == hist->GetNbinsX()+1) return weight=0;
    if (bin2 == 0 || bin2 == hist->GetNbinsY()+1) return weight=0;
-
    weight = hist->GetBinContent(bin1, bin2);
-
-   return weight;
+   if (whole){
+	return weight;
+   }else {
+	 if (hist->GetBinContent(bin1, bin2) < .1) return 0;
+	 float integral = hist->Integral(bin1,bin1, 0, hist->GetNbinsY()+1);
+         return weight/integral;
+   }
 
 }
 
