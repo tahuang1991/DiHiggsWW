@@ -821,9 +821,9 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
     	tex.SetNDC()
 	tex.Draw("same")
 	c1.Update()
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0428_%s_B3.pdf"%cut[0])
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0428_%s_B3.png"%cut[0])
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0428_%s_B3.C"%cut[0])
+        c1.SaveAs("%s"%(tree.GetTitle())+"_0511_%s_B3.pdf"%cut[0])
+        c1.SaveAs("%s"%(tree.GetTitle())+"_0511_%s_B3.png"%cut[0])
+        c1.SaveAs("%s"%(tree.GetTitle())+"_0511_%s_B3.C"%cut[0])
         ##########################################
         ##### fill hist_h2
         
@@ -841,25 +841,38 @@ def drawh2Mass_combined(file, cut="weight"):
     print "num of trees ", num
     hist_h2 = ROOT.TH1F("hist_h2"," ",150,200,500)
     hist_h2true = ROOT.TH1F("hist_h2true"," ",150,200,500)
-    hist_h2Mass_RMS = ROOT.TH2F("hist_h2Mass_RMS"," ",150,200,500,100,0,200)
-    hist_h2Mass_RMS2 = ROOT.TH2F("hist_h2Mass_RMS2"," ",150,200,500,100,0,100)
+    hist_h2Mass_RMS = ROOT.TH2F("hist_h2Mass_RMS"," ",150,200,500,50,0,50)
+    hist_h2Mass_RMS2 = ROOT.TH2F("hist_h2Mass_RMS2"," ",150,200,500,50,0,0.5)
     hist_h2Mass_deltaR = ROOT.TH2F("hist_h2Mass_deltaR"," ",150,200,500,60,0,6)
     hist_h2Mass_mean = ROOT.TH2F("hist_h2Mass_mean"," ",150,200,500,150,200,500)
-    hist_h2Mass_integral = ROOT.TH2F("hist_h2Mass_integral"," ",150,200,500,120,0,12000)
+    hist_h2Mass_integral = ROOT.TH2F("hist_h2Mass_integral"," ",150,200,500,100,0,totintegral[cut]/count)
+    hist_h2Mass_integral_peak5 = ROOT.TH2F("hist_h2Mass_integral_peak5"," ",150,200,500,75,0,totintegral[cut]/count*0.75)
+    hist_h2Mass_integral_peak10 = ROOT.TH2F("hist_h2Mass_integral_peak10"," ",150,200,500,75,0,totintegral[cut]/count*0.75)
+    hist_rms_integral_peak10 = ROOT.TH2F("hist_rms_integral_peak10"," ",50,0,50,75,0,totintegral[cut]/count*0.75)
     hist_h2Mass_met = ROOT.TH2F("hist_h2Mass_met"," ",150,200,500,50,0,200)
     hist_h2Mass_muonshellpt = ROOT.TH2F("hist_h2Mass_nuoffshellpt"," ",150,200,500,80,0,160)
     hist_h2Mass_muoffshellpt = ROOT.TH2F("hist_h2Mass_nuonshellpt"," ",150,200,500,80,0,160)
+    hist_RMS_correct = ROOT.TH1F("hist_RMS_correct"," ",50,0,50)
+    hist_RMS_incorrect = ROOT.TH1F("hist_RMS_incorrect"," ",50,0,50)
+    hist_integralpeak10_correct = ROOT.TH1F("hist_integralpeak10_correct"," ",75,0,totintegral[cut]/count*0.75)
+    hist_integralpeak10_incorrect = ROOT.TH1F("hist_integralpeak10_incorrect"," ",75,0,totintegral[cut]/count*0.75)
     hist_h2.SetXTitle("M_{H}")
     hist_h2Mass_RMS.SetXTitle("reconstruced M_{H}")
     hist_h2Mass_RMS.SetYTitle("MMC RMS")
     hist_h2Mass_RMS2.SetXTitle("reconstructed M_{H}")
-    hist_h2Mass_RMS2.SetYTitle("MMC M_{H}/RMS")
+    hist_h2Mass_RMS2.SetYTitle("MMC RMS/M_{H}")
     hist_h2Mass_deltaR.SetXTitle("reconstructed M_{H}")
     hist_h2Mass_deltaR.SetYTitle("#DeltaR_{#nu1,#nu2}")
     hist_h2Mass_mean.SetXTitle("reconstructed M_{H}")
     hist_h2Mass_mean.SetYTitle("average M_{H}")
     hist_h2Mass_integral.SetXTitle("reconstructed M_{H}")
     hist_h2Mass_integral.SetYTitle("integral over M_{H}")
+    hist_h2Mass_integral_peak5.SetXTitle("reconstructed M_{H}")
+    hist_h2Mass_integral_peak5.SetYTitle("integral over (maxbin-5, maxbin+5)")
+    hist_h2Mass_integral_peak10.SetXTitle("reconstructed M_{H}")
+    hist_h2Mass_integral_peak10.SetYTitle("integral over (maxbin-10, maxbin+10)")
+    hist_rms_integral_peak10.SetXTitle("RMS")
+    hist_rms_integral_peak10.SetYTitle("integral over (maxbin-10, maxb+10)")
     hist_h2Mass_met.SetXTitle("reconstructed M_{H}")
     hist_h2Mass_met.SetYTitle("#slash{E}_{T}")
     hist_h2Mass_muonshellpt.SetXTitle("reconstructed M_{H}")
@@ -867,6 +880,9 @@ def drawh2Mass_combined(file, cut="weight"):
     hist_h2Mass_muoffshellpt.SetXTitle("reconstructed M_{H}")
     hist_h2Mass_muoffshellpt.SetYTitle("p_{T#mu}^{offshell}")
     m = 1
+    #test 
+    #num = 10
+    #print "totintegral ", totintegral[cut]
     while m<num:
     	f = ROOT.TFile(file)
     	list = f.GetListOfKeys()
@@ -880,7 +896,10 @@ def drawh2Mass_combined(file, cut="weight"):
    	b1 = ROOT.TH1F("%s"%name,"b1",800,200,1000)
     	tree.Draw("h2tohh_Mass>>%s"%name,cut)
         h2_mass_mean = b1.GetMean()
-        h2_mass_integral = b1.Integral(0,800+1)
+        h2_mass_integral = b1.Integral(0,800+1)/count
+        maxbin = b1.GetMaximumBin() 
+	integral_peak5 = b1.Integral(maxbin-5, maxbin+5)/count
+	integral_peak10 = b1.Integral(maxbin-10, maxbin+10)/count
         h2_mass_reconstructed = geth2MassMostProba(tree,cut)
         h2_mass_reco_rms = getRMSh2Mass(tree,cut)
 	nu1_eta = getTrueValue(tree,"eta_nuonshellW_true","(200,-6,6)")
@@ -898,13 +917,22 @@ def drawh2Mass_combined(file, cut="weight"):
 #	print  " tree title ",tree.GetTitle()," entries ", tree.GetEntries()," rms ",h2_mass_reco_rms 
     #    if m>10:
 #		break;    
-	#if (abs(h2_mass_reconstructed-h2_mass_true)>30 or h2_mass_reconstructed > 450 or h2_mass_reconstructed < 250):
+	if (abs(h2_mass_reconstructed-h2_mass_true)<20):
 	#	print "m ",m," ",tree.GetTitle()," reconstructed mass  ", h2_mass_reconstructed, " true mass ", h2_mass_true
+		hist_integralpeak10_correct.Fill(integral_peak10)
+		hist_RMS_correct.Fill(h2_mass_reco_rms)
+	else:
+		hist_integralpeak10_incorrect.Fill(integral_peak10)
+		hist_RMS_incorrect.Fill(h2_mass_reco_rms)
+		
  	hist_h2Mass_RMS.Fill(h2_mass_reconstructed, h2_mass_reco_rms)	
- 	hist_h2Mass_RMS2.Fill(h2_mass_reconstructed, h2_mass_reconstructed/h2_mass_reco_rms)	
+ 	hist_h2Mass_RMS2.Fill(h2_mass_reconstructed, h2_mass_reco_rms/h2_mass_reconstructed)	
         hist_h2Mass_deltaR.Fill(h2_mass_reconstructed, deltaR)
         hist_h2Mass_mean.Fill(h2_mass_reconstructed, h2_mass_mean)
         hist_h2Mass_integral.Fill(h2_mass_reconstructed, h2_mass_integral)
+        hist_h2Mass_integral_peak5.Fill(h2_mass_reconstructed, integral_peak5)
+        hist_h2Mass_integral_peak10.Fill(h2_mass_reconstructed, integral_peak10)
+        hist_rms_integral_peak10.Fill(h2_mass_reco_rms, integral_peak10)
         hist_h2Mass_met.Fill(h2_mass_reconstructed, met)
         hist_h2Mass_muonshellpt.Fill(h2_mass_reconstructed, onshellmuon_pt)
         hist_h2Mass_muoffshellpt.Fill(h2_mass_reconstructed, offshellmuon_pt)
@@ -913,7 +941,22 @@ def drawh2Mass_combined(file, cut="weight"):
         m = m+1
 	#sub_key = sub_list.At(m)
 	f.Close()
-    
+       
+    hist_integralpeak10_correct.SetXTitle("intergral(M_{H}-20GeV, M_{H}+20GeV)")
+    hist_RMS_correct.SetXTitle("RMS ")
+    hist_integralpeak10_incorrect.SetXTitle("intergral(M_{H}-20GeV, M_{H}+20GeV)")
+    hist_RMS_incorrect.SetXTitle("RMS ")
+    hist_integralpeak10_correct.SetLineColor(ROOT.kRed)
+    hist_RMS_correct.SetLineColor(ROOT.kRed)
+    hist_integralpeak10_incorrect.SetLineColor(ROOT.kBlue)
+    hist_RMS_incorrect.SetLineColor(ROOT.kBlue)
+    leg_integralpeak10 = ROOT.TLegend(0.25,0.7,0.45,0.82)
+    leg_integralpeak10.AddEntry(hist_integralpeak10_correct,"Good reconstruction'")
+    leg_integralpeak10.AddEntry(hist_integralpeak10_incorrect,"bad reconstruction'")
+    leg_RMS = ROOT.TLegend(0.25,0.7,0.45,0.82)
+    leg_RMS.AddEntry(hist_RMS_correct,"Good reconstruction'")
+    leg_RMS.AddEntry(hist_RMS_incorrect,"bad reconstruction'")
+
     h2massout = ROOT.TFile("h2mass_%s"%cut+"out.root","recreate")
     h2massout.cd()
     h2Mass_c = ROOT.TCanvas()
@@ -931,14 +974,14 @@ def drawh2Mass_combined(file, cut="weight"):
     hist_h2.Draw()
     hist_h2true.Draw("same")
     legend.Draw("same")
-    h2Mass_c.SaveAs("MMC_h2Mass_0428_%s_1M_B3.pdf"%cut) 
-    h2Mass_c.SaveAs("MMC_h2Mass_0428_%s_1M_B3.png"%cut) 
-    h2Mass_c.SaveAs("MMC_h2Mass_0428_%s_1M_B3.C"%cut) 
+    h2Mass_c.SaveAs("MMC_h2Mass_0511_%s_1M_B3.pdf"%cut) 
+    h2Mass_c.SaveAs("MMC_h2Mass_0511_%s_1M_B3.png"%cut) 
+    h2Mass_c.SaveAs("MMC_h2Mass_0511_%s_1M_B3.C"%cut) 
     h2Mass_c.Write()
  
-    h2_c2 = ROOT.TCanvas("h2_c2","h2_c2",800,600)
+    h2_c2 = ROOT.TCanvas("h2_c2","h2_c2",1200,900)
     h2_c2.cd()
-    h2_c2.Divide(3,3)
+    h2_c2.Divide(4,3)
     h2_c2.cd(1)
     hist_h2.Draw()
     hist_h2true.Draw("same")
@@ -954,22 +997,48 @@ def drawh2Mass_combined(file, cut="weight"):
     h2_c2.cd(6)
     hist_h2Mass_integral.Draw("colz")
     h2_c2.cd(7)
-    hist_h2Mass_met.Draw("colz")
+    hist_h2Mass_integral_peak5.Draw("colz")
     h2_c2.cd(8)
-    hist_h2Mass_muonshellpt.Draw("colz")
+    hist_h2Mass_integral_peak10.Draw("colz")
     h2_c2.cd(9)
-    hist_h2Mass_muoffshellpt.Draw("colz")
+    hist_rms_integral_peak10.Draw("colz")
+    h2_c2.cd(10)
+    hist_RMS_correct.Draw()
+    hist_RMS_incorrect.Draw("same")
+    leg_RMS.Draw("same")
+    
+    h2_c2.cd(11)
+    hist_integralpeak10_correct.Draw()
+    hist_integralpeak10_incorrect.Draw("same")
+    leg_integralpeak10.Draw("same")
+
+    h2_c2.cd(12)
+    hist_h2Mass_met.Draw("colz")
+    #hist_h2Mass_muoffshellpt.Draw("colz")
+    #hist_h2Mass_muonshellpt.Draw("colz")
 
     h2_c2.cd()
-    h2_c2.SaveAs("MMC_h2Mass_combined_0428_%s_1M_B3.pdf"%cut)
-    h2_c2.SaveAs("MMC_h2Mass_combined_0428_%s_1M_B3.png"%cut)
-    h2_c2.SaveAs("MMC_h2Mass_combined_0428_%s_1M_B3.C"%cut)
+    h2_c2.SaveAs("MMC_h2Mass_combined_0511_%s_1M_B3.pdf"%cut)
+    h2_c2.SaveAs("MMC_h2Mass_combined_0511_%s_1M_B3.png"%cut)
+    h2_c2.SaveAs("MMC_h2Mass_combined_0511_%s_1M_B3.C"%cut)
     h2_c2.Write() 
     hist_h2.Write()
     hist_h2true.Write()
     hist_h2Mass_RMS.Write()
     hist_h2Mass_RMS2.Write()
     hist_h2Mass_deltaR.Write()
+    hist_h2Mass_mean.Write()
+    hist_h2Mass_integral.Write()
+    hist_h2Mass_integral_peak5.Write()
+    hist_h2Mass_integral_peak10.Write()
+    hist_rms_integral_peak10.Write()
+    hist_h2Mass_met.Write()
+    hist_integralpeak10_correct.Write()
+    hist_RMS_correct.Write()
+    hist_integralpeak10_incorrect.Write()
+    hist_RMS_incorrect.Write()
+    hist_h2Mass_muonshellpt.Write()
+    hist_h2Mass_muoffshellpt.Write()
     h2massout.Write()
     h2massout.Close()
 
@@ -1225,11 +1294,13 @@ if __name__ == "__main__":
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-100k-0406-mediateStates-B3-combined.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_iterations1M_0406_B3.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_weight_0408_B3.root"
-    #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_finalStates_checksolution_0428_B3.root"
-    file = "/fdata/hepx/store/user/taohuang/Hhh/0427_onoffshellWmass/DiHiggs-1M-0427-mediateStates-B3-1511752.root"
+    #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_finalStates_checksolution_0511_B3.root"
+    file = "/fdata/hepx/store/user/taohuang/Hhh/0504_h2tohh/DiHiggs-1M-0504-mediateStates-B3-combined.root"
     dir = "DiHiggsWWAna/%s"%treename
     #dir = "DiHiggsWWAna/"
     
+    totintegral = {'weight':10000,'weight1':8000,'weight2':4000,'weight3':360} 
+    cut_weight3 = ["weight3","weight3*(control<2)","weight3*(control>1)"]
     cut_weight2 = ["weight2","weight2*(control<2)","weight2*(control>1)"]
     cut_weight1 = ["weight1","weight1*(control<2)","weight1*(control>1)"]
     cut_weight = ["weight","weight*(control<2)","weight*(control>1)"]
@@ -1237,9 +1308,11 @@ if __name__ == "__main__":
     #monitoringMMC(file,cut_weight)  
     #monitoringMMC(file,cut_weight1)
     #monitoringMMC(file,cut_weight2)
+    #monitoringMMC(file,cut_weight3)
     drawh2Mass_combined(file)
     drawh2Mass_combined(file,"weight1")
     drawh2Mass_combined(file,"weight2")
+    drawh2Mass_combined(file,"weight3")
     title1 = "MMC PDF for M_{H}, Event 4204"
     h2massbins = "(80,260,420)"#for843 only
     
