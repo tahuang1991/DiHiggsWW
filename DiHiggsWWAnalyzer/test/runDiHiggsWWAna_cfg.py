@@ -41,6 +41,7 @@ process.DiHiggsWWAna = cms.EDAnalyzer('DiHiggsWWAnalyzer',
         weightfromonshellnupt_func = cms.bool(False),
         weightfromonshellnupt_hist = cms.bool(True),
         weightfromoffshellWmass_hist = cms.bool(True),
+        weightfromonoffshellWmass_hist = cms.bool(True),
 	RefPDFfile = cms.string("%s"%refrootfile)
         )
 )
