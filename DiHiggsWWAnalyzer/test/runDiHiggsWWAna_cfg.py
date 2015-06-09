@@ -32,16 +32,24 @@ print "To test array jobs, randint ", random.randint(0,10000000)
 refrootfile = os.getenv( "CMSSW_BASE" ) +"/src/DiHiggsWW/DiHiggsWWAnalyzer/plugins/MMCRefPDF.ROOT"
 process.DiHiggsWWAna = cms.EDAnalyzer('DiHiggsWWAnalyzer',
 	verbose = cms.untracked.int32(0),
-        finalStates = cms.bool(False),
-        runMMC = cms.bool(True),
+        finalStates = cms.bool(True),
+	jetLabel = cms.string("ak4GenJets"),
+	metLabel = cms.string("genMetTrue"),	
+	jetsPt = cms.double(30.0),
+	jetsEta = cms.double(2.50),
+	muonsPt = cms.double(20.0),
+	muonsEta = cms.double(2.40),
+	metPt = cms.double(20.0),
+        runMMC = cms.bool(False),
         simulation = cms.bool(True),
         mmcset = cms.PSet(
-	iterations = cms.untracked.int32(100000),
+	iterations = cms.untracked.int32(1),
 	seed = cms.int32(random.randint(0,100000000)),#may be ignored since we use can take ievent alone as seed
         weightfromonshellnupt_func = cms.bool(False),
         weightfromonshellnupt_hist = cms.bool(True),
         weightfromoffshellWmass_hist = cms.bool(True),
         weightfromonoffshellWmass_hist = cms.bool(True),
+	useMET = cms.bool(True),
 	RefPDFfile = cms.string("%s"%refrootfile)
         )
 )

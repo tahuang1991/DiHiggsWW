@@ -51,6 +51,7 @@ MMC::MMC(TLorentzVector* mu1_lorentz, TLorentzVector* mu2_lorentz, TLorentzVecto
    iterations_ = mmcset_.getUntrackedParameter<int>("iterations",100000);
    seed_ = mmcset_.getParameter<int>("seed");
    RefPDFfile_ = mmcset_.getParameter<std::string>("RefPDFfile");
+   useMET_ = mmcset_.getParameter<bool>("useMET");
    std::stringstream ss;
    ss << "mmctree_" << iev;
    const std::string name(ss.str());
@@ -183,11 +184,19 @@ MMC::runMMC(){
           	 nu_onshellW_lorentz->SetPtEtaPhiM(nu_onshellW_pt, eta_gen, phi_gen,0);
                   // should replace htoBB_lorentz by jets_lorentz if we have correct jets_lorentz
                  //solution[j] = nulorentz_offshellW(jets_lorentz, mu_onshellW_lorentz,
-                 solution[j] = nulorentz_offshellW(htoBB_lorentz, mu_onshellW_lorentz,
+                 if (useMET_)
+                 	solution[j] = nulorentz_offshellW(mmcmet_vec2, mu_onshellW_lorentz,
 					            mu_offshellW_lorentz, nu_onshellW_lorentz,
 						   nu_offshellW_lorentz, j%2, hmass_gen);
+		else
+                 	solution[j] = nulorentz_offshellW(htoBB_lorentz, mu_onshellW_lorentz,
+					            mu_offshellW_lorentz, nu_onshellW_lorentz,
+						   nu_offshellW_lorentz, j%2, hmass_gen);
+
+
+
                  //std::cout << " calculate nu1_pt " << nu_onshellW_pt << " eta_gen "<< eta_gen << " phi_gen " << phi_gen << std::endl; 
-                 //std::cout << j << " nu_offshellW_eta " << nu_offshellW_lorentz->Eta()<<" phi " << nu_offshellW_lorentz->Phi() << std::endl; 
+                 std::cout << j << " nu_offshellW_eta " << nu_offshellW_lorentz->Eta()<<" phi " << nu_offshellW_lorentz->Phi() << std::endl; 
                  if (solution[j]) solutions++;
            }
     //       nu_offshellW_lorentz= NULL; 
@@ -200,10 +209,14 @@ MMC::runMMC(){
                 nu_onshellW_pt = nu1pt_onshellW(std::make_pair(eta_gen, phi_gen), mu_onshellW_lorentz, wmass_gen); 
           	nu_onshellW_lorentz->SetPtEtaPhiM(nu_onshellW_pt, eta_gen, phi_gen,0);
                  //nulorentz_offshellW(jets_lorentz, mu_onshellW_lorentz,
-                nulorentz_offshellW(htoBB_lorentz, mu_onshellW_lorentz,
+                if (useMET_)
+                	nulorentz_offshellW(mmcmet_vec2, mu_onshellW_lorentz,
                                     mu_offshellW_lorentz, nu_onshellW_lorentz,
 				    nu_offshellW_lorentz, j%2, hmass_gen);
-
+		else
+                	nulorentz_offshellW(htoBB_lorentz, mu_onshellW_lorentz,
+                                    mu_offshellW_lorentz, nu_onshellW_lorentz,
+				    nu_offshellW_lorentz, j%2, hmass_gen);
 
                 weight = 1.0/solutions;// change weight if we consider possibility factor  like matrix elements
  		mu_onshellW_Eta = mu_onshellW_lorentz->Eta();
@@ -795,7 +808,6 @@ MMC::checkSolution(TLorentzVector* jetslorentz,
 
 
 
-//how to use MET here!
 //------------- method called to calculate lorentzvector of second nuetrinos, which is from offshell W -----------
 // return true if we can get nu_offshellW_lorentz
 bool 
@@ -824,9 +836,11 @@ MMC::nulorentz_offshellW(TLorentzVector* jetslorentz,
    
    chdeltaeta = (pow(hMass,2)+pow(jetslorentz->Pt(),2)-pow(tmplorentz->M(),2)-pow(tmplorentz->Pt(),2)-pow(nu_tmp_pt,2))/(2*tmp2lorentz->Pt()*nu_tmp_pt);
    if (verbose >0 ){
-        std::cout << "nu2 px: " << nu_tmp_px << " py: "<< nu_tmp_py << std::endl;
-   	std::cout << "chdeltaeta " << chdeltaeta << std::endl;
-        std::cout << "tmp2lorentz "; tmp2lorentz->Print();
+        
+        std::cout << "From jetLorentz nu2 px: " << nu_tmp_px << " py: "<< nu_tmp_py << " chdeltaeta: " << chdeltaeta << std::endl;
+	float chdeltaeta_tmp = (pow(hMass,2)+2*(mmcmet_vec2->Px()*tmp2lorentz->Px()+mmcmet_vec2->Py()*tmp2lorentz->Py())-pow(nu_tmp_pt,2))/(2*tmp2lorentz->Pt()*nu_tmp_pt);
+        std::cout << "From mmcmet nu2 px: "<< mmcmet_vec2->Px()-nu1lorentz->Px() <<" py: "<< mmcmet_vec2->Py()-nu1lorentz->Py()
+		<<" chdeltaeta: " << chdeltaeta_tmp << std::endl; 
    }
    if (chdeltaeta < 1.0) {
         delete tmplorentz;
@@ -870,6 +884,86 @@ MMC::nulorentz_offshellW(TLorentzVector* jetslorentz,
    
    return true; 
 }
+
+
+
+//------------- method called to calculate lorentzvector of second nuetrinos, which is from offshell W -----------
+// return true if we can get nu_offshellW_lorentz
+bool 
+MMC::nulorentz_offshellW(TVector2* met, 
+                                        TLorentzVector* mu1lorentz, 
+                                        TLorentzVector* mu2lorentz, 
+                                        TLorentzVector* nu1lorentz, 
+                                        TLorentzVector* nu2lorentz, int control, float hMass){
+
+   TLorentzVector* tmplorentz = new TLorentzVector(mu1lorentz->Px()+mu2lorentz->Px()+nu1lorentz->Px(),
+                                                   mu1lorentz->Py()+mu2lorentz->Py()+nu1lorentz->Py(),
+                                                   mu1lorentz->Pz()+mu2lorentz->Pz()+nu1lorentz->Pz(),
+                                                   mu1lorentz->Energy()+mu2lorentz->Energy()+nu1lorentz->Energy());
+   float nu_tmp_px;
+   float nu_tmp_py;
+   float nu_tmp_pt;
+   
+   nu_tmp_px = met->Px()-nu1lorentz->Px();
+   nu_tmp_py = met->Py()-nu1lorentz->Py();
+   TVector2 nu_pxpy(nu_tmp_px, nu_tmp_py);
+
+   nu_tmp_pt = nu_pxpy.Mod();
+
+   float chdeltaeta;//cosh(nu_offshellW_eta-tmp2lorentz_eta)
+   TLorentzVector* tmp2lorentz = new TLorentzVector(sqrt(pow(tmplorentz->Pt(),2)+pow(tmplorentz->M(),2)),0,tmplorentz->Pz(),tmplorentz->Energy());//fake one massless lorentzvector with same pz and E
+   
+   chdeltaeta = (pow(hMass,2)+2*(nu_pxpy.Px()*tmplorentz->Px()+nu_pxpy.Py()*tmplorentz->Py())-pow(tmplorentz->M(),2))/(2*tmp2lorentz->Pt()*nu_tmp_pt);
+   if (verbose >0 ){
+        std::cout << "nu2 px: " << nu_tmp_px << " py: "<< nu_tmp_py << std::endl;
+   	std::cout << "chdeltaeta " << chdeltaeta << std::endl;
+        std::cout << "tmp2lorentz "; tmp2lorentz->Print();
+   }
+   if (chdeltaeta < 1.0) {
+        delete tmplorentz;
+	delete tmp2lorentz;
+   	nu2lorentz->SetPtEtaPhiM(0, 0, 0, 0);
+	return false;
+      }
+   float nu_tmp_phi = nu_pxpy.Phi_mpi_pi(nu_pxpy.Phi());
+   float deltaeta = acosh(chdeltaeta);
+   float nu_tmp_eta = (control == 1) ? (tmp2lorentz->Eta()-deltaeta) : (tmp2lorentz->Eta()+deltaeta);//control = j%2 
+   // should check whether deltaeta > 1
+  // std::cout <<"control "<< control <<" nu_tmp_px " << nu_tmp_px << "  nu_tmp_py " << nu_tmp_py << " nu_tmp_pt " << nu_tmp_pt 
+    //         << " cosh(deltaeta2) " << chdeltaeta << " nu_tmp_eta " << nu_tmp_eta << " nu_tmp_phi " << nu_tmp_phi << std::endl; 
+   if (fabs(nu_tmp_eta) > 7) {
+        delete tmplorentz;
+	delete tmp2lorentz;
+   	nu2lorentz->SetPtEtaPhiM(0, 0, 0, 0);
+	return false;  //from simulation, |nu_offshellW_Eta|<6
+    }
+   nu2lorentz->SetPtEtaPhiM(nu_tmp_pt, nu_tmp_eta, nu_tmp_phi, 0);
+   TLorentzVector* htoww_tmp = new TLorentzVector(*tmplorentz+*nu2lorentz);
+   if (abs(htoww_tmp->M()-hMass) >2){
+   	std::cout <<" set Higgs Mass" << hMass << " MMC higgs mass" << htoww_tmp->M() << std::endl;
+        htoww_tmp->Print();
+        verbose = 1;
+       }
+   if (verbose > 0){
+   	std::cout << "tmplorentz mass " << tmplorentz->M(); tmplorentz->Print();
+   	std::cout << "tmp2lorentz mass " << tmp2lorentz->M(); tmp2lorentz->Print();
+   	std::cout << " met Tvector2 "; met->Print(); 
+   	std::cout << " mu1 lorentz "; mu1lorentz->Print();
+    	std::cout << " mu2 lorentz "; mu2lorentz->Print();
+   	std::cout << " nu1 lorentz "; nu1lorentz->Print();
+   	std::cout << " tmp lorentz "; tmplorentz->Print();
+        std::cout << " nu2 lorentz "; nu2lorentz->Print();
+    }
+       // std::cout << " nu_offshellW lorentz "; nu2lorentz->Print();
+   delete tmplorentz;
+   delete tmp2lorentz;
+   delete htoww_tmp;
+   
+   return true; 
+}
+
+
+
 
 //----------------------------- print lorentz vectors from analyzer --------------------------------------------
 //

@@ -73,6 +73,9 @@ class MMC{
       bool  nulorentz_offshellW(TLorentzVector* jetlorentz, TLorentzVector* mu1lorentz, 
 			       TLorentzVector* mu2lorentz, TLorentzVector* nu1lorentz, 
  			       TLorentzVector* nu2lorentz, int control, float hMass);
+      bool  nulorentz_offshellW(TVector2* met, TLorentzVector* mu1lorentz, 
+			       TLorentzVector* mu2lorentz, TLorentzVector* nu1lorentz, 
+ 			       TLorentzVector* nu2lorentz, int control, float hMass);
       bool checkSolution(TLorentzVector* jetslorentz,
                           TLorentzVector* mu1lorentz,
                           TLorentzVector* mu2lorentz,
@@ -100,7 +103,8 @@ class MMC{
       bool weightfromonshellnupt_func_;
       bool weightfromonshellnupt_hist_;
       bool weightfromonoffshellWmass_hist_;
-   
+      bool useMET_;   
+
     private:
       TLorentzVector calculateMET(); 
     public:

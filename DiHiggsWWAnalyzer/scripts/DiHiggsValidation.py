@@ -1,5 +1,7 @@
 import random
 import ROOT
+import os
+
 ROOT.gROOT.SetBatch(1)
 #gStyle from TStyle
 ROOT.gStyle.SetStatW(0.17)
@@ -391,78 +393,86 @@ def deltaR2(file,dir,x_bins,y_bins,cut,pic_name):
     c1.SaveAs("Dihiggs_deltaR2_%s"%pic_name+"_B3.pdf")
     c1.SaveAs("Dihiggs_deltaR2_%s"%pic_name+"_B3.png")
 
-
-
-#_______________________________________________________
-def getPurity(file,dir,den,num,xaxis,h_bins):
+#_____________________________________________________________________________
+def drawAll_1D(dir, treename, todraw,x_bins,x_title,cut,pic_name):
     c1 = ROOT.TCanvas()
     c1.SetGridx()
     c1.SetGridy()
     c1.SetTickx()
     c1.SetTicky()
 
-    f = ROOT.TFile(file)
-    t = f.Get(dir)
-    nBins = int(h_bins[1:-1].split(',')[0])
-    minBin = float(h_bins[1:-1].split(',')[1])
-    maxBin = float(h_bins[1:-1].split(',')[2])
-    
-    b1 = ROOT.TH1F("b1","b1",nBins,minBin,maxBin)
-    b1.GetYaxis().SetRangeUser(0.60,1.02)
-    b1.GetYaxis().SetTitleOffset(1.2)
-    b1.GetYaxis().SetNdivisions(520)
-    b1.GetYaxis().SetTitle("TFTrack GE11dphicut Efficiency")
-    b1.GetXaxis().SetTitle("%s of Simtrack"%xaxis)
-    b1.SetTitle("Track reco in TrackFinder"+" "*16 + "CMS Simulation Preliminary")
-    b1.SetStats(0)
+    xBins = int(x_bins[1:-1].split(',')[0])
+    xminBin = float(x_bins[1:-1].split(',')[1])
+    xmaxBin = float(x_bins[1:-1].split(',')[2])
+    if not os.path.isdir(dir):
+          print "ERROR: This is not a valid directory: ", inputDir
+    ls = os.listdir(dir)
+    tot = len(ls)
+    rootfile = dir[:]+ls[0]
+    tfile0 = ROOT.TFile(rootfile)
+    t = tfile0.Get(treename)
+    m = 0
+    chain = ROOT.TChain(treename)
+    e = ROOT.TH1F("e","e",xBins,xminBin,xmaxBin)
+    b1 = ROOT.TH1F("b1","b1",xBins,xminBin,xmaxBin)
+    b1.SetTitle("h2#rightarrow hh#rightarrow BBWW, B3"+" "*12 + "CMS Simulation Preliminary")
+    b1.GetYaxis().SetTitle("Events")
+    b1.GetXaxis().SetTitle("%s"%x_title)
+    for x in ls:
+	x = dir[:]+x
+	chain.Add(x)
+	"""
+	if m>0:
+		x = dir[:]+x
+#	b1.Add(draw1D(x, treename, todraw,x_bins,x_title,cut,pic_name, m))
+    		f = ROOT.TFile(x)
+    		t.AddFriend(treename,f)
+	#t.Draw(todraw+">>e",cut)
+	#print "e entries ",e.GetEntries(), " b1 entries ", b1.GetEntries()
+		f.Close()
+	#b1.Add(e)
+	m = m+1
+	"""
+    chain.Draw(todraw+">>b1", cut)
+    b1.Draw() 
+    print "chain ",chain, " b1 entries ",b1.GetEntries()
 
-    h1 = ROOT.TH1F("h1","h1",nBins,minBin,maxBin)
-    t.Draw("abs(%s) >> h1"%xaxis,den)
-    h2 = ROOT.TH1F("h2","h2",nBins,minBin,maxBin)
-    t.Draw("abs(%s) >> h2"%xaxis,num)
-    e = ROOT.TEfficiency(h2,h1)
-    
-    b1.Draw()
-    e.SetLineColor(ROOT.kRed)
-    e.Draw("same")
-    legend = ROOT.TLegend(0.23,0.60,0.80,0.82)
-#legend.SetFillColor(ROOT.kWhite)
-    legend.SetHeader("PU140,simPt > 10Gev")
-#legend.AddEntry(e1,"","l")
-#legend.Draw("same")
-    tex = ROOT.TLatex(0.30,0.50,"PU140, p_{T}^{sim} > 15Gev")
-    tex.SetTextSize(0.05)
-    tex.SetNDC()
-    tex.Draw("same")
-	
-    c1.SaveAs("TFTrack_reco_eff_%s_Pt10_GE11dphi_PU140.pdf"%xaxis)
-    c1.SaveAs("TFTrack_reco_eff_%s_Pt10_GE11dphi_PU140.png"%xaxis)
-
-
+    c1.SaveAs("Dihiggs_%s"%pic_name+"_All_B3.pdf")
+    c1.SaveAs("Dihiggs_%s"%pic_name+"_All_B3.png")
 
 #_______________________________________________________________________________
 if __name__ == "__main__":
      
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-1M-B3-1071409.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_correctnu_0324_B3.root"
-    file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-1M-0402-mediateStates-B3-1387077.root"
+    filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_htobbana_cuts_750k_B3/"
     dir = "DiHiggsWWAna/evtree"
   
     #htoWW_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz)**2)"
     
     
     htoWW_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz)**2)"
-    hmass_bins = "(50,100,150)"
-    hmass_bins1 = "(200,124.5,125.5)" 
+    hmass_bins = "(50,100,300)"
+    hmass_bins1 = "(50,0,200)" 
     htoWW_cut = "h2tohh" 
     
     #draw1D(file,dir,htoWW_mass,hmass_bins1,"reconstructed mass of h#rightarrow WW, reconstruction from(#mu#mu#nu#nu)", htoWW_cut,"htoWW_final_mass_1M_mediateStates_0325")
-    
+    bjet_pt = "sqrt(bjet_px**2+bjet_py**2)" 
+    bbarjet_pt = "sqrt(bbarjet_px**2+bbarjet_py**2)" 
     htoBB_mass = "sqrt((b1_energy+b2_energy)**2-(b1_px+b2_px)**2-(b1_py+b2_py)**2-(b1_pz+b2_pz)**2)"
+    htoBBJets_mass = "sqrt((bjet_energy+bbarjet_energy)**2-(bjet_px+bbarjet_px)**2-(bjet_py+bbarjet_py)**2-(bjet_pz+bbarjet_pz)**2)"
+    htoBBJetstot_mass = "sqrt((bjet_energy_tot+bbarjet_energy_tot)**2-(bjet_px_tot+bbarjet_px_tot)**2-(bjet_py_tot+bbarjet_py_tot)**2-(bjet_pz_tot+bbarjet_pz_tot)**2)"
     htoBB_cut = "h2tohh"
+    drawAll_1D(filedir,dir,"dR_bjet","(50,0,2)","deltaR(bjet, b genParticle)", htoBB_cut,"dR_bjet_cuts_1M_0605")
+    drawAll_1D(filedir,dir,"dR_bbarjet","(50,0,2)","deltaR(bbarjet, bbar genParticle)", htoBB_cut,"dR_bbarjet_cuts_1M_0605")
+    drawAll_1D(filedir,dir,bjet_pt, "(100,0,200)","p#_T(bjet)",htoBB_cut,"bjetPt_cuts_1M_0605")
+    drawAll_1D(filedir,dir,bbarjet_pt, "(100,0,200)","p#_T(bbarjet)",htoBB_cut,"bbarjetPt_cuts_1M_0605")
     #draw1D(file,dir,htoBB_mass,hmass_bins1,"reconstructed mass of h#rightarrow BB", htoBB_cut,"htoBB_mass_1M_mediateStates_0325")
+    drawAll_1D(filedir,dir,htoBBJets_mass,hmass_bins1,"reconstructed mass of h#rightarrow BB, from GenJet (closest)", htoBB_cut,"htoBBjets_cuts_mass_1M_0606")
+    #drawAll_1D(filedir,dir,htoBBJetstot_mass,hmass_bins1,"reconstructed mass of h#rightarrow BB, from GenJet (sum)", htoBB_cut,"htoBBjetstot_mass_1M_0606")
    
     h2toh1h1_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy+b1_energy+b2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px+b1_px+b2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py+b1_py+b2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz+b1_pz+b2_pz)**2)"
+    h2toh1h1Jets_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy+bjet_energy+bbarjet_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px+bjet_px+bbarjet_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py+bjet_py+bbarjet_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz+bjet_pz+bbarjet_pz)**2)"
     h2toh1h1_cut = "h2tohh"
     h2mass_bins_6 = "(200,400,600)"
     h2mass_bins_3 = "(200,250,450)"
@@ -498,17 +508,7 @@ if __name__ == "__main__":
     offshellW_1_cut = "mu2_mother_mass>mu1_mother_mass"
 #    draw1D_combined(file,dir,"mu1_mother_mass","mu2_mother_mass", wmass_onshell_bins,"Simulated M_{W}^{onshell}",onshellW_1_cut,offshellW_1_cut,"onshellW_mass_1M_mediateStates_0325")
     
-    draw1D_combined(file,dir,nu1_pt,nu2_pt, onshell_nupt_bins,"Simulated p_{T#nu}^{onshellW}",onshellW_1_cut,offshellW_1_cut,"onshell_nupt_1M_mediateStates_0325")
-    #draw1D(file,dir,"mu1_mother_mass", wmass_offshell_bins,"Simulated M_{W}^{offshell}, pdgid = -24", offshellW_1_cut,"offshellW1_mass_1M_mediateStates_0325")
-    #draw1D(file,dir,"mu2_mother_mass", wmass_offshell_bins,"Simulated M_{W}^{offshell}, pdgid = 24 ", onshellW_1_cut,"offshellW2_mass_1M_mediateStates_0325")
-    #draw1D(file,dir,"nu1_eta",eta_bins,"Simulated #eta_{#nu}^{offshellW}, pdgid = -14",offshellW_1_cut,"offshell_nu1_eta_1M_mediateStates_0325")
-    #draw1D(file,dir,"nu1_eta",eta_bins,"Simulated #eta_{#nu}^{onshellW}, pdgid = -14",onshellW_1_cut,"onshell_nu1_eta_1M_mediateStates_0325")
-    #draw1D(file,dir,"nu2_eta",eta_bins,"Simulated #eta_{#nu}^{offshellW}, pdgid = 14",onshellW_1_cut,"offshell_nu2_eta_1M_mediateStates_0325")
-    #draw1D(file,dir,"nu2_eta",eta_bins,"Simulated #eta_{#nu}^{onshellW}, pdgid = 14",offshellW_1_cut,"onshell_nu2_eta_1M_mediateStates_0325")
-    #draw1D(file,dir,nu1_pt, offshell_nupt_bins,"Simulated p_{T#nu}^{offshellW}, pdgid = -14",offshellW_1_cut,"offshell_nu1_pt_1M_mediateStates_0325")
-    #draw1D(file,dir,nu1_pt, onshell_nupt_bins,"Simulated p_{T#nu}^{onshellW}, pdgid = -14",onshellW_1_cut,"onshell_nu1_pt_1M_mediateStates_0325")
-    #draw1D(file,dir,nu2_pt, offshell_nupt_bins,"Simulated p_{T#nu}^{offshellW}, pdgid = 14",onshellW_1_cut,"offshell_nu2_pt_1M_mediateStates_0325")
-    #draw1D(file,dir,nu2_pt, onshell_nupt_bins,"Simulated p_{T#nu}^{onshellW}, pdgid = 14",offshellW_1_cut,"onshell_nu2_pt_1M_mediateStates_0325")
+    #draw1D_combined(file,dir,nu1_pt,nu2_pt, onshell_nupt_bins,"Simulated p_{T#nu}^{onshellW}",onshellW_1_cut,offshellW_1_cut,"onshell_nupt_1M_mediateStates_0325")
     delta_phi = "(25,-3.1415,3.1415)"
     delta_eta = "(50,-5.0,5.0)"
     #deltaR1(file,dir,delta_eta,delta_phi,h2toh1h1_cut,"h2toh1h1_0223")
