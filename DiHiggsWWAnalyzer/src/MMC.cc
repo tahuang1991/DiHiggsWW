@@ -73,7 +73,7 @@ MMC::MMC(TLorentzVector* mu1_lorentz, TLorentzVector* mu2_lorentz, TLorentzVecto
 
 MMC::MMC(){
  
-  std::cout <<" empty constructor " << std::endl;
+  //std::cout <<" empty constructor " << std::endl;
 
 
 }
@@ -82,7 +82,7 @@ MMC::MMC(){
 //deconstructor
 MMC::~MMC(){
     
-  std::cout << " deconstructor " << std::endl;
+//  std::cout << " deconstructor " << std::endl;
   
   delete mmcmet_vec2;
   if (simulation){
@@ -196,7 +196,7 @@ MMC::runMMC(){
 
 
                  //std::cout << " calculate nu1_pt " << nu_onshellW_pt << " eta_gen "<< eta_gen << " phi_gen " << phi_gen << std::endl; 
-                 std::cout << j << " nu_offshellW_eta " << nu_offshellW_lorentz->Eta()<<" phi " << nu_offshellW_lorentz->Phi() << std::endl; 
+                 //std::cout << j << " nu_offshellW_eta " << nu_offshellW_lorentz->Eta()<<" phi " << nu_offshellW_lorentz->Phi() << std::endl; 
                  if (solution[j]) solutions++;
            }
     //       nu_offshellW_lorentz= NULL; 

@@ -1,5 +1,7 @@
 import random
 import ROOT
+import os
+
 ROOT.gROOT.SetBatch(1)
 #gStyle from TStyle
 ROOT.gStyle.SetStatW(0.17)
@@ -438,7 +440,102 @@ def getPurity(file,dir,den,num,xaxis,h_bins):
     c1.SaveAs("TFTrack_reco_eff_%s_Pt10_GE11dphi_PU140.pdf"%xaxis)
     c1.SaveAs("TFTrack_reco_eff_%s_Pt10_GE11dphi_PU140.png"%xaxis)
 
+#_____________________________________________________________________________
+def drawAll_1D(dir, treename, todraw,x_bins,x_title,cut,pic_name,text):
+    c1 = ROOT.TCanvas()
+    c1.SetGridx()
+    c1.SetGridy()
+    c1.SetTickx()
+    c1.SetTicky()
 
+    xBins = int(x_bins[1:-1].split(',')[0])
+    xminBin = float(x_bins[1:-1].split(',')[1])
+    xmaxBin = float(x_bins[1:-1].split(',')[2])
+    if not os.path.isdir(dir):
+          print "ERROR: This is not a valid directory: ", dir
+    ls = os.listdir(dir)
+    tot = len(ls)
+    rootfile = dir[:]+ls[0]
+    tfile0 = ROOT.TFile(rootfile)
+    t = tfile0.Get(treename)
+    m = 0
+    chain = ROOT.TChain(treename)
+    e = ROOT.TH1F("e","e",xBins,xminBin,xmaxBin)
+    b1 = ROOT.TH1F("b1","b1",xBins,xminBin,xmaxBin)
+    b1.SetTitle("ttbar#rightarrow bbbarWW, B3"+" "*12 + "CMS Simulation Preliminary")
+    b1.GetYaxis().SetTitle("Events")
+    b1.GetXaxis().SetTitle("%s"%x_title)
+    for x in ls:
+	x = dir[:]+x
+	chain.Add(x)
+    chain.Draw(todraw+">>b1", cut)
+    b1.Draw() 
+    #print "chain ",chain, " b1 entries ",b1.GetEntries()
+    tex = ROOT.TLatex(0.15,0.45,text)
+    tex.SetTextSize(0.05)
+    tex.SetNDC()
+    tex.Draw("same")
+
+    c1.SaveAs("ttbar_%s"%pic_name+"_All_B3.pdf")
+    c1.SaveAs("ttbar_%s"%pic_name+"_All_B3.png")
+
+
+
+#_____________________________________________________________________________
+def drawAll_2D(dir, treename, todraw,x_bins,y_bins, x_title, y_title,cut,pic_name):
+
+    c1 = ROOT.TCanvas()
+    c1.SetGridx()
+    c1.SetGridy()
+    c1.SetTickx()
+    c1.SetTicky()
+
+    xBins = int(x_bins[1:-1].split(',')[0])
+    xminBin = float(x_bins[1:-1].split(',')[1])
+    xmaxBin = float(x_bins[1:-1].split(',')[2])
+    yBins = int(y_bins[1:-1].split(',')[0])
+    yminBin = float(y_bins[1:-1].split(',')[1])
+    ymaxBin = float(y_bins[1:-1].split(',')[2])
+    
+    b1 = ROOT.TH2F("b1","b1",xBins,xminBin,xmaxBin, yBins,yminBin,ymaxBin)
+    b1.SetTitle("ttbar#rightarrow bbbarWW, B3"+" "*12 + "CMS Simulation Preliminary")
+    b1.GetYaxis().SetTitle("%s"%y_title)
+    b1.GetXaxis().SetTitle("%s"%x_title)
+    if not os.path.isdir(dir):
+          print "ERROR: This is not a valid directory: ", dir
+    ls = os.listdir(dir)
+    tot = len(ls)
+    
+    chain = ROOT.TChain(treename)
+    for x in ls:
+	x = dir[:]+x
+	chain.Add(x)
+    chain.Draw(todraw+">>b1",cut,"colz")
+    b1.Draw("colz") 
+    ROOT.gPad.SetLogz()
+
+    
+    c1.SaveAs("ttbar_%s"%pic_name+"_All_B3.pdf")
+    c1.SaveAs("ttbar_%s"%pic_name+"_All_B3.png")
+   
+
+#______________________________________________________________________________
+def buildTChain(dir,treename, rootfilename):
+
+    if not os.path.isdir(dir):
+          print "ERROR: This is not a valid directory: ", dir
+    ls = os.listdir(dir)
+    tot = len(ls)
+    
+    chain = ROOT.TChain(treename)
+    for x in ls:
+	x = dir[:]+x
+	chain.Add(x)
+   
+    file = ROOT.TFile(rootfilename,"recreate") 
+    chain.CloneTree(-1,"fast")
+    file.Write()
+    file.Close()
 
 #_______________________________________________________________________________
 if __name__ == "__main__":
@@ -446,8 +543,10 @@ if __name__ == "__main__":
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-1M-B3-1071409.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_correctnu_0324_B3.root"
     file = "/eos/uscms/store/user/tahuang/DiHiggs/ttbar_100k_0414_B3.root"
+    filedir = "/fdata/hepx/store/user/taohuang/ttbar_run2_PU20_bbana_cuts_1M_finalStates_V1/"
+
     dir = "ttbarAna/evtree"
-  
+    buildTChain(filedir,dir,"ttbar_TChain.root") 
     #htoWW_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz)**2)"
     
     
@@ -455,33 +554,35 @@ if __name__ == "__main__":
     W2_mass = "sqrt((mu2_energy+nu2_energy)**2-(mu2_px+nu2_px)**2-(mu2_py+nu2_py)**2-(mu2_pz+nu2_pz)**2)"
     Wmass_bins = "(40,60,100)"
     
-    draw1D(file,dir,W1_mass,Wmass_bins,"reconstructed mass of W_{1}#rightarrow #mu_{1}#nu_{1} (W_{1} from #bar{t})", "1","W1_mass_100k_0413")
-    draw1D(file,dir,W2_mass,Wmass_bins,"reconstructed mass of W_{2}#rightarrow #mu_{2}#nu_{2} (W_{2} from t)", "1","W2_mass_100k_0413")
+    #drawAll_1D(filedir,dir,W1_mass,Wmass_bins,"reconstructed mass of W_{1}#rightarrow #mu_{1}#nu_{1} (W_{1} from #bar{t})", "1","W1_mass_1M_0605_finalStates")
+    #drawAll_1D(filedir,dir,W2_mass,Wmass_bins,"reconstructed mass of W_{2}#rightarrow #mu_{2}#nu_{2} (W_{2} from t)", "1","W2_mass_1M_0605_finalStates")
     W1cand_mass = "mu1_mother_mass"
     W2cand_mass = "mu2_mother_mass"
-    draw1D(file,dir,W1cand_mass,Wmass_bins,"mass of W_{1} candidates ","1","W1cand_mass_100k_0413")
-    draw1D(file,dir,W2cand_mass,Wmass_bins,"mass of W_{2} candidates ","1","W2cand_mass_100k_0413")
+    #draw1D(file,dir,W1cand_mass,Wmass_bins,"mass of W_{1} candidates ","1","W1cand_mass_100k_0413")
+    #draw1D(file,dir,W2cand_mass,Wmass_bins,"mass of W_{2} candidates ","1","W2cand_mass_100k_0413")
+
+
+    drawAll_1D(filedir,dir,"bjet_decendant_energy/bjet_energy","(101,-.005,1.005)","#frac{E_{b decendants}}{E_{bjet}}", "dR_bjet<0.1","decendantenergyratio_dR1_0605_V1", "#DeltaR<0.1, p_T>30, |#eta|<2.5")
+    drawAll_1D(filedir,dir,"bjet_decendant_energy/bjet_energy","(101,-.005,1.005)","#frac{E_{b decendants}}{E_{bjet}}", "dR_bjet>0.4","decendantenergyratio_dR2_0605_V1", "#DeltaR>0.4, p_T>30, |#eta|<2.5")
+    drawAll_1D(filedir,dir,"bbarjet_decendant_energy/bbarjet_energy","(101,-.005,1.005)","#frac{E_{b decendants}}{E_{bbarjet}}", "dR_bbarjet<0.1","decendantenergyratio_bjetdR1_0605_V1", "#DeltaR<0.1, p_T>30, |#eta|<2.5")
+    drawAll_1D(filedir,dir,"bbarjet_decendant_energy/bbarjet_energy","(101,-.005,1.005)","#frac{E_{b decendant}}{E_{bbarjet}}", "dR_bbarjet>0.4","decendantenergyratio_bbarjetdR2_0605_V1", "#DeltaR>0.4, p_T>30, |#eta|<2.5")
+
+    #drawAll_2D(filedir,dir,"(bjet_decendant_energy/bjet_energy):dR_bjet","(50,0,2)","(55,0,1.1)", "dR(b genParticle, b GenJet)", "#frac{E_{b decendants}}{E_{bjet}}","1","energyratioVsdR_bjet_0605_V1")
 
     tbar_mass = "sqrt((mu1_energy+nu1_energy+b2_energy)**2-(mu1_px+nu1_px+b2_px)**2-(mu1_py+nu1_py+b2_py)**2-(mu1_pz+nu1_pz+b2_pz)**2)"
     t_mass = "sqrt((mu2_energy+nu2_energy+b1_energy)**2-(mu2_px+nu2_px+b1_px)**2-(mu2_py+nu2_py+b1_py)**2-(mu2_pz+nu2_pz+b1_pz)**2)"
     tmass_bins = "(60,140,200)"
-    draw1D(file,dir,t_mass,tmass_bins,"reconstructed mass of t#rightarrowWb", "1","tmass_100k_0413")
-    draw1D(file,dir,tbar_mass,tmass_bins,"reconstructed mass of #bar{t}#rightarrowW#bar{b}", "1","tbarmass_100k_0413")
+    #draw1D(file,dir,t_mass,tmass_bins,"reconstructed mass of t#rightarrowWb", "1","tmass_100k_0413")
+    #draw1D(file,dir,tbar_mass,tmass_bins,"reconstructed mass of #bar{t}#rightarrowW#bar{b}", "1","tbarmass_100k_0413")
     tbarcand_mass = "tbar_mass"
     tcand_mass = "t_mass" 
-    draw1D(file,dir,tcand_mass,tmass_bins,"mass of t cand", "1","tcandmass_100k_0413")
-    draw1D(file,dir,tbarcand_mass,tmass_bins,"mass of #bar{t} cand", "1","tbarcandmass_100k_0413")
+    #draw1D(file,dir,tcand_mass,tmass_bins,"mass of t cand", "1","tcandmass_100k_0413")
+    #draw1D(file,dir,tbarcand_mass,tmass_bins,"mass of #bar{t} cand", "1","tbarcandmass_100k_0413")
    # h2toh1h1_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy+b1_energy+b2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px+b1_px+b2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py+b1_py+b2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz+b1_pz+b2_pz)**2)"
     #h2toh1h1_cut = "h2tohh"
     #h2mass_bins_6 = "(200,400,600)"
     #h2mass_bins_3 = "(200,250,450)"
     #draw1D(file,dir,h2toh1h1_mass,h2mass_bins_3,"reconstructed mass of h2#rightarrow BB#mu#nu#mu#nu", h2toh1h1_cut,"h2toh1h1_mass_1M_0413")
-    
-    #htoWW_mass1 = "sqrt((mu1_mother_energy+mu2_mother_energy)**2-(mu1_mother_px+mu2_mother_px)**2-(mu1_mother_py+mu2_mother_py)**2-(mu1_mother_pz+mu2_mother_pz)**2)"
-    #draw1D(file,dir,htoWW_mass1,hmass_bins1," reconstructed mass of h#rightarrow WW, reconstruction from (WW)", htoWW_cut,"htoWW_median_mass_1M_0413")
-    #draw1D(file,dir,"htoWW_mass",hmass_bins1,"true h mass from  h candidates in generation", htoWW_cut,"htoWW_mass_100k_Gen_0324")
-    #draw1D(file,dir,"h2tohh_mass",h2mass_bins_3,"true h2 mass from h2 candidates in generation", htoWW_cut,"h2_mass_100k_Gen_0324")
-
 #draw jets mass and draw h2 reconstruction mass from jets and muons neutrinos
     jets_mass_bins = "(200, 100,400)"
     #draw1D(file,dir,"jets_mass",jets_mass_bins,"invariant mass of all decendants from b+#bar{b}", htoWW_cut,"jets_mass_1M_0413")

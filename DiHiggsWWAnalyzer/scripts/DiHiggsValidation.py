@@ -28,7 +28,7 @@ ROOT.gStyle.SetPadBottomMargin(0.13)
 
 
 #___________________________________________
-def draw1D(file,dir,todraw,x_bins,x_title,cut,pic_name):
+def draw1D(file,dir,todraw,x_bins,x_title,cut,pic_name, rand):
     
     c1 = ROOT.TCanvas()
     c1.SetGridx()
@@ -42,48 +42,20 @@ def draw1D(file,dir,todraw,x_bins,x_title,cut,pic_name):
     xminBin = float(x_bins[1:-1].split(',')[1])
     xmaxBin = float(x_bins[1:-1].split(',')[2])
     
-    b1 = ROOT.TH1F("b1","b1",xBins,xminBin,xmaxBin)
-    b1.SetTitle("h2#rightarrow hh#rightarrow BBWW, B3"+" "*12 + "CMS Simulation Preliminary")
-    b1.GetYaxis().SetTitle("Events")
-    b1.GetXaxis().SetTitle("%s"%x_title)
+    
+    b = ROOT.TH1F("b","b",xBins,xminBin,xmaxBin)
+    b.SetTitle("h2#rightarrow hh#rightarrow BBWW, B3"+" "*12 + "CMS Simulation Preliminary")
+    b.GetYaxis().SetTitle("Events")
+    b.GetXaxis().SetTitle("%s"%x_title)
     #b1.SetStats(0)
 
-    b1.Sumw2() 
-    t.Draw(todraw+">>b1",cut)
-   # b1.Draw("colz")
-#    b2 = ROOT.TF2("b2","x^2+y^2",xminBin,xmaxBin,yminBin,ymaxBin)
- #   contour = [1,2,3,4]
-    #list = [None]*3
-    #list.append(1)
-    #list.append(2)
-    #list.append(3)
-    #list = list[-3:]    
-    #b2.SetContour(4, contour)
-   # b2.SetContourLevel(0,1)
-    #b2.SetContourLevel(1,2)
-    #b2.SetContourLevel(2,3)
-    #b2.SetContourLevel(3,4)
-    #b2.Draw("CONT3 same")
-    b1.Fit("gaus")
-    legend = ROOT.TLegend(0.15,0.46,0.45,0.64)
-    legend.SetFillColor(ROOT.kWhite)
-    legend.SetFillStyle(0)
-#    legend.SetHeader("PU140,simTrack Pt(%s"%pt_min+",%s)"%pt_max)
-#legend.AddEntry(e1,"","l")
-#    legend.Draw("same")
- #   line1 = "PU140,simTrack Pt(%s"%pt_min+",%s)"%pt_max
-  #  line2 = "98 dphicut %f"%dphi_cut
-   # tex = ROOT.TLatex(0.15,0.45,line1)
-    #tex.SetTextSize(0.05)
-    #tex.SetNDC()
-    #tex.Draw("same")
-    #tex2 = ROOT.TLatex(0.15,0.35,line2)
-    #tex2.SetTextSize(0.05)
-    #tex2.SetNDC()
-    #tex2.Draw("same")
-	
-    c1.SaveAs("Dihiggs_%s"%pic_name+"_B3.pdf")
-    c1.SaveAs("Dihiggs_%s"%pic_name+"_B3.png")
+    b.Sumw2() 
+    t.Draw(todraw+">>b",cut)
+    #b1.Draw()
+    print " b entries in draw1D ",b.GetEntries()
+    #c1.SaveAs("Dihiggs_%s_%d"%(pic_name, rand)+"_B3.pdf")
+    #c1.SaveAs("Dihiggs_%s_%d"%(pic_name, rand)+"_B3.png")
+    return b	
 
 
 #____________________________________________________________________
@@ -394,7 +366,7 @@ def deltaR2(file,dir,x_bins,y_bins,cut,pic_name):
     c1.SaveAs("Dihiggs_deltaR2_%s"%pic_name+"_B3.png")
 
 #_____________________________________________________________________________
-def drawAll_1D(dir, treename, todraw,x_bins,x_title,cut,pic_name):
+def drawAll_1D(dir, treename, todraw,x_bins,x_title,cut,pic_name, text):
     c1 = ROOT.TCanvas()
     c1.SetGridx()
     c1.SetGridy()
@@ -421,63 +393,137 @@ def drawAll_1D(dir, treename, todraw,x_bins,x_title,cut,pic_name):
     for x in ls:
 	x = dir[:]+x
 	chain.Add(x)
-	"""
-	if m>0:
-		x = dir[:]+x
-#	b1.Add(draw1D(x, treename, todraw,x_bins,x_title,cut,pic_name, m))
-    		f = ROOT.TFile(x)
-    		t.AddFriend(treename,f)
-	#t.Draw(todraw+">>e",cut)
-	#print "e entries ",e.GetEntries(), " b1 entries ", b1.GetEntries()
-		f.Close()
-	#b1.Add(e)
-	m = m+1
-	"""
     chain.Draw(todraw+">>b1", cut)
+    c1.SetLogy()
     b1.Draw() 
     print "chain ",chain, " b1 entries ",b1.GetEntries()
+    #print "GetMaximumbin() ", b1.GetMaximumBin()," bincenter ",b1.GetBinCenter(b1.GetMaximumBin())
+    tex = ROOT.TLatex(0.15,0.45,text)
+    tex.SetTextSize(0.05)
+    tex.SetNDC()
+    tex.Draw("same")
 
+    c1.SaveAs("Dihiggs_%s"%pic_name+"_logy_All_B3.pdf")
+    c1.SaveAs("Dihiggs_%s"%pic_name+"_logy_All_B3.png")
+
+#_____________________________________________________________________________
+def drawAll_2D(dir, treename, todraw,x_bins,y_bins, x_title, y_title,cut,pic_name, text):
+
+    c1 = ROOT.TCanvas()
+    c1.SetGridx()
+    c1.SetGridy()
+    c1.SetTickx()
+    c1.SetTicky()
+
+    xBins = int(x_bins[1:-1].split(',')[0])
+    xminBin = float(x_bins[1:-1].split(',')[1])
+    xmaxBin = float(x_bins[1:-1].split(',')[2])
+    yBins = int(y_bins[1:-1].split(',')[0])
+    yminBin = float(y_bins[1:-1].split(',')[1])
+    ymaxBin = float(y_bins[1:-1].split(',')[2])
+    
+    b1 = ROOT.TH2F("b1","b1",xBins,xminBin,xmaxBin, yBins,yminBin,ymaxBin)
+    b1.SetTitle("h2#rightarrow bbbarWW, B3"+" "*12 + "CMS Simulation Preliminary")
+    b1.GetYaxis().SetTitle("%s"%y_title)
+    b1.GetXaxis().SetTitle("%s"%x_title)
+    if not os.path.isdir(dir):
+          print "ERROR: This is not a valid directory: ", dir
+    ls = os.listdir(dir)
+    tot = len(ls)
+    
+    chain = ROOT.TChain(treename)
+    for x in ls:
+	x = dir[:]+x
+	chain.Add(x)
+    chain.Draw(todraw+">>b1",cut,"colz")
+    b1.Draw("colz") 
+    ROOT.gPad.SetLogz()
+
+
+    tex = ROOT.TLatex(0.15,0.45,text)
+    tex.SetTextSize(0.05)
+    tex.SetNDC()
+    tex.Draw("same")
+    
     c1.SaveAs("Dihiggs_%s"%pic_name+"_All_B3.pdf")
     c1.SaveAs("Dihiggs_%s"%pic_name+"_All_B3.png")
+
+#______________________________________________________________________________
+def buildTChain(dir,treename, rootfilename):
+
+    if not os.path.isdir(dir):
+          print "ERROR: This is not a valid directory: ", dir
+    ls = os.listdir(dir)
+    tot = len(ls)
+    
+    chain = ROOT.TChain(treename)
+   
+    for x in ls:
+	x = dir[:]+x
+	chain.Add(x)
+    file = ROOT.TFile(rootfilename,"recreate") 
+    chain.Write()
+    file.Write()
+    file.Close()
+
 
 #_______________________________________________________________________________
 if __name__ == "__main__":
      
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-1M-B3-1071409.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_correctnu_0324_B3.root"
-    filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_htobbana_cuts_750k_B3/"
+    #filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_htobbana_cuts_750k_B3_V2/"
+    filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_htobbana_cuts_50k_B3_V2/"
     dir = "DiHiggsWWAna/evtree"
-  
-    #htoWW_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz)**2)"
+    
+    #buildTChain(filedir,dir,"/fdata/hepx/store/user/taohuang/Dihiggs_TChain.root") 
+    htoWW_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz)**2)"
     
     
     htoWW_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz)**2)"
     hmass_bins = "(50,100,300)"
-    hmass_bins1 = "(50,0,200)" 
+    hmass_bins1 = "(100,80,150)" 
+    hmass_bins2 = "(50,0,200)" 
     htoWW_cut = "h2tohh" 
     
-    #draw1D(file,dir,htoWW_mass,hmass_bins1,"reconstructed mass of h#rightarrow WW, reconstruction from(#mu#mu#nu#nu)", htoWW_cut,"htoWW_final_mass_1M_mediateStates_0325")
+    #drawAll_1D(filedir,dir,htoWW_mass,hmass_bins1,"reconstructed mass of h#rightarrow WW, reconstruction from(#mu#mu#nu#nu)", htoWW_cut,"htoWW_mass_1M_JetNoNu_0605","p_T>10, |#eta|<2.4")
     bjet_pt = "sqrt(bjet_px**2+bjet_py**2)" 
     bbarjet_pt = "sqrt(bbarjet_px**2+bbarjet_py**2)" 
     htoBB_mass = "sqrt((b1_energy+b2_energy)**2-(b1_px+b2_px)**2-(b1_py+b2_py)**2-(b1_pz+b2_pz)**2)"
     htoBBJets_mass = "sqrt((bjet_energy+bbarjet_energy)**2-(bjet_px+bbarjet_px)**2-(bjet_py+bbarjet_py)**2-(bjet_pz+bbarjet_pz)**2)"
     htoBBJetstot_mass = "sqrt((bjet_energy_tot+bbarjet_energy_tot)**2-(bjet_px_tot+bbarjet_px_tot)**2-(bjet_py_tot+bbarjet_py_tot)**2-(bjet_pz_tot+bbarjet_pz_tot)**2)"
     htoBB_cut = "h2tohh"
-    drawAll_1D(filedir,dir,"dR_bjet","(50,0,2)","deltaR(bjet, b genParticle)", htoBB_cut,"dR_bjet_cuts_1M_0605")
-    drawAll_1D(filedir,dir,"dR_bbarjet","(50,0,2)","deltaR(bbarjet, bbar genParticle)", htoBB_cut,"dR_bbarjet_cuts_1M_0605")
-    drawAll_1D(filedir,dir,bjet_pt, "(100,0,200)","p#_T(bjet)",htoBB_cut,"bjetPt_cuts_1M_0605")
-    drawAll_1D(filedir,dir,bbarjet_pt, "(100,0,200)","p#_T(bbarjet)",htoBB_cut,"bbarjetPt_cuts_1M_0605")
+    drawAll_1D(filedir,dir,"dR_bjet","(50,0,2)","deltaR(bjet, b genParticle)", "1","dR_bjet_cuts_50k_0621_V2","p_{T}>30, |#eta|<2.5")
+    drawAll_1D(filedir,dir,"dR_bbarjet","(50,0,2)","deltaR(bbarjet, bbar genParticle)", "1","dR_bbarjet_cuts_50k_0621_V2","p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,bjet_pt, "(100,0,200)","p#_T(bjet)","1","bjetPt_cuts_1M_0605_V3","p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,bbarjet_pt, "(100,0,200)","p#_T(bbarjet)","1","bbarjetPt_cuts_1M_0605_V3","p_{T}>30, |#eta|<2.5")
     #draw1D(file,dir,htoBB_mass,hmass_bins1,"reconstructed mass of h#rightarrow BB", htoBB_cut,"htoBB_mass_1M_mediateStates_0325")
-    drawAll_1D(filedir,dir,htoBBJets_mass,hmass_bins1,"reconstructed mass of h#rightarrow BB, from GenJet (closest)", htoBB_cut,"htoBBjets_cuts_mass_1M_0606")
+    #drawAll_1D(filedir,dir,htoBBJets_mass,hmass_bins2,"reconstructed mass of h#rightarrow BB, from GenJet (closest)", "1","htoBBjets_cuts_mass_1M_0606_V4"," p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,htoBBJets_mass,hmass_bins2,"reconstructed mass of h#rightarrow BB, from GenJet (closest)", "1","htoBBjets_cuts_mass_1M_0606_V2"," p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,htoBBJets_mass,hmass_bins2,"reconstructed mass of h#rightarrow BB, from GenJet (closest)", "dR_bjet<0.1 && dR_bbarjet<0.1","htoBBjets_cuts_dR1_mass_50k_0621","#splitline{jet reconstruction algo: ak4GenJets}{#DeltaR(bjet)<0.1, #DeltaR(bbarjet)<0.1, p_{T}>30, |#eta|<2.5}")
     #drawAll_1D(filedir,dir,htoBBJetstot_mass,hmass_bins1,"reconstructed mass of h#rightarrow BB, from GenJet (sum)", htoBB_cut,"htoBBjetstot_mass_1M_0606")
    
+    #drawAll_1D(filedir,dir,"bjet_decendant_energy/bjet_energy","(101,-0.005,1.005)","#frac{E_{b decendants}}{E_{bjet}}", "dR_bjet<0.1","decendantenergyratio_dR1_0605_V3", "#DeltaR<0.1,p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,"bjet_decendant_energy/bjet_energy","(101,-0.005,1.005)","#frac{E_{b decendants}}{E_{bjet}}", "dR_bjet>0.4","decendantenergyratio_dR2_0605_V3", "#DeltaR>0.4,p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,"bbarjet_decendant_energy/bbarjet_energy","(101,-0.005,1.005)","#frac{E_{b decendants}}{E_{bbarjet}}", "dR_bbarjet<0.1","decendantenergyratio_bjetdR1_0605_V3", "#DeltaR<0.1,p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,"bbarjet_decendant_energy/bbarjet_energy","(101,-0.005,1.005)","#frac{E_{b decendant}}{E_{bbarjet}}", "dR_bbarjet>0.4","decendantenergyratio_bbarjetdR2_0605_V3", "#DeltaR>0.4,p_{T}>30, |#eta|<2.5")
+
+
+    drawAll_2D(filedir,dir,"(bjet_decendant_energy/bjet_energy):dR_bjet","(50,0,2)","(55,0,1.1)", "dR(b genParticle, b GenJet)", "#frac{E_{b decendants}}{E_{bjet}}","1","energyratioVsdR_bjet_50k_0621_V2","p_{T}>30, |#eta|<2.5")
+
+    #drawAll_2D(filedir,dir,"(sqrt(bjet_decendant_px**2+bjet_decendant_py**2)/sqrt(bjet_px**2+bjet_py**2)):dR_bjet","(50,0,2)","(51,-0.01,1.01)", "dR(b genParticle, b GenJet)", "#frac{p_T(b decendants)}{p_T(bjet)}","1","ptratioVsdR_bjet_0605_V3","p_{T}>30, |#eta|<2.5")
+
+    #drawAll_2D(filedir,dir,"(sqrt(bbarjet_decendant_px**2+bbarjet_decendant_py**2)/sqrt(bbarjet_px**2+bbarjet_py**2)):dR_bjet","(50,0,2)","(51,-0.01,1.01)", "dR(bbar genParticle, bbar GenJet)", "#frac{p_T(bbar decendants)}{p_T(bbarjet)}","1","ptratioVsdR_bbarjet_0605_V3","p_{T}>30, |#eta|<2.5")
+
+
     h2toh1h1_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy+b1_energy+b2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px+b1_px+b2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py+b1_py+b2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz+b1_pz+b2_pz)**2)"
     h2toh1h1Jets_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy+bjet_energy+bbarjet_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px+bjet_px+bbarjet_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py+bjet_py+bbarjet_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz+bjet_pz+bbarjet_pz)**2)"
-    h2toh1h1_cut = "h2tohh"
+    h2toh1h1_cut = "h2tohh && dR_bjet<0.1 && dR_bbarjet<0.1"
     h2mass_bins_6 = "(200,400,600)"
-    h2mass_bins_3 = "(200,250,450)"
-    #draw1D(file,dir,h2toh1h1_mass,h2mass_bins_3,"reconstructed mass of h2#rightarrow BB#mu#nu#mu#nu", h2toh1h1_cut,"h2toh1h1_mass_1M_mediateStates_0325")
-    
+    h2mass_bins_3 = "(100,250,450)"
+    #drawAll_1D(filedir,dir,h2toh1h1_mass,h2mass_bins_3,"reconstructed mass of h2#rightarrow BB#mu#nu#mu#nu", "h2tohh","h2toh1h1_mass_1M_genp_0605_V4"," ")
+    #drawAll_1D(filedir,dir,h2toh1h1Jets_mass,h2mass_bins_3,"reconstructed mass of h2#rightarrow BB#mu#nu#mu#nu", h2toh1h1_cut,"h2toh1h1_mass_1M_jets_0605_V3","#splitline{jets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5}{muons: p_{T}>10, |#eta|<2.4}") 
+
     htoWW_mass1 = "sqrt((mu1_mother_energy+mu2_mother_energy)**2-(mu1_mother_px+mu2_mother_px)**2-(mu1_mother_py+mu2_mother_py)**2-(mu1_mother_pz+mu2_mother_pz)**2)"
     #draw1D(file,dir,htoWW_mass1,hmass_bins1," reconstructed mass of h#rightarrow WW, reconstruction from (WW)", htoWW_cut,"htoWW_median_mass_1M_mediateStates_0325")
     #draw1D(file,dir,"htoWW_mass",hmass_bins1,"true h mass from  h candidates in generation", htoWW_cut,"htoWW_mass_100k_Gen_0324")

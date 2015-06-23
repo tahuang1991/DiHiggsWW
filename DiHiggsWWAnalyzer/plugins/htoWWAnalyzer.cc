@@ -278,15 +278,12 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       if (it->pdgId() == 24 ){
         const reco::Candidate* tmpw1 = it->mother();
         while (tmpw1->pdgId() == 24 && tmpw1->numberOfMothers() == 1) tmpw1 = tmpw1->mother();
-
         if (tmpw1->pdgId() == 25)  W1Coll.push_back(it->clone());
-
 	}
       else if (it->pdgId() == -24 )
       {
         const reco::Candidate* tmpw2 = it->mother();
         while (tmpw2->pdgId() == -24 && tmpw2->numberOfMothers() == 1) tmpw2 = tmpw2->mother();
-
         if (tmpw2->pdgId() == 25)  W2Coll.push_back(it->clone());
         }
 
@@ -294,14 +291,12 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       {
 	  bquark = true;
           if (it->numberOfMothers() != 1) std::cout << "bquark has more than one mother particle" << std::endl;
-       //   std::cout << "find bquark candidate" << std::endl;
           b1Coll.push_back(it->clone());
       }
       else if (it->pdgId() == -5 && it->mother()->pdgId() == 25 )
       {
 	  bbarquark = true;
           if (it->numberOfMothers() != 1) std::cout << "bquark has more than one mother particle" << std::endl;
-         // std::cout << "find bbarquark candidate" << std::endl;
           b2Coll.push_back(it->clone());
       }
 
@@ -533,7 +528,7 @@ htoWWAnalyzer::finddecendant(const reco::Candidate* cand, int id, bool first){
 	else if ((cand->daughter(i))->pdgId() == id && !first && (cand->daughter(i))->numberOfDaughters()>1) 
 		return  tmp=cand->daughter(i);// tmp has more one daughters therefore it is final-states
         else if (finddecendant(cand->daughter(i),id, first)) 
-		return tmp=finddecendant(cand->daughter(i),id);
+		return tmp=finddecendant(cand->daughter(i),id, first);
    }
     
     return tmp;

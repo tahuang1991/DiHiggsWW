@@ -1,7 +1,7 @@
 from array import *
 import ROOT
 import math
-
+import os
 
 ROOT.gROOT.SetBatch(1)
 #gStyle from TStyle
@@ -1042,6 +1042,63 @@ def drawh2Mass_combined(file, cut="weight"):
     h2massout.Write()
     h2massout.Close()
 
+
+#____________________________________________________________________________
+def drawh2MassAll_combined(dir, cut="weight"):
+
+
+
+    hist_h2 = ROOT.TH1F("hist_h2"," ",150,200,500)
+    hist_h2true = ROOT.TH1F("hist_h2true"," ",150,200,500)
+
+
+    if not os.path.isdir(dir):
+          print "ERROR: This is not a valid directory: ", dir
+    ls = os.listdir(dir)
+    tot = len(ls)
+    for x in ls:
+	x = dir[:]+x
+    	num = gettreenum(x)
+	m = 1
+    	while m<num:
+    		f = ROOT.TFile(x)
+    		list = f.GetListOfKeys()
+    		key = list.At(0)
+   	 	obj = key.ReadObj() #DiHiggsWWAna
+    		sub_list = obj.GetListOfKeys()
+    		sub_key = sub_list.At(m)
+		tree = sub_key.ReadObj()
+        	h2_mass_true = getTrueValue(tree,"mass_h2_true","(800,200,1000)")
+    		name = tree.GetTitle()+"_h2Mass"
+   		b1 = ROOT.TH1F("%s"%name,"b1",800,200,1000)
+    		tree.Draw("h2tohh_Mass>>%s"%name,cut)
+        	h2_mass_mean = b1.GetMean()
+        	maxbin = b1.GetMaximumBin() 
+		h2_mass_reconstructed = b1.GetXaxis().GetBinCenter(maxbin)
+       		hist_h2.Fill(h2_mass_reconstructed)
+		hist_h2true.Fill(h2_mass_true)
+        	m = m+1
+		f.Close()
+       
+			
+    h2Mass_c = ROOT.TCanvas()
+    hist_h2.SetLineColor(ROOT.kRed)
+    hist_h2.GetXaxis().SetTitle("M_{H}")
+    hist_h2.SetTitle("M_{H} reconstruction from MMC")
+
+    hist_h2true.SetLineColor(ROOT.kBlue)
+    hist_h2true.SetLineStyle(2)
+    legend = ROOT.TLegend(0.25,0.7,0.45,0.82)
+    legend.SetFillColor(ROOT.kWhite)
+    #legend.SetFillStyle(0)
+    legend.AddEntry(hist_h2,"Reconstructed ","l") 
+    legend.AddEntry(hist_h2true,"True ","l") 
+    hist_h2.Draw()
+    hist_h2true.Draw("same")
+    legend.Draw("same")
+    h2Mass_c.SaveAs("MMC_h2Mass_0621_%s_1M_B3.pdf"%cut) 
+    h2Mass_c.SaveAs("MMC_h2Mass_0621_%s_1M_B3.png"%cut) 
+
 #___________________________________________________________________________
 def geth2MassMostProba(t, cut = "weight"):
  
@@ -1296,6 +1353,7 @@ if __name__ == "__main__":
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_weight_0408_B3.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_finalStates_checksolution_0511_B3.root"
     file = "/fdata/hepx/store/user/taohuang/Hhh/0504_h2tohh/DiHiggs-1M-0504-mediateStates-B3-combined.root"
+    filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_htobbana_cuts_1M_filter_B3_MMC/"
     dir = "DiHiggsWWAna/%s"%treename
     #dir = "DiHiggsWWAna/"
     
@@ -1309,10 +1367,10 @@ if __name__ == "__main__":
     #monitoringMMC(file,cut_weight1)
     #monitoringMMC(file,cut_weight2)
     #monitoringMMC(file,cut_weight3)
-    drawh2Mass_combined(file)
-    drawh2Mass_combined(file,"weight1")
-    drawh2Mass_combined(file,"weight2")
-    drawh2Mass_combined(file,"weight3")
+    drawh2MassAll_combined(filedir)
+    drawh2MassAll_combined(filedir,"weight1")
+    #drawh2Mass_combined(file,"weight2")
+    #drawh2Mass_combined(file,"weight3")
     title1 = "MMC PDF for M_{H}, Event 4204"
     h2massbins = "(80,260,420)"#for843 only
     
