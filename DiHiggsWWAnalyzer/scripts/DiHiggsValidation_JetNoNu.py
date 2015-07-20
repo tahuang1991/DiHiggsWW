@@ -377,7 +377,7 @@ def drawAll_1D(dir, treename, todraw,x_bins,x_title,cut,pic_name, text):
     xminBin = float(x_bins[1:-1].split(',')[1])
     xmaxBin = float(x_bins[1:-1].split(',')[2])
     if not os.path.isdir(dir):
-          print "ERROR: This is not a valid directory: ", inputDir
+          print "ERROR: This is not a valid directory: ",dir
     ls = os.listdir(dir)
     tot = len(ls)
     rootfile = dir[:]+ls[0]
@@ -394,18 +394,18 @@ def drawAll_1D(dir, treename, todraw,x_bins,x_title,cut,pic_name, text):
 	x = dir[:]+x
 	chain.Add(x)
     chain.Draw(todraw+">>b1", cut)
-    c1.SetLogy()
+   # c1.SetLogy()
     b1.Draw() 
     print "chain ",chain, " b1 entries ",b1.GetEntries()
     #print "GetMaximumbin() ", b1.GetMaximumBin()," bincenter ",b1.GetBinCenter(b1.GetMaximumBin())
     tex = ROOT.TLatex(0.15,0.45,text)
-    tex.SetTextSize(0.05)
+    tex.SetTextSize(0.04)
+    tex.SetTextFont(42)
     tex.SetNDC()
     tex.Draw("same")
 
-    c1.SaveAs("Dihiggs_%s"%pic_name+"_logy_All_B3.pdf")
-    c1.SaveAs("Dihiggs_%s"%pic_name+"_logy_All_B3.png")
-
+    c1.SaveAs("Dihiggs_%s"%pic_name+"_All_B3.pdf")
+    c1.SaveAs("Dihiggs_%s"%pic_name+"_All_B3.png")
 
 #_____________________________________________________________________________
 def drawAll_combined1D(dir, treename, todraw, truetodraw, x_bins,x_title,cut,pic_name, text):
@@ -419,7 +419,7 @@ def drawAll_combined1D(dir, treename, todraw, truetodraw, x_bins,x_title,cut,pic
     xminBin = float(x_bins[1:-1].split(',')[1])
     xmaxBin = float(x_bins[1:-1].split(',')[2])
     if not os.path.isdir(dir):
-          print "ERROR: This is not a valid directory: ", inputDir
+          print "ERROR: This is not a valid directory: ", dir
     ls = os.listdir(dir)
     tot = len(ls)
     rootfile = dir[:]+ls[0]
@@ -458,7 +458,10 @@ def drawAll_combined1D(dir, treename, todraw, truetodraw, x_bins,x_title,cut,pic
     tex.Draw("same")
 
     c1.SaveAs("Dihiggs_combined_%s"%pic_name+"_All_B3.pdf")
-    c1.SaveAs("Dihiggs_combined_%s"%pic_name+"_All_B3.png")
+    c1.SaveAs("Dihiggs_combined_%s"%pic_name+"_All_B3.pdf")
+
+
+
 
 #_____________________________________________________________________________
 def drawAll_2D(dir, treename, todraw,x_bins,y_bins, x_title, y_title,cut,pic_name, text):
@@ -477,7 +480,7 @@ def drawAll_2D(dir, treename, todraw,x_bins,y_bins, x_title, y_title,cut,pic_nam
     ymaxBin = float(y_bins[1:-1].split(',')[2])
     
     b1 = ROOT.TH2F("b1","b1",xBins,xminBin,xmaxBin, yBins,yminBin,ymaxBin)
-    b1.SetTitle("h2#rightarrow bbbarWW, B3"+" "*12 + "CMS Simulation Preliminary")
+    b1.SetTitle("h2#rightarrow bbWW, B3"+" "*12 + "CMS Simulation Preliminary")
     b1.GetYaxis().SetTitle("%s"%y_title)
     b1.GetXaxis().SetTitle("%s"%x_title)
     if not os.path.isdir(dir):
@@ -490,12 +493,13 @@ def drawAll_2D(dir, treename, todraw,x_bins,y_bins, x_title, y_title,cut,pic_nam
 	x = dir[:]+x
 	chain.Add(x)
     chain.Draw(todraw+">>b1",cut,"colz")
-    b1.Draw("colz") 
+    b1.Draw("colz")
     ROOT.gPad.SetLogz()
 
 
     tex = ROOT.TLatex(0.15,0.45,text)
-    tex.SetTextSize(0.05)
+    tex.SetTextSize(0.04)
+    tex.SetTextFont(42)
     tex.SetNDC()
     tex.Draw("same")
     
@@ -527,11 +531,23 @@ if __name__ == "__main__":
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs-1M-B3-1071409.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_correctnu_0324_B3.root"
     #filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_htobbana_cuts_750k_B3_V2/"
-    #filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_htobbana_cuts_50k_B3_V2/"
-    filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_htobbana_cuts_1M_filter_B3_MMC/"
-    filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_cuts_1M_filter_B3_MMC_ak4genjets_hepx/"
+    filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_htobbana_cuts_50k_B3_JetNoNu_0715/"
+    #filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_cuts_1M_filter_B3_MMC_useMET_METcorrection_V3MMC/"
+    #filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_cuts_1M_filter_B3_MMC_useMET_GenLevelwithcuts/"
+    #filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_cuts_1M_filter_B3_MMC_useMETwithMMC/"
+    #filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_cuts_1M_filter_B3_MMC_useMET_METcorrectionwithMMC/"
+    #filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_cuts_1M_filter_B3_MMC_bjets_trueMET/"
     dir = "DiHiggsWWAna/evtree"
     
+    #drawAll_1D(filedir,dir,"(b1_pt/bjet_pt)*(bjet_pt>=bbarjet_pt)+(b2_pt/bbarjet_pt)*(bjet_pt<bbarjet_pt)","(100,0.0,2.0)","#frac{p_{T}(b)}{p_{T}(bjet)}","htobb && hasbjet && hasbbarjet","htobb_ptratio_50k_c1_JetNoNu_0715","b-jets:p_{T}>30, |#eta|<2.4")
+    #drawAll_1D(filedir,dir,"(b1_pt/bjet_pt)*(bjet_pt>=bbarjet_pt)+(b2_pt/bbarjet_pt)*(bjet_pt<bbarjet_pt)","(100,0.0,2.0)","#frac{p_{T}(b)}{p_{T}(bjet)}","htobb && hasbjet && hasbbarjet && dR_bjet<0.1 && dR_bbarjet<0.1","htobb_dR1_ptratio_50k_c1_JetNoNu_0715","b-jets:p_{T}>30, |#eta|<2.4, #Delta R<0.1")
+    #drawAll_1D(filedir,dir,"(b1_pt/bjet_pt)*(bjet_pt<=bbarjet_pt)+(b2_pt/bbarjet_pt)*(bjet_pt>bbarjet_pt)","(100,0.0,2.0)","#frac{p_{T}(b)}{p_{T}(bjet)}","htobb && hasbjet && hasbbarjet","htobb_ptratio_50k_c2_JetNoNu_0715","b-jets:p_{T}>30, |#eta|<2.4")
+    #drawAll_1D(filedir,dir,"(b1_pt/bjet_pt)*(bjet_pt<=bbarjet_pt)+(b2_pt/bbarjet_pt)*(bjet_pt>bbarjet_pt)","(100,0.0,2.0)","#frac{p_{T}(b)}{p_{T}(bjet)}","htobb && hasbjet && hasbbarjet && dR_bjet<0.1 && dR_bbarjet<0.1","htobb_dR1_ptratio_50k_c2_JetNoNu_0715","b-jets:p_{T}>30, |#eta|<2.4, #Delta R<0.1")
+
+    #drawAll_2D(filedir,dir,"((b1_pt/bjet_pt)*(bjet_pt>=bbarjet_pt)+(b2_pt/bbarjet_pt)*(bjet_pt<bbarjet_pt)):((b1_pt/bjet_pt)*(bjet_pt<=bbarjet_pt)+(b2_pt/bbarjet_pt)*(bjet_pt>bbarjet_pt))","(100,0,2)","(100,0,2.0)","c1", "c2","htobb && hasbjet && hasbbarjet && hasMET","htobb_ptratio_50k_c1c2_JetNoNu_metcut_0715","b-jets:p_{T}>30, |#eta|<2.4, #Delta R<0.1;  #slash{E}_{T}>20")
+    #drawAll_2D(filedir,dir,"((b1_pt/bjet_pt)*(bjet_pt>=bbarjet_pt)+(b2_pt/bbarjet_pt)*(bjet_pt<bbarjet_pt)):((b1_pt/bjet_pt)*(bjet_pt<=bbarjet_pt)+(b2_pt/bbarjet_pt)*(bjet_pt>bbarjet_pt))","(100,0,2)","(100,0,2.0)","c1", "c2","htobb && hasbjet && hasbbarjet","htobb_ptratio_50k_c1c2_JetNoNu_0715","b-jets:p_{T}>30, |#eta|<2.4, #Delta R<0.1")
+    drawAll_1D(filedir,dir,"(bjet_energy*bbarjet_energy-bjet_px*bbarjet_px-bjet_py*bbarjet_py-bjet_pz*bbarjet_pz)","(100,0.0,100.0)","p^{4}(bjet)*p^{4}(bbarjet)","htobb && hasbjet && hasbbarjet","htobb_ptratio_50k_bjetsdot_JetNoNu_0715","b-jets:p_{T}>30, |#eta|<2.4")
+    drawAll_1D(filedir,dir,"(b1_energy*b2_energy-b1_px*b2_px-b1_py*b2_py-b1_pz*b2_pz)","(100,0.0,100.0)","p^{4}(b)*p^{4}(#bar{b})","htobb && hasbjet && hasbbarjet","htobb_ptratio_50k_bquarkdot_JetNoNu_0715","b-jets:p_{T}>30, |#eta|<2.4")
     #buildTChain(filedir,dir,"/fdata/hepx/store/user/taohuang/Dihiggs_TChain.root") 
     htoWW_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz)**2)"
     
@@ -541,22 +557,28 @@ if __name__ == "__main__":
     hmass_bins1 = "(100,80,150)" 
     hmass_bins2 = "(50,0,200)" 
     htoWW_cut = "h2tohh" 
+    hasjets_cut = "hasbjet && hasbbarjet"
     
     #drawAll_1D(filedir,dir,htoWW_mass,hmass_bins1,"reconstructed mass of h#rightarrow WW, reconstruction from(#mu#mu#nu#nu)", htoWW_cut,"htoWW_mass_1M_JetNoNu_0605","p_T>10, |#eta|<2.4")
+    #drawAll_combined1D(filedir,dir,htoWW_mass,"htoWW_mass",hmass_bins1,"reconstructed mass of h#rightarrow WW, reconstruction from(#mu#mu#nu#nu)", htoWW_cut,"htoWW_mass_1M_JetNoNu_0625","p_T>10, |#eta|<2.4")
     bjet_pt = "sqrt(bjet_px**2+bjet_py**2)" 
     bbarjet_pt = "sqrt(bbarjet_px**2+bbarjet_py**2)" 
     htoBB_mass = "sqrt((b1_energy+b2_energy)**2-(b1_px+b2_px)**2-(b1_py+b2_py)**2-(b1_pz+b2_pz)**2)"
     htoBBJets_mass = "sqrt((bjet_energy+bbarjet_energy)**2-(bjet_px+bbarjet_px)**2-(bjet_py+bbarjet_py)**2-(bjet_pz+bbarjet_pz)**2)"
+    htoBBJets_correction_mass = "sqrt(((bjet_energy+bbarjet_energy)*rescalefactor)**2-((bjet_px+bbarjet_px)*rescalefactor)**2-((bjet_py+bbarjet_py)*rescalefactor)**2-((bjet_pz+bbarjet_pz)*rescalefactor)**2)"
     htoBBJetstot_mass = "sqrt((bjet_energy_tot+bbarjet_energy_tot)**2-(bjet_px_tot+bbarjet_px_tot)**2-(bjet_py_tot+bbarjet_py_tot)**2-(bjet_pz_tot+bbarjet_pz_tot)**2)"
     htoBB_cut = "h2tohh"
-    #drawAll_1D(filedir,dir,"dR_bjet","(50,0,2)","deltaR(bjet, b genParticle)", "1","dR_bjet_cuts_50k_0621_V2","p_{T}>30, |#eta|<2.5")
-    #drawAll_1D(filedir,dir,"dR_bbarjet","(50,0,2)","deltaR(bbarjet, bbar genParticle)", "1","dR_bbarjet_cuts_50k_0621_V2","p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,"dR_bjet","(50,0,2)","deltaR(bjet, b genParticle)", "1","dR_bjet_cuts_50k_0621_JetNoNu_V2","p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,"dR_bbarjet","(50,0,2)","deltaR(bbarjet, bbar genParticle)", "1","dR_bbarjet_cuts_50k_0621_JetNoNu_V2","p_{T}>30, |#eta|<2.5")
     #drawAll_1D(filedir,dir,bjet_pt, "(100,0,200)","p#_T(bjet)","1","bjetPt_cuts_1M_0605_V3","p_{T}>30, |#eta|<2.5")
     #drawAll_1D(filedir,dir,bbarjet_pt, "(100,0,200)","p#_T(bbarjet)","1","bbarjetPt_cuts_1M_0605_V3","p_{T}>30, |#eta|<2.5")
     #draw1D(file,dir,htoBB_mass,hmass_bins1,"reconstructed mass of h#rightarrow BB", htoBB_cut,"htoBB_mass_1M_mediateStates_0325")
     #drawAll_1D(filedir,dir,htoBBJets_mass,hmass_bins2,"reconstructed mass of h#rightarrow BB, from GenJet (closest)", "1","htoBBjets_cuts_mass_1M_0606_V4"," p_{T}>30, |#eta|<2.5")
     #drawAll_1D(filedir,dir,htoBBJets_mass,hmass_bins2,"reconstructed mass of h#rightarrow BB, from GenJet (closest)", "1","htoBBjets_cuts_mass_1M_0606_V2"," p_{T}>30, |#eta|<2.5")
-    #drawAll_1D(filedir,dir,htoBBJets_mass,hmass_bins2,"reconstructed mass of h#rightarrow BB, from GenJet (closest)", "dR_bjet<0.1 && dR_bbarjet<0.1","htoBBjets_cuts_dR1_mass_50k_0621","#splitline{jet reconstruction algo: ak4GenJets}{#DeltaR(bjet)<0.1, #DeltaR(bbarjet)<0.1, p_{T}>30, |#eta|<2.5}")
+    #drawAll_1D(filedir,dir,htoBBJets_mass,hmass_bins2,"reconstructed mass of h#rightarrow BB, from GenJet (closest)", "dR_bjet<0.1 && dR_bbarjet<0.1","htoBBjets_cuts_dR1_mass_50k_0625_JetNoNu","#splitline{jet reconstruction algo: ak4GenJetsNoNu}{#DeltaR(bjet)<0.1, #DeltaR(bbarjet)<0.1, p_{T}>30, |#eta|<2.5}")
+    #drawAll_1D(filedir,dir,htoBBJets_correction_mass,hmass_bins2,"reconstructed mass of h#rightarrow BB, from GenJet (closest)", "dR_bjet<0.1 && dR_bbarjet<0.1 &&"+hasjets_cut,"htoBBjets_cuts_dR1_mass_50k_0625_correction_JetNoNu","#splitline{jet reconstruction: ak4GenJetsNoNu, after rescaling}{#DeltaR(bjet)<0.1, #DeltaR(bbarjet)<0.1, p_{T}>30, |#eta|<2.5}")
+    #drawAll_combined1D(filedir,dir,htoBBJets_mass,"htobb_mass",hmass_bins2,"reconstructed mass of h#rightarrow BB, from GenJet (closest)", "dR_bjet<0.1 && dR_bbarjet<0.1","htoBBjets_cuts_dR1_mass_50k_0625_JetNoNu","#splitline{jet reconstruction algo: ak4GenJetsNoNu}{#DeltaR(bjet)<0.1, #DeltaR(bbarjet)<0.1, p_{T}>30, |#eta|<2.5}")
+    #drawAll_combined1D(filedir,dir,htoBBJets_correction_mass,"htobb_mass",hmass_bins2,"reconstructed mass of h#rightarrow BB, from GenJet (closest)", "dR_bjet<0.1 && dR_bbarjet<0.1 &&"+hasjets_cut,"htoBBjets_cuts_dR1_mass_50k_0625_correction_JetNoNu","#splitline{jet reconstruction: ak4GenJetsNoNu, after rescaling}{#DeltaR(bjet)<0.1, #DeltaR(bbarjet)<0.1, p_{T}>30, |#eta|<2.5}")
     #drawAll_1D(filedir,dir,htoBBJetstot_mass,hmass_bins1,"reconstructed mass of h#rightarrow BB, from GenJet (sum)", htoBB_cut,"htoBBjetstot_mass_1M_0606")
    
     #drawAll_1D(filedir,dir,"bjet_decendant_energy/bjet_energy","(101,-0.005,1.005)","#frac{E_{b decendants}}{E_{bjet}}", "dR_bjet<0.1","decendantenergyratio_dR1_0605_V3", "#DeltaR<0.1,p_{T}>30, |#eta|<2.5")
@@ -564,8 +586,7 @@ if __name__ == "__main__":
     #drawAll_1D(filedir,dir,"bbarjet_decendant_energy/bbarjet_energy","(101,-0.005,1.005)","#frac{E_{b decendants}}{E_{bbarjet}}", "dR_bbarjet<0.1","decendantenergyratio_bjetdR1_0605_V3", "#DeltaR<0.1,p_{T}>30, |#eta|<2.5")
     #drawAll_1D(filedir,dir,"bbarjet_decendant_energy/bbarjet_energy","(101,-0.005,1.005)","#frac{E_{b decendant}}{E_{bbarjet}}", "dR_bbarjet>0.4","decendantenergyratio_bbarjetdR2_0605_V3", "#DeltaR>0.4,p_{T}>30, |#eta|<2.5")
 
-
-    #drawAll_2D(filedir,dir,"(bjet_decendant_energy/bjet_energy):dR_bjet","(50,0,2)","(55,0,1.1)", "dR(b genParticle, b GenJet)", "#frac{E_{b decendants}}{E_{bjet}}","1","energyratioVsdR_bjet_50k_0621_V2","p_{T}>30, |#eta|<2.5")
+    #drawAll_2D(filedir,dir,"(bjet_decendant_energy/bjet_energy):dR_bjet","(50,0,2)","(55,0,1.1)", "dR(b genParticle, b GenJet)", "#frac{E_{b decendants}}{E_{bjet}}","1","energyratioVsdR_bjet_50k_0621_JetNoNu_V2","p_{T}>30, |#eta|<2.5")
 
     #drawAll_2D(filedir,dir,"(sqrt(bjet_decendant_px**2+bjet_decendant_py**2)/sqrt(bjet_px**2+bjet_py**2)):dR_bjet","(50,0,2)","(51,-0.01,1.01)", "dR(b genParticle, b GenJet)", "#frac{p_T(b decendants)}{p_T(bjet)}","1","ptratioVsdR_bjet_0605_V3","p_{T}>30, |#eta|<2.5")
 
@@ -574,22 +595,85 @@ if __name__ == "__main__":
 
     h2toh1h1_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy+b1_energy+b2_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px+b1_px+b2_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py+b1_py+b2_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz+b1_pz+b2_pz)**2)"
     h2toh1h1Jets_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy+bjet_energy+bbarjet_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px+bjet_px+bbarjet_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py+bjet_py+bbarjet_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz+bjet_pz+bbarjet_pz)**2)"
-    h2toh1h1_cut = "h2tohh && dR_bjet<0.1 && dR_bbarjet<0.1 && hasMET"
+    h2toh1h1Jets_correction_mass = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy+(bjet_energy+bbarjet_energy)*rescalefactor)**2-(mu1_px+mu2_px+nu1_px+nu2_px+(bjet_px+bbarjet_px)*rescalefactor)**2-(mu1_py+mu2_py+nu1_py+nu2_py+(bjet_py+bbarjet_py)*rescalefactor)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz+(bjet_pz+bbarjet_pz)*rescalefactor)**2)"
+    h2toh1h1_cut = "h2tohh&& runmmc && dR_bjet<0.1 && dR_bbarjet<0.1 && hasMET && hasbjet && hasbbarjet && hastwomuons"
+    h2toh1h1_simplecut = "h2tohh && runmmc && hasbjet && hasbbarjet && hasMET && hastwomuons"
     h2mass_bins_6 = "(200,400,600)"
     h2mass_bins_3 = "(100,250,450)"
     #drawAll_1D(filedir,dir,h2toh1h1_mass,h2mass_bins_3,"reconstructed mass of h2#rightarrow BB#mu#nu#mu#nu", "h2tohh","h2toh1h1_mass_1M_genp_0605_V4"," ")
-    #drawAll_1D(filedir,dir,h2toh1h1Jets_mass,h2mass_bins_3,"reconstructed mass of h2#rightarrow BB#mu#nu#mu#nu", h2toh1h1_cut,"h2toh1h1_mass_1M_jets_0605_V3","#splitline{jets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5}{muons: p_{T}>10, |#eta|<2.4}") 
-    #drawAll_combined1D(filedir,dir,h2toh1h1Jets_mass,"h2tohh_mass",h2mass_bins_3,"reconstructed mass of h2#rightarrow BB#mu#nu#mu#nu", h2toh1h1_cut,"h2toh1h1_mass_1M_ak4genjets_metcut_0629","#splitline{jets: ak4Genjets, #DeltaR<0.1, p_{T}>30, |#eta|<2.5}{muons: p_{T}>10, |#eta|<2.4 and #slash{E}_{T}>20}") 
-		
-    drawAll_combined1D(filedir,dir, "MMC_h2mass_prob","h2tohh_mass",h2mass_bins_3," MMC reconstruction m_{H}", h2toh1h1_cut,"h2toh1h1_mass_1M_ak4genjets_metcut_0629","#splitline{jets: ak4Genjets, #DeltaR<0.1, p_{T}>30, |#eta|<2.5}{muons: p_{T}>10, |#eta|<2.4 and #slash{E}_{T}>20}") 
-		
+    #drawAll_1D(filedir,dir,h2toh1h1Jets_mass,h2mass_bins_3,"reconstructed mass of h2#rightarrow BB#mu#nu#mu#nu", h2toh1h1_cut,"h2toh1h1_mass_1M_jets_0625_JetNoNu","#splitline{jets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5}{muons: p_{T}>10, |#eta|<2.4}") 
+    #drawAll_1D(filedir,dir,h2toh1h1Jets_correction_mass,h2mass_bins_3,"reconstructed mass of h2#rightarrow BB#mu#nu#mu#nu", h2toh1h1_cut+"&&"+hasjets_cut,"h2toh1h1_mass_1M_jets_0625_correction_JetNoNu","#splitline{jets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5, after rescaling}{muons: p_{T}>10, |#eta|<2.4}") 
 
+    #drawAll_combined1D(filedir,dir, "MMC_h2mass_prob","h2tohh_mass",h2mass_bins_3," MMC reconstruction m_{H}", h2toh1h1_cut,"h2toh1h1_mass_bjets_norescaled_trueMET_cuts_0710","#splitline{cut on events: bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5}{muons: p_{T}>10, |#eta|<2.4 and #slash{E}_{T}>20}") 
+    #drawAll_combined1D(filedir,dir, "MMC_h2mass_prob","h2tohh_mass",h2mass_bins_3," MMC reconstruction m_{H}", h2toh1h1_simplecut,"h2toh1h1_mass_bjets_norescaled_trueMET_simplecuts_0710","#splitline{cut on events: bjets: p_{T}>30, |#eta|<2.5}{muons: p_{T}>10, |#eta|<2.4 and #slash{E}_{T}>2} ") 
+    #drawAll_combined1D(filedir,dir,h2toh1h1Jets_mass,"h2tohh_mass",h2mass_bins_3,"reconstructed mass of h2#rightarrow BB#mu#nu#mu#nu", h2toh1h1_cut,"h2toh1h1_mass_1M_jets_metcut_0625_JetNoNu","#splitline{jets:ak4GenjetsNoNu #DeltaR<0.1, p_{T}>30, |#eta|<2.5}{muons: p_{T}>10, |#eta|<2.4 and #slash{E}_{T}>20}") 
+    #drawAll_combined1D(filedir,dir,h2toh1h1Jets_correction_mass,"h2tohh_mass",h2mass_bins_3,"reconstructed mass of h2#rightarrow BB#mu#nu#mu#nu", h2toh1h1_cut,"h2toh1h1_mass_1M_jets_metcut_0625_correction_JetNoNu","#splitline{jets:ak4GenJetsNoNu #DeltaR<0.1, p_{T}>30, |#eta|<2.5, after rescaling}{muons: p_{T}>10, |#eta|<2.4 and #slash{E}_{T}>20}") 
+    #drawAll_combined1D(filedir,dir,h2toh1h1Jets_correction_mass,"h2tohh_mass",h2mass_bins_3,"reconstructed mass of h2#rightarrow BB#mu#nu#mu#nu", h2toh1h1_cut+"&&"+hasjets_cut,"h2toh1h1_mass_1M_jets_0625_correction_JetNoNu","#splitline{jets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5, after rescaling}{muons: p_{T}>10, |#eta|<2.4}") 
     htoWW_mass1 = "sqrt((mu1_mother_energy+mu2_mother_energy)**2-(mu1_mother_px+mu2_mother_px)**2-(mu1_mother_py+mu2_mother_py)**2-(mu1_mother_pz+mu2_mother_pz)**2)"
     #draw1D(file,dir,htoWW_mass1,hmass_bins1," reconstructed mass of h#rightarrow WW, reconstruction from (WW)", htoWW_cut,"htoWW_median_mass_1M_mediateStates_0325")
     #draw1D(file,dir,"htoWW_mass",hmass_bins1,"true h mass from  h candidates in generation", htoWW_cut,"htoWW_mass_100k_Gen_0324")
     #draw1D(file,dir,"h2tohh_mass",h2mass_bins_3,"true h2 mass from h2 candidates in generation", htoWW_cut,"h2_mass_100k_Gen_0324")
 
+    nu12_px = "(nu1_px+nu2_px)"
+    nu12_py = "(nu1_py+nu2_py)"
+    bjets_nu_px = "(bjet_nu_px+bbarjet_nu_px)"
+    bjets_nu_py = "(bjet_nu_py+bbarjet_nu_py)"
+    bjets_nu_pz = "(bjet_nu_pz+bbarjet_nu_pz)"
+    bjets_rescale_px = "(bjet_px+bbarjet_px)*(rescalefactor-1)"
+    bjets_rescale_py = "(bjet_py+bbarjet_py)*(rescalefactor-1)"
+    bjets_rescale_pz = "(bjet_pz+bbarjet_pz)*(rescalefactor-1)"
+    nu12_bjetsnu_px = "(nu1_px+nu2_px+bjet_nu_px+bbarjet_nu_px)"
+    nu12_bjetsnu_py = "(nu1_py+nu2_py+bjet_nu_py+bbarjet_nu_py)"
+    nu12_pt = "sqrt((nu1_px+nu2_px)**2+(nu1_py+nu2_py)**2)"
+    sum1_px = "(nu1_px+nu2_px+mu1_px+mu2_px+(bjet_px+bbarjet_px)*rescalefactor)"
+    sum1_py = "(nu1_py+nu2_py+mu1_py+mu2_py+(bjet_py+bbarjet_py)*rescalefactor)"
+    sum2_px = "(nu1_px+nu2_px+mu1_px+mu2_px+totjets_px)"
+    sum2_py = "(nu1_py+nu2_py+mu1_py+mu2_py+totjets_py)"
+    sum3_px = "(nu1_px+nu2_px-met_px)"
+    sum3_py = "(nu1_py+nu2_py-met_py)"
+    sum4_px = "(nu1_px+nu2_px-met_correction_px)"
+    sum4_py = "(nu1_py+nu2_py-met_correction_py)"
+    sum5_px = "(nu1_px+nu2_px+bjet_nu_px+bbarjet_nu_px-met_px)"
+    sum5_py = "(nu1_py+nu2_py+bjet_nu_py+bbarjet_nu_py-met_py)"
+    
+    MissET_projectionX = "(met_px*(bjet_px+bbarjet_px)+met_py*(bjet_py+bbarjet_py))/sqrt((bjet_px+bbarjet_px)**2+(bjet_py+bbarjet_py)**2)"
+    MissET_projectionY = "(met_py*(bjet_px+bbarjet_px)-met_px*(bjet_py+bbarjet_py))/sqrt((bjet_px+bbarjet_px)**2+(bjet_py+bbarjet_py)**2)"
+    MissET_projectionX_correction = "(met_correction_px*(bjet_px+bbarjet_px)+met_correction_py*(bjet_py+bbarjet_py))/sqrt((bjet_px+bbarjet_px)**2+(bjet_py+bbarjet_py)**2)"
+    MissET_projectionY_correction = "(met_correction_py*(bjet_px+bbarjet_px)-met_correction_px*(bjet_py+bbarjet_py))/sqrt((bjet_px+bbarjet_px)**2+(bjet_py+bbarjet_py)**2)"
+    nu12_projectionX = "((nu1_px+nu2_px)*(bjet_px+bbarjet_px)+(nu1_py+nu2_py)*(bjet_py+bbarjet_py))/sqrt((bjet_px+bbarjet_px)**2+(bjet_py+bbarjet_py)**2)"
+    nu12_projectionY = "((nu1_py+nu2_py)*(bjet_px+bbarjet_px)-(nu1_px+nu2_px)*(bjet_py+bbarjet_py))/sqrt((bjet_px+bbarjet_px)**2+(bjet_py+bbarjet_py)**2)"
+    
+    #drawAll_1D(filedir,dir,sum1_px,"(100,-100,100)",sum1_px, "h2tohh && hasbjet && hasbbarjet &&hasMET && dR_bjet<0.1 && dR_bbarjet<0.1","sum1px_dR1_1M_0705","bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,sum1_py,"(100,-100,100)",sum1_py, "h2tohh && hasbjet && hasbbarjet &&hasMET && dR_bjet<0.1 && dR_bbarjet<0.1","sum1py_dR1_1M_0705","bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,sum2_px,"(100,-100,100)",sum2_px, "h2tohh && hasbjet && hasbbarjet &&hasMET && dR_bjet<0.1 && dR_bbarjet<0.1","sum2px_dR1_1M_0705","bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,sum2_py,"(100,-100,100)",sum2_py, "h2tohh && hasbjet && hasbbarjet &&hasMET && dR_bjet<0.1 && dR_bbarjet<0.1","sum2py_dR1_1M_0705","bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,sum3_px,"(100,-100,100)",sum3_px, "h2tohh && hasbjet && hasbbarjet &&hasMET && dR_bjet<0.1 && dR_bbarjet<0.1","sum3px_dR1_1M_0705","bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,sum3_py,"(100,-100,100)",sum3_py, "h2tohh && hasbjet && hasbbarjet &&hasMET && dR_bjet<0.1 && dR_bbarjet<0.1","sum3py_dR1_1M_0705","bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,sum4_px,"(100,-100,100)",sum4_px, "h2tohh && hasbjet && hasbbarjet &&hasMET && dR_bjet<0.1 && dR_bbarjet<0.1","sum4px_dR1_1M_0705","bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,sum4_py,"(100,-100,100)",sum4_py, "h2tohh && hasbjet && hasbbarjet &&hasMET && dR_bjet<0.1 && dR_bbarjet<0.1","sum4py_dR1_1M_0705","bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,sum5_px,"(100,-100,100)",sum5_px, "h2tohh && hasbjet && hasbbarjet &&hasMET && dR_bjet<0.1 && dR_bbarjet<0.1","sum5px_dR1_1M_0705","bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5")
+    #drawAll_1D(filedir,dir,sum5_py,"(100,-100,100)",sum5_py, "h2tohh && hasbjet && hasbbarjet &&hasMET && dR_bjet<0.1 && dR_bbarjet<0.1","sum5py_dR1_1M_0705","bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5")
+    #drawAll_2D(filedir,dir,nu12_px+":met_px","(50,-100,100)","(50,-100,100)","#slash{E}_{T,x}", "nu1_px+nu2_px","h2tohh && hasMET","metpx_0629_1M_afterfilter_metcut","#slash{E}_{T}>20")
+    #drawAll_2D(filedir,dir,nu12_py+":met_py","(50,-100,100)","(50,-100,100)","#slash{E}_{T,y}","nu1_py+nu2_py","h2tohh && hasMET","metpy_0629_1M_afterfilter_metcut","#slash{E}_{T}>20 ")
+    #drawAll_2D(filedir,dir,nu12_bjetsnu_px+":met_px","(50,-100,100)","(50,-100,100)","#slash{E}_{T,x}", "nu1_px+nu2_px+bjetsnu_px", "hasMET && hasbjet && hasbbarjet && h2tohh","metpx_addnufrombjets_0629_1M_afterfilter_metcut","#slash{E}_{T}>20")
+    #drawAll_2D(filedir,dir,nu12_bjetsnu_py+":met_py","(50,-100,100)","(50,-100,100)","#slash{E}_{T,y}","nu1_py+nu2_py+bjetsnu_py","hasMET && hasbjet && hasbbarjet && h2tohh","metpy_addnufrombjets_0629_1M_afterfilter_metcut","#slash{E}_{T}>20 ")
+    #drawAll_2D(filedir,dir,bjets_rescale_px+":"+bjets_nu_px,"(50,-50,50)","(50,-50,50)","nufrombjets_px","bjets_px*(rescalefactor-1)"," hasbjet && hasbbarjet && dR_bjet<0.1 && dR_bbarjet<0.1","nufromjetspx_0629_1M_afterfilter_metcut","#slash{E}_{T}>20, bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5")
+    #drawAll_2D(filedir,dir,bjets_rescale_py+":"+bjets_nu_py,"(50,-50,50)","(50,-50,50)","nufrombjets_py","bjets_py*(rescalefactor-1)","hasbjet && hasbbarjet && dR_bjet<0.1 && dR_bbarjet<0.1","nufromjetspy_0629_1M_afterfilter_metcut","#slash{E}_{T}>20, bjets:#DeltaR<0.1,p_{T}>30,|#eta|<2.5")
+    #drawAll_2D(filedir,dir,bjets_rescale_pz+":"+bjets_nu_pz,"(50,-50,50)","(50,-50,50)","nufrombjets_pz","bjets_pz*(rescalefactor-1)","hasbjet && hasbbarjet && dR_bjet<0.1 && dR_bbarjet<0.1","nufromjetspz_0629_1M_afterfilter_metcut","#slash{E}_{T}>20, bjets:#DeltaR<0.1,p_{T}>30,|#eta|<2.5 ")
+    #drawAll_2D(filedir,dir,nu12_pt+":met","(50,0,200)","(50,0,200)","#slash{E}_{T}","#sqrt{(nu1_px+nu2_px)**2+(nu1_py+nu2_py)**2}","h2tohh && hasMET","met_0629_1M_afterfilter_metcut","#slash{E}_{T}>20")
+   #METcorrection 
+    #drawAll_2D(filedir,dir,nu12_px+":met_correction_px","(50,-100,100)","(50,-100,100)","#slash{E}_{T,x}", "nu1_px+nu2_px","h2tohh && hasMET","metpx_0629_1M_afterfilter_correction_metcut","#slash{E}_{T}>20, correction after bjets rescaling")
+    #drawAll_2D(filedir,dir,nu12_py+":met_correction_py","(50,-100,100)","(50,-100,100)","#slash{E}_{T,y}","nu1_py+nu2_py","h2tohh && hasMET","metpy_0629_1M_afterfilter_correction_metcut","#slash{E}_{T}>20,correction after bjets rescaling ")
+    #drawAll_2D(filedir,dir,nu12_pt+":met_correction","(50,0,200)","(50,0,200)","#slash{E}_{T}","#sqrt{(nu1_px+nu2_px)**2+(nu1_py+nu2_py)**2}","h2tohh && hasMET","met_0629_1M_afterfilter_correction_metcut","#slash{E}_{T}>20, correction after bjets rescaling")
+    #drawAll_2D(filedir,dir,MissET_projectionY+":"+MissET_projectionX,"(50,-100,100)","(50,-100,100)","#slash{E} projection X", "#slash{E} projection Y","h2tohh && hasMET","projection_0629_1M_afterfilter_metcut","#slash{E}_{T}>20")
+    #drawAll_2D(filedir,dir,MissET_projectionX_correction+":"+MissET_projectionX,"(50,-100,100)","(50,-100,100)","before correction", "after correction","h2tohh && hasMET","projectionX_0629_1M_afterfilter_metcut","#slash{E}_{T}>20")
+    #drawAll_2D(filedir,dir,MissET_projectionY_correction+":"+MissET_projectionY,"(50,-100,100)","(50,-100,100)","before correction", "after correction","h2tohh && hasMET","projectionY_0629_1M_afterfilter_metcut","#slash{E}_{T}>20")
+    #drawAll_2D(filedir,dir,MissET_projectionX_correction+":"+nu12_projectionX,"(50,-100,100)","(50,-100,100)","#vec{nu1+nu2} projection @ #hat{bjets} in X-Y plane","#slash{E}_{T} projection @ #hat{bjets} in X-Y plane","h2tohh && hasMET","nu12MET_projectionX_0629_1M_correction_V2_afterfilter_metcut","#slash{E}_{T}>20, after correction due to bjets rescaling ")
+    #drawAll_2D(filedir,dir,MissET_projectionY_correction+":"+nu12_projectionY,"(50,-100,100)","(50,-100,100)","#vec{nu1+nu2} projection @ #hat{k}(#perp #hat{bjets}) in X-Y plane","#slash{E}_{T} projection @ #hat{k}(#perp #hat{bjets}) in X-Y plane","h2tohh && hasMET","nu12MET_projectionY_0629_1M_correction_V2_afterfilter_metcut","#slash{E}_{T}>20, after correction due to bjets rescaling")
 #draw jets mass and draw h2 reconstruction mass from jets and muons neutrinos
+    #drawAll_2D(filedir,dir," sqrt((nu1_px+nu2_px-met_correction_px)**2+(nu1_py+nu2_py-met_correction_py)**2):(MMC_h2mass_prob/h2tohh_mass)","(40,0.6,1.4)","(30,0,30)","#frac{MMC reconstruction m_{H}}{true m_{H}}","|#vec{#slash{E}_{T}^{correction}}-#vec{nu1}-#vec{nu2}|",h2toh1h1_cut,"mhratio_Metdiff_0705_1M_bjets_brescaled_METcorrection_cuts","#splitline{cut on events: bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5}{muons: p_{T}>10, |#eta|<2.4 and #slash{E}_{T}>20}")
+    #drawAll_2D(filedir,dir," sqrt((nu1_px+nu2_px+bjet_nu_px+bbarjet_nu_px-met_px)**2+(nu1_py+nu2_py+bjet_nu_py+bbarjet_nu_py-met_py)**2):(MMC_h2mass_prob/h2tohh_mass)","(40,0.6,1.4)","(30,0,30)","#frac{MMC reconstruction m_{H}}{true m_{H}}","|#vec{#slash{E}_{T}^{correction}}-#vec{nu1}-#vec{nu2}|",h2toh1h1_cut,"mhratio_Metdiff_0705_1M_bjets_norescaled_cuts","#splitline{cut on events: bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5}{muons: p_{T}>10, |#eta|<2.4 and #slash{E}_{T}>20}")
+    #drawAll_2D(filedir,dir," sqrt((nu1_px+nu2_px-met_px)**2+(nu1_py+nu2_py-met_py)**2):(MMC_h2mass_prob/h2tohh_mass)","(40,0.6,1.4)","(30,0,30)","#frac{MMC reconstruction m_{H}}{true m_{H}}","|#vec{#slash{E}_{T}}-#vec{nu1}-#vec{nu2}|",h2toh1h1_cut,"mhratio_Metdiff_0705_1M_bjets_GenMET_cuts","#splitline{cut on events: bjets: #DeltaR<0.1, p_{T}>30, |#eta|<2.5}{muons: p_{T}>10, |#eta|<2.4 and #slash{E}_{T}>20}")
     jets_mass_bins = "(200, 100,400)"
     #draw1D(file,dir,"jets_mass",jets_mass_bins,"invariant mass of all decendants from b+#bar{b}", htoWW_cut,"jets_mass_1M_mediateStates_0325")
     h2_mass_jets = "sqrt((mu1_energy+mu2_energy+nu1_energy+nu2_energy+jets_energy)**2-(mu1_px+mu2_px+nu1_px+nu2_px+jets_px)**2-(mu1_py+mu2_py+nu1_py+nu2_py+jets_py)**2-(mu1_pz+mu2_pz+nu1_pz+nu2_pz+jets_pz)**2)"

@@ -111,11 +111,16 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
      //cuts on GenJets
      double jetsPt_;
      double jetsEta_;
+     double bjetsPt_;
+     double bjetsEta_;
      double jetsDeltaR_;
      double muonPt2_;
      double muonPt1_;
      double muonsEta_;
      double metPt_;
+     
+     bool rescalebjets_;
+     bool metcorrection_;
      
     private:
      //decendants and ancestor
@@ -162,11 +167,19 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       TLorentzVector nu1_lorentz;
       TLorentzVector nu2_lorentz;
       TLorentzVector met_lorentz;
-      TLorentzVector bjet_lorentz;
-      TLorentzVector bbarjet_lorentz;
+      TLorentzVector b1jet_lorentz;
+      TLorentzVector b2jet_lorentz;
+      TLorentzVector totjets_lorentz;
+      TLorentzVector bjet_nu_lorentz;
+      TLorentzVector bbarjet_nu_lorentz;
+      TLorentzVector b_genp_lorentz;
+      TLorentzVector bbar_genp_lorentz;
+      TLorentzVector h2tohh_genp_lorentz;
+     
 
     private:
-      TLorentzVector stableDecendantsLorentz(const reco::Candidate* cand); 
+      void stableDecendantsCandidates(const reco::Candidate* cand, std::vector<const reco::Candidate*> &candvec); 
+      void neutrinoDecendantsCandidates(const reco::Candidate *cand, std::vector<const reco::Candidate*> &candvec);
    
     private:
       TLorentzVector calculateMET(); 
@@ -229,21 +242,25 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float b1_px;
       float b1_py;
       float b1_pz;
+      float b1_pt;
       int b1_motherid;
       float b2_energy;
       float b2_px;
       float b2_py;
       float b2_pz;
+      float b2_pt;
       int b2_motherid;
       float bjet_energy;
       float bjet_px;
       float bjet_py;
       float bjet_pz;
+      float bjet_pt;
       float bjet_mass;
       float bbarjet_energy;
       float bbarjet_px;
       float bbarjet_py;
       float bbarjet_pz;
+      float bbarjet_pt;
       float bbarjet_mass;
       float dR_bjet;
       float dR_bbarjet;
@@ -268,10 +285,30 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float bbarjet_decendant_py;
       float bbarjet_decendant_pz;
 
+      float bjet_nu_px;//bjet
+      float bjet_nu_py;
+      float bjet_nu_pz;
+      float bjet_nu_energy;
+      float bbarjet_nu_px;//bbarjet
+      float bbarjet_nu_py;
+      float bbarjet_nu_pz;
+      float bbarjet_nu_energy;
+      
+
+      float totjets_energy;
+      float totjets_px;
+      float totjets_py;
+      float totjets_pz;
+
       float met;
       float met_phi;
       float met_px;
       float met_py;
+
+      float met_correction;
+      float met_correction_phi;
+      float met_correction_px;
+      float met_correction_py;
 
       float htobb_energy;
       float htobb_px;
@@ -284,6 +321,7 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float h2tohh_py;
       float h2tohh_pz;
       float h2tohh_mass;
+      int h2tohh_pdgid;
       //cuts for higgstoWWbb
       bool mu_positive;
       bool mu_negative;
@@ -305,6 +343,14 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       bool runMMC_;
       bool simulation_;
       MMC* thismmc;
+      bool runmmc;
+  
+      float MMC_h2mass_prob;
+      float MMC_h2mass_Entries;
+      float MMC_h2mass_RMS;
+      float MMC_h2mass_Mean;
+      float MMC_h2mass_underflow;
+      float MMC_h2mass_overflow;
      // MMC tree branches
 };
 
@@ -325,17 +371,21 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
      verbose_ = iConfig.getUntrackedParameter<int>("verbose",0);
      mmcset_ = iConfig.getParameter<edm::ParameterSet>("mmcset"); 
      finalStates_ = iConfig.getParameter<bool>("finalStates");
+     rescalebjets_ = iConfig.getParameter<bool>("rescalebjets");
      runMMC_ = iConfig.getParameter<bool>("runMMC");
      simulation_ = iConfig.getParameter<bool>("simulation");
      jetLabel_ = iConfig.getParameter<std::string>("jetLabel");
      metLabel_ = iConfig.getParameter<std::string>("metLabel");
      jetsPt_ = iConfig.getParameter<double>("jetsPt");
      jetsEta_ = iConfig.getParameter<double>("jetsEta");
+     bjetsPt_ = iConfig.getParameter<double>("bjetsPt");
+     bjetsEta_ = iConfig.getParameter<double>("bjetsEta");
      jetsDeltaR_ = iConfig.getParameter<double>("jetsDeltaR");
      muonPt1_ = iConfig.getParameter<double>("muonPt1");
      muonPt2_ = iConfig.getParameter<double>("muonPt2");
      muonsEta_ = iConfig.getParameter<double>("muonsEta");
      metPt_ = iConfig.getParameter<double>("metPt");
+     metcorrection_ = iConfig.getParameter<bool>("metcorrection");
    // initilize candidates pointer
 
 
@@ -476,6 +526,10 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    edm::Handle<edm::View<reco::GenMET> > genmetColl; 
    iEvent.getByLabel(metLabel_, genmetColl);
 
+   std::vector<const reco::Candidate*> bjet_nucands;
+   std::vector<const reco::Candidate*> bbarjet_nucands;
+   std::vector<const reco::Candidate*> h2_nucands;
+
       mu_positive = false;
       mu_negative = false;
       nu_positive = false;
@@ -487,6 +541,8 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
       htobb = false;
       htoWW = false;
       h2tohh = false;
+   runmmc = false;
+   rescalefactor  =1.0;
    
    std::cout <<" genJetColl size " << genjetColl->size() <<" genmetColl size " << genmetColl->size() << std::endl;   
 
@@ -667,11 +723,18 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     }
    
    if (genmetColl->size() != 1){
-	std::cout <<" size of genmetColl " << genmetColl->size();
+	//std::cout <<" size of genmetColl " << genmetColl->size();
 	} 
    reco::GenMET genMet(genmetColl->front());
+   /*if (h2tohh){
+   	met_lorentz = calculateMET();
+   	std::cout <<"MET from two nuetrino "; met_lorentz.Print();
+	}*/
    met_lorentz.SetXYZT(genMet.px(), genMet.py(), 0, genMet.pt()); 
-   std::cout <<"MET from genMet "; met_lorentz.Print();
+      met = genMet.pt();
+      met_phi = met_lorentz.Phi();
+      met_px = genMet.px();
+      met_py = genMet.py();
 
   // match bquark and bjet
    hasbjet = false;
@@ -680,14 +743,14 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    hastwomuons =false;
    dR_bjet = jetsDeltaR_;
    dR_bbarjet = jetsDeltaR_;
-   bjet_energy_tot = 0;
-   bjet_px_tot = 0.0;
-   bjet_py_tot = 0.0;
-   bjet_pz_tot = 0.0;
-   bbarjet_energy_tot = 0;
-   bbarjet_px_tot = 0.0;
-   bbarjet_py_tot = 0.0;
-   bbarjet_pz_tot = 0.0;
+   bjet_nu_energy = 0;
+   bjet_nu_px = 0.0;
+   bjet_nu_py = 0.0;
+   bjet_nu_pz = 0.0;
+   bbarjet_nu_energy = 0;
+   bbarjet_nu_px = 0.0;
+   bbarjet_nu_py = 0.0;
+   bbarjet_nu_pz = 0.0;
 
    bjet_decendant_energy = 0;
    bjet_decendant_px = 0.0;
@@ -697,12 +760,24 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    bbarjet_decendant_px = 0.0;
    bbarjet_decendant_py = 0.0;
    bbarjet_decendant_pz = 0.0;
+  
+   totjets_energy =0;
+   totjets_px =0;
+   totjets_py =0;
+   totjets_pz =0;
 	
    int nparts = 0;
    if ((!runMMC_ and htobb) || (runMMC_ and h2tohh)){
    for (reco::GenJetCollection::const_iterator jetit = genjetColl->begin(); jetit != genjetColl->end(); jetit++){
 	//cuts on GenJets
-	if (jetit->pt()<jetsPt_ or std::fabs(jetit->eta())> jetsEta_) continue;
+	if (jetit->pt() >= jetsPt_ and std::fabs(jetit->eta()) <= jetsEta_){	
+ 		totjets_px += jetit->px();
+		totjets_py += jetit->py();
+		totjets_pz += jetit->pz();
+		totjets_energy += jetit->energy();
+
+	}
+	if (jetit->pt() < bjetsPt_ or std::fabs(jetit->eta())> bjetsEta_) continue;
         std::vector <const reco::GenParticle*> mcparts = jetit->getGenConstituents();
   	for (unsigned i = 0; i < mcparts.size(); i++) {
     		const reco::GenParticle* mcpart = mcparts[i];
@@ -710,13 +785,6 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 		const reco::Candidate* hcand;
 		if ((bcand=findancestor(mcpart, -5, false)) and bcand->mother()->pdgId() == 25){ 
 			hcand = bcand->mother();
-			if (hcand == htoBBcand and dR_bbarjet != deltaR(jetit->eta(), jetit->phi(), b2cand->eta(), b2cand->phi())){
-				bbarjet_px_tot += jetit->px();
-				bbarjet_py_tot += jetit->py();
-				bbarjet_pz_tot += jetit->pz();
-				bbarjet_energy_tot += jetit->energy();
-			
-			}
 			if (hcand == htoBBcand and dR_bbarjet>deltaR(jetit->eta(), jetit->phi(), b2cand->eta(), b2cand->phi())){
 				dR_bbarjet = deltaR(jetit->eta(), jetit->phi(), b2cand->eta(), b2cand->phi());
 				//printCandidate(jetit->clone());
@@ -742,24 +810,13 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 		  }
 		if ((bcand=findancestor(mcpart, 5, false)) and bcand->mother()->pdgId() == 25){
 			hcand = bcand->mother();
-			if (hcand == htoBBcand and dR_bjet != deltaR(jetit->eta(), jetit->phi(), b1cand->eta(), b1cand->phi())){
-				bjet_px_tot += jetit->px();
-				bjet_py_tot += jetit->py();
-				bjet_pz_tot += jetit->pz();
-				bjet_energy_tot += jetit->energy();
-			}	
 			if (hcand == htoBBcand and dR_bjet>deltaR(jetit->eta(), jetit->phi(), b1cand->eta(), b1cand->phi())){
 				dR_bjet = deltaR(jetit->eta(), jetit->phi(), b1cand->eta(), b1cand->phi());
 				//printCandidate(jetit->clone());
 				//std::cout <<" bcand(5) "; printCandidate(bcand);
 				std::cout <<" has h->b, h is the same from h->bb in genparticles flow,dR "<< dR_bjet <<std::endl;
-				bjet_px = jetit->px();
-				bjet_py = jetit->py();
-				bjet_pz = jetit->pz();
-				bjet_energy = jetit->energy();
-				bjet_mass = jetit->mass();
-				b1jet = jetit->clone();
 				hasbjet = true;
+				b1jet = jetit->clone();
 				bjet_decendant_px = 0;
 				bjet_decendant_py = 0;
 				bjet_decendant_pz = 0;
@@ -781,13 +838,45 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	if (!hasbbarjet or !hasbjet) std::cout <<" has h->bb, but failed to two b jets " << std::endl;
     }//htobb
 
+   if (htobb and hasbjet and hasbbarjet and b1jet->px() == b2jet->px() and b1jet->py() == b2jet->py()) {
+	std::cout <<" error: two bjets are in fact the same " << "b1jetpx "<< b1jet->px() <<" b2jetpx "<< b2jet->px()<<std::endl;
+	hasbjet = false;
+	hasbbarjet =false;
+    }
+   if (htobb and hasbjet) {
+	 b1jet_lorentz.SetXYZT(b1jet->px(), b1jet->py(), b1jet->pz(), b1jet->energy());
+   	 //std::cout << " neutrino from bjet " << std::endl;
+	 neutrinoDecendantsCandidates(b1cand, bjet_nucands);
+	 TLorentzVector tmp = TLorentzVector();
+	 for (unsigned int i=0; i < bjet_nucands.size(); i++){
+		printCandidate(bjet_nucands[i]);
+		tmp += TLorentzVector(bjet_nucands[i]->px(), bjet_nucands[i]->py(), bjet_nucands[i]->pz(), bjet_nucands[i]->energy());
+	}
+	 bjet_nu_lorentz = tmp;
+   }
+   else b2jet_lorentz.SetXYZT(1,0,0,1);
+
+   if (htobb and hasbbarjet) {
+	b2jet_lorentz.SetXYZT(b2jet->px(), b2jet->py(), b2jet->pz(), b2jet->energy());
+   	//std::cout << " neutrino from bbarjet " << std::endl;
+	neutrinoDecendantsCandidates(b2cand, bbarjet_nucands);
+	TLorentzVector tmp = TLorentzVector();
+	 for (unsigned int i=0; i < bbarjet_nucands.size(); i++){
+		printCandidate(bbarjet_nucands[i]);
+		tmp += TLorentzVector(bbarjet_nucands[i]->px(), bbarjet_nucands[i]->py(), bbarjet_nucands[i]->pz(), bbarjet_nucands[i]->energy());
+	}
+	bbarjet_nu_lorentz = tmp;
+   }
+   else b2jet_lorentz.SetXYZT(1,0,0,1);
 
    if (htoWW){
-         if ((mu1cand->pt() >= muonPt1_ and mu2cand->pt() >= muonPt2_) || (mu2cand->pt()>=muonPt1_ and mu1cand->pt()>=muonPt2_)) 
+         if (((mu1cand->pt() >= muonPt1_ and mu2cand->pt() >= muonPt2_) || (mu2cand->pt()>=muonPt1_ and mu1cand->pt()>=muonPt2_)) and
+		fabs(mu1cand->eta()) <= muonsEta_ and fabs(mu2cand->eta()) <= muonsEta_) 
 		hastwomuons = true;
-
     }
+   
    if (genMet.pt() >= metPt_) hasMET =true;
+
    if (h2tohh) {
         std::cout << "find h2 candidate " << std::endl;
         std::cout << "h2 candidate id " << h2tohhcand->pdgId() << " mass " << h2tohhcand->mass() << std::endl;
@@ -807,31 +896,26 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         w1cand = findancestor(mu1cand, -24, true);
 	w2cand = findancestor(mu2cand, 24, true);   
         }
-        //if ()
+	
+        
         std::cout <<" h2tohh "; printCandidate(h2tohhcand);
-        std::cout <<"new mu1 "; printCandidate(mu1cand);	
+        std::cout <<" mu1 "; printCandidate(mu1cand);	
+        std::cout <<" nu1 "; printCandidate(nu1cand);
         //std::cout <<"old mu1 "; printCandidate(findmudaughter(mu1_W1_cand));	
-        std::cout <<"new nu1 "; printCandidate(nu1cand);
         //std::cout <<"old nu1 "; printCandidate(findnudaughter(mu1_W1_cand));	
-        std::cout <<"new mu2 "; printCandidate(mu2cand);	
+        std::cout <<" mu2 "; printCandidate(mu2cand);	
+        std::cout <<" nu2 "; printCandidate(nu2cand);	
+	std::cout <<" nu12_px" << nu1cand->px()+nu2cand->px() <<" nu12_py " << nu1cand->py()+nu2cand->py() << std::endl;
         //std::cout <<"old mu2 "; printCandidate(findmudaughter(mu2_W2_cand));	
-        std::cout <<"new nu2 "; printCandidate(nu2cand);	
         //std::cout <<"old nu2 "; printCandidate(findnudaughter(mu2_W2_cand));	
         std::cout <<" w1 " ; printCandidate(w1cand);
         std::cout <<" w2 " ; printCandidate(w2cand);
         std::cout <<" b1 " ; printCandidate(b1cand);
         std::cout <<" b2 " ; printCandidate(b2cand);
-        //std::cout <<"another b1 " ; printCandidate(finddecendant(htoBBcand, 5, false));
-        //std::cout <<"another b2 " ; printCandidate(finddecendant(htoBBcand, -5, false));
-        //std::cout <<" b jet"; bjetsLorentz(b1cand).Print(); 
-        //std::cout <<" b jet"; bjetsLorentz(finddecendant(htoBBcand, 5, false)).Print(); 
-        //std::cout <<" bbar jet"; bjetsLorentz(b2cand).Print(); 
-        //std::cout <<" bbar jet"; bjetsLorentz(finddecendant(htoBBcand, -5, false)).Print(); 
+ 	
         //std::cout <<" htoWW " ; printCandidate(htoWWcand);
         //std::cout <<" htoBB and its decendants" <<std::endl; printCandidate(htoBBcand);
 	//printallDecendants(h2tohhcand);
-        //met_lorentz = calculateMET();
-        //std::cout <<"MET from nuetrinos "; met_lorentz.Print(); 
         //debug
          /* float h_energy = mu1_energy+mu2_energy+nu1_energy+nu2_energy;
           float h_px = mu1_px+mu2_px+nu1_px+nu2_px;
@@ -855,41 +939,112 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	std::cout<<"bbarjet_tot (P,E)=( " << bbarjet_px_tot << ", "<< bbarjet_py_tot << ", "<<bbarjet_pz_tot << ", " << bbarjet_energy_tot <<")" << std::endl; 
 	std::cout<<"bbarjet_bdecendant (P,E)=( " << bbarjet_decendant_px << ", "<< bbarjet_decendant_py << ", "<<bbarjet_decendant_pz << ", " << bbarjet_decendant_energy <<")" << std::endl; 
 	*/
-        	
+    	//std::cout <<" num of neutrino from bjet is " << bjet_nucands.size() <<" p4: "; bjet_nu_lorentz.Print();
+    	//std::cout <<" num of neutrino from bbarjet is " << bbarjet_nucands.size() <<" p4: "; bbarjet_nu_lorentz.Print();
+    	/*
+    	neutrinoDecendantsCandidates(h2tohhcand, h2_nucands);
+	TLorentzVector met_diff = calculateMET();
+        met_diff = met_diff+bjet_nu_lorentz+bbarjet_nu_lorentz-met_lorentz;
+	if (h2_nucands.size() != (bjet_nucands.size()+bbarjet_nucands.size()+2))
+		std::cout <<" h2_nucands: "<< h2_nucands.size() <<"  bjets nucands+2 "<< 
+			(bjet_nucands.size()+bbarjet_nucands.size()+2)<<std::endl;
+	std::cout <<"nu12+bjet_nu and met diff  Px " << met_diff.Px() << " Py "<< met_diff.Py() << std::endl; 
+	
+        if (met_diff.Pt()>10){
+	
+   	for (reco::GenParticleCollection::const_iterator it = genParticleColl->begin(); it != genParticleColl->end(); ++it) {
+		if (it->status()==1 &&(abs(it->pdgId()) == 12 || abs(it->pdgId()) == 14 || abs(it->pdgId())==16 ))
+		     {unsigned int i=0; 
+		      for (; i<h2_nucands.size(); i++){
+			if (it->pdgId() == h2_nucands[i]->pdgId() && it->px()==h2_nucands[i]->px())
+				break;
+			}
+		       if (i==h2_nucands.size()) {std::cout <<"extra neutrino "<< std::endl; printCandidate(it->clone());
+		      			printallAncestors(it->clone());}
+		      }
+	} 	
+	std::cout <<" neutrinos from h2 " << std::endl;
+	for (unsigned int i =0; i<h2_nucands.size(); i++)
+		printCandidate(h2_nucands[i]);
+	}*/
         bjets_lorentz.SetXYZT(b1jet->px()+b2jet->px(), b1jet->py()+b2jet->py(), b1jet->pz()+b2jet->pz(), b1jet->energy()+b2jet->energy());
-	std::cout <<"m_(jets) before rescaling " << bjets_lorentz.M() << std::endl;
-	rescalefactor = 125.0/bjets_lorentz.M();
+       //need to correction later
+	std::cout <<"m_(jets) before rescaling " << bjets_lorentz.M(); bjets_lorentz.Print(); 
+	if (rescalebjets_) rescalefactor = 125.0/bjets_lorentz.M();
+        totjets_lorentz.SetXYZT(totjets_px+(rescalefactor-1)*bjets_lorentz.Px(), totjets_py+(rescalefactor-1)*bjets_lorentz.Py(), totjets_pz+(rescalefactor-1)*bjets_lorentz.Pz(), totjets_energy+(rescalefactor-1)*bjets_lorentz.Energy());
     }
-     
-    if (htoWW or htobb){
+    
+    //met correction 
+    TVector2 met_correction_vec2(met_lorentz.Px()-(rescalefactor-1)*bjets_lorentz.Px(), met_lorentz.Py()-(rescalefactor-1)*bjets_lorentz.Py());
+    met_correction = met_correction_vec2.Mod();
+    met_correction_px = met_correction_vec2.Px();
+    met_correction_py = met_correction_vec2.Py();
+    met_correction_phi = met_correction_vec2.Phi();
+    if (metcorrection_){
+	met_lorentz.SetXYZT(met_correction_px,met_correction_py,0,met_correction);
+	//met_lorentz = met_lorentz-bjet_nu_lorentz-bbarjet_nu_lorentz;
+    	std::cout <<"met due to  correction(nubjets) "; met_lorentz.Print();
+	}
 
-        fillbranches();
-        evtree->Fill();
-
-    }
    //if (h2tohh && runMMC_) runMMC();
-   if (h2tohh and hasbjet and hasbbarjet and runMMC_){
+   if (h2tohh and runMMC_ and hasbjet and hasbbarjet){
    	mu1_lorentz.SetPtEtaPhiM(mu1cand->pt(), mu1cand->eta(), mu1cand->phi(), 0);
    	nu1_lorentz.SetPtEtaPhiM(nu1cand->pt(), nu1cand->eta(), nu1cand->phi(), 0);
         mu2_lorentz.SetPtEtaPhiM(mu2cand->pt(), mu2cand->eta(), mu2cand->phi(), 0); 
         nu2_lorentz.SetPtEtaPhiM(nu2cand->pt(), nu2cand->eta(), nu2cand->phi(), 0); 
 	//rescale bjets
-        bjets_lorentz.SetXYZT((bjet_px+bbarjet_px)*rescalefactor, (bjet_py+bbarjet_py)*rescalefactor, (bjet_pz+bbarjet_pz)*rescalefactor, (bjet_energy+bbarjet_energy)*rescalefactor);
-	std::cout <<" m_(jets)  after rescaling " << bjets_lorentz.M() << std::endl;
+	//std::cout <<" b1jet "; b1jet_lorentz.Print();
+	//std::cout <<" b2jet "; b2jet_lorentz.Print();
+	
         int onshellMarker = -1;
 
         if (w1cand->mass() > w2cand->mass()) onshellMarker = 1;
         else onshellMarker = 2;
-         //std::cout <<" mu1 lorenz "; mu1_lorentz.Print(); 
+        b_genp_lorentz.SetXYZT(b1cand->px(), b1cand->py(), b1cand->pz(), b1cand->energy()); 
+        bbar_genp_lorentz.SetXYZT(b2cand->px(), b2cand->py(), b2cand->pz(), b2cand->energy()); 
+	h2tohh_genp_lorentz.SetXYZT(h2tohhcand->px(), h2tohhcand->py(), h2tohhcand->pz(), h2tohhcand->energy());
+        //met_lorentz = calculateMET();
+    std::cout <<"met before correction px "<< met_px  <<"  py "<< met_py << "  pt "<< met << std::endl;
+    std::cout <<"met after correction px "<< met_correction_px  <<"  py "<< met_correction_py << "  pt "<< met_correction << std::endl;
+    std::cout <<"met used in MMC  px "<< met_lorentz.Px()  <<"  py "<< met_lorentz.Py() << "  pt "<< met_lorentz.Pt() << std::endl;
+        //std::cout <<" totjets lorenz "; totjets_lorentz.Print(); 
+        TLorentzVector sum_lorentz = TLorentzVector();
+        //std::cout <<" sum of (mu1 nu1 mu2 nu2 (corrected)bjets ) "; 
+	//sum_lorentz = mu1_lorentz+mu2_lorentz+nu1_lorentz+nu2_lorentz+bjets_lorentz;
+	//sum_lorentz.Print();
+        //std::cout <<" sum of (mu1 nu1 mu2 nu2 (corrected)totjets ) "; 
+	//sum_lorentz = mu1_lorentz+mu2_lorentz+nu1_lorentz+nu2_lorentz+totjets_lorentz;
+	//sum_lorentz.Print();
+        std::cout <<" sum of (nu1 nu2 (correct)MET ) "; 
+ 	sum_lorentz = nu1_lorentz+nu2_lorentz-met_lorentz;
+	std::cout <<" px " << sum_lorentz.Px() <<" py " << sum_lorentz.Py() << std::endl;
         //thismmc = new MMC();
         //std::cout << "onshellMarkder  " << onshellMarker << std::endl;
-	thismmc = new MMC(&mu1_lorentz, &mu2_lorentz, &bjets_lorentz, &met_lorentz, &nu1_lorentz, &nu2_lorentz, onshellMarker, 
-	simulation_, ievent, mmcset_, fs, verbose_);
+	thismmc = new MMC(&mu1_lorentz, &mu2_lorentz, &b1jet_lorentz, &b2jet_lorentz, &totjets_lorentz,&met_lorentz, 
+	&nu1_lorentz, &nu2_lorentz, &b_genp_lorentz, &bbar_genp_lorentz, &h2tohh_genp_lorentz, 
+	onshellMarker, simulation_, ievent, mmcset_, fs, verbose_);
         //thismmc->printTrueLorentz();
-        thismmc->runMMC();	
+        runmmc=thismmc->runMMC();	
+        if (runmmc) {
+		TH1F* MMC_h2mass =(TH1F*)(thismmc->getMMCh2()).Clone("MMC_h2mass");
+		std::cout <<" Mass_h2mass in Analyzer " << std::endl;
+		MMC_h2mass_prob = (MMC_h2mass->GetXaxis())->GetBinCenter(MMC_h2mass->GetMaximumBin());
+		MMC_h2mass_RMS = MMC_h2mass->GetRMS();
+		MMC_h2mass_Entries = MMC_h2mass->GetEntries();
+		MMC_h2mass_Mean = MMC_h2mass->GetMean();
+		int nbin=(MMC_h2mass->GetXaxis())->GetNbins();
+		MMC_h2mass_overflow = MMC_h2mass->GetBinContent(nbin+1);
+		MMC_h2mass_underflow = MMC_h2mass->GetBinContent(-1);
+                std::cout <<" most prob " << MMC_h2mass_prob <<" RMS "<< MMC_h2mass_RMS << " entries " << MMC_h2mass_Entries << std::endl;
+	
+	}
         delete thismmc;
 
     }    
+    if (htoWW or htobb){
+        fillbranches();
+        evtree->Fill();
+    }
 }
 
 
@@ -950,36 +1105,45 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("b1_px",&b1_px);
    evtree->Branch("b1_py",&b1_py);
    evtree->Branch("b1_pz",&b1_pz);
+   evtree->Branch("b1_pt",&b1_pt);
    evtree->Branch("b1_motherid",&b1_motherid);
    evtree->Branch("b2_energy",&b2_energy);
    evtree->Branch("b2_px",&b2_px);
    evtree->Branch("b2_py",&b2_py);
    evtree->Branch("b2_pz",&b2_pz);
+   evtree->Branch("b2_pt",&b2_pt);
    evtree->Branch("b2_motherid",&b2_motherid);
    evtree->Branch("hasbjet",&hasbjet);
    evtree->Branch("bjet_energy",&bjet_energy);
    evtree->Branch("bjet_px",&bjet_px);
    evtree->Branch("bjet_py",&bjet_py);
    evtree->Branch("bjet_pz",&bjet_pz);
+   evtree->Branch("bjet_pt",&bjet_pt);
    evtree->Branch("bjet_mass",&bjet_mass);
    evtree->Branch("hasbbarjet",&hasbbarjet);
    evtree->Branch("bbarjet_energy",&bbarjet_energy);
    evtree->Branch("bbarjet_px",&bbarjet_px);
    evtree->Branch("bbarjet_py",&bbarjet_py);
    evtree->Branch("bbarjet_pz",&bbarjet_pz);
+   evtree->Branch("bbarjet_pt",&bbarjet_pt);
    evtree->Branch("bbarjet_mass",&bbarjet_mass);
    evtree->Branch("dR_bjet",&dR_bjet);
    evtree->Branch("dR_bbarjet",&dR_bbarjet);
    evtree->Branch("rescalefactor",&rescalefactor);
 
-   evtree->Branch("bjet_energy_tot",&bjet_energy_tot);
-   evtree->Branch("bjet_px_tot",&bjet_px_tot);
-   evtree->Branch("bjet_py_tot",&bjet_py_tot);
-   evtree->Branch("bjet_pz_tot",&bjet_pz_tot);
-   evtree->Branch("bbarjet_energy_tot",&bbarjet_energy_tot);
-   evtree->Branch("bbarjet_px_tot",&bbarjet_px_tot);
-   evtree->Branch("bbarjet_py_tot",&bbarjet_py_tot);
-   evtree->Branch("bbarjet_pz_tot",&bbarjet_pz_tot);
+   evtree->Branch("bjet_nu_energy",&bjet_nu_energy);
+   evtree->Branch("bjet_nu_px",&bjet_nu_px);
+   evtree->Branch("bjet_nu_py",&bjet_nu_py);
+   evtree->Branch("bjet_nu_pz",&bjet_nu_pz);
+   evtree->Branch("bbarjet_nu_energy",&bbarjet_nu_energy);
+   evtree->Branch("bbarjet_nu_px",&bbarjet_nu_px);
+   evtree->Branch("bbarjet_nu_py",&bbarjet_nu_py);
+   evtree->Branch("bbarjet_nu_pz",&bbarjet_nu_pz);
+
+   evtree->Branch("totjets_energy",&totjets_energy);
+   evtree->Branch("totjets_px",&totjets_px);
+   evtree->Branch("totjets_py",&totjets_py);
+   evtree->Branch("totjets_pz",&totjets_pz);
    
    evtree->Branch("bjet_decendant_energy",&bjet_decendant_energy);
    evtree->Branch("bjet_decendant_px",&bjet_decendant_px);
@@ -1001,16 +1165,30 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("h2tohh_py",&h2tohh_py);
    evtree->Branch("h2tohh_pz",&h2tohh_pz);
    evtree->Branch("h2tohh_mass",&h2tohh_mass);
+   evtree->Branch("h2tohh_pdgid",&h2tohh_pdgid);
 
    evtree->Branch("met",&met);
    evtree->Branch("met_phi",&met_phi);
    evtree->Branch("met_px",&met_px);
    evtree->Branch("met_py",&met_py);
+   evtree->Branch("met_correction",&met_correction);
+   evtree->Branch("met_correction_phi",&met_correction_phi);
+   evtree->Branch("met_correction_px",&met_correction_px);
+   evtree->Branch("met_correction_py",&met_correction_py);
    
    evtree->Branch("hasMET",&hasMET);
+   evtree->Branch("hastwomuons",&hastwomuons);
    evtree->Branch("htobb",&htobb);
    evtree->Branch("htoWW",&htoWW);
    evtree->Branch("h2tohh",&h2tohh);
+  
+   evtree->Branch("runmmc",&runmmc); 
+   evtree->Branch("MMC_h2mass_prob",&MMC_h2mass_prob);
+   evtree->Branch("MMC_h2mass_RMS",&MMC_h2mass_RMS);
+   evtree->Branch("MMC_h2mass_Mean",&MMC_h2mass_Mean);
+   evtree->Branch("MMC_h2mass_Entries",&MMC_h2mass_Entries);
+   evtree->Branch("MMC_h2mass_overflow",&MMC_h2mass_overflow);
+   evtree->Branch("MMC_h2mass_underflow",&MMC_h2mass_underflow);
     
 }
 
@@ -1121,10 +1299,12 @@ DiHiggsWWAnalyzer::fillbranches(){
       b1_px = b1cand->px();
       b1_py = b1cand->py();
       b1_pz = b1cand->pz();
+      b1_pt = b1cand->pt();
       b2_energy = b2cand->energy();
       b2_px = b2cand->px();
       b2_py = b2cand->py();
       b2_pz = b2cand->pz();
+      b2_pt = b2cand->pt();
 
       htobb_energy = htoBBcand->energy();
       htobb_px = htoBBcand->px();
@@ -1137,27 +1317,34 @@ DiHiggsWWAnalyzer::fillbranches(){
       bbarjet_px = b2jet->px();
       bbarjet_py = b2jet->py();
       bbarjet_pz = b2jet->pz();
+      bbarjet_pt = b2jet->pt();
       bbarjet_energy = b2jet->energy();
       bbarjet_mass = b2jet->mass();
+      bbarjet_nu_energy = bbarjet_nu_lorentz.Energy();
+      bbarjet_nu_px = bbarjet_nu_lorentz.Px();
+      bbarjet_nu_py = bbarjet_nu_lorentz.Py();
+      bbarjet_nu_pz = bbarjet_nu_lorentz.Pz();
       }
       if (hasbjet){
       bjet_px = b1jet->px();
       bjet_py = b1jet->py();
       bjet_pz = b1jet->pz();
+      bjet_pt = b1jet->pt();
       bjet_energy = b1jet->energy();
       bjet_mass = b1jet->mass();
+      bjet_nu_energy = bjet_nu_lorentz.Energy();
+      bjet_nu_px = bjet_nu_lorentz.Px();
+      bjet_nu_py = bjet_nu_lorentz.Py();
+      bjet_nu_pz = bjet_nu_lorentz.Pz();
       }
 
-      met = met_lorentz.Energy();
-      met_phi = met_lorentz.Phi();
-      met_px = met_lorentz.Px();
-      met_py = met_lorentz.Py();
     if (h2tohh){
       h2tohh_energy = h2tohhcand->energy();
       h2tohh_px = h2tohhcand->px();
       h2tohh_py = h2tohhcand->py();
       h2tohh_pz = h2tohhcand->pz();
       h2tohh_mass = h2tohhcand->mass();
+      h2tohh_pdgid = h2tohhcand->pdgId();
       }
 }
 
@@ -1304,23 +1491,37 @@ DiHiggsWWAnalyzer::hasDaughter(const reco::Candidate* cand, int id){
 
 }
 
+//----------- method called to calculate total lorentz vector for neutrinos decendants ---------------
+//
+void 
+DiHiggsWWAnalyzer::neutrinoDecendantsCandidates(const reco::Candidate *cand, std::vector<const reco::Candidate*> &candvec){
+  
+
+   for (unsigned i = 0; i < cand->numberOfDaughters(); i++){
+	if ((cand->daughter(i))->status() == 1 && (abs((cand->daughter(i))->pdgId()) == 12 
+	     || abs((cand->daughter(i))->pdgId()) == 14 || abs((cand->daughter(i))->pdgId()) == 16) ){
+		if (candvec.size() == 0) candvec.push_back(cand->daughter(i));
+		else if (std::find(candvec.begin(), candvec.end(), cand->daughter(i)) == candvec.end()) 
+			candvec.push_back(cand->daughter(i));
+	}else neutrinoDecendantsCandidates(cand->daughter(i), candvec);
+   }
+
+}
+
+
 
 //----------- method called to calculate total lorentz vector from b bar jets ---------------
 //
-TLorentzVector
-DiHiggsWWAnalyzer::stableDecendantsLorentz(const reco::Candidate *cand){
+void DiHiggsWWAnalyzer::stableDecendantsCandidates(const reco::Candidate *cand, std::vector<const reco::Candidate*> &candvec){
   
-   TLorentzVector bjets = TLorentzVector();
    for (unsigned i = 0; i < cand->numberOfDaughters(); i++){
 	if ((cand->daughter(i))->status() == 1){
-		TLorentzVector tmp((cand->daughter(i))->px(), (cand->daughter(i))->py(), 
-				(cand->daughter(i))->pz(),(cand->daughter(i))->energy());
-                //printCandidate(cand->daughter(i));
-        	bjets = bjets+tmp; 
-	}else bjets = bjets+stableDecendantsLorentz(cand->daughter(i));
+		if (candvec.size() == 0) candvec.push_back(cand->daughter(i));
+		else if (std::find(candvec.begin(), candvec.end(), cand->daughter(i)) == candvec.end()) 
+			candvec.push_back(cand->daughter(i));
+	}else stableDecendantsCandidates(cand->daughter(i), candvec);
    }
 
-   return bjets;
 }
 
 //-------------  method called to calculate MET in simuation ------------------ 

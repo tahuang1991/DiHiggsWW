@@ -136,7 +136,11 @@ class ttbarAnalyzer : public edm::EDAnalyzer {
      //cuts on GenJets
      double jetsPt_;
      double jetsEta_;
-     double muonsPt_; 
+     double bjetsPt_;
+     double bjetsEta_;
+     double jetsDeltaR_;
+     double muonPt2_;
+     double muonPt1_;
      double muonsEta_;
      double metPt_;
      
@@ -177,15 +181,18 @@ class ttbarAnalyzer : public edm::EDAnalyzer {
       
       TLorentzVector mu1_lorentz;
       TLorentzVector mu2_lorentz;
-      TLorentzVector bbar_lorentz;
+      TLorentzVector b_genp_lorentz;
+      TLorentzVector bbar_genp_lorentz;
       TLorentzVector nu1_lorentz;
       TLorentzVector nu2_lorentz;
       TLorentzVector met_lorentz;
-      TLorentzVector bjet_lorentz;
-      TLorentzVector bbarjet_lorentz;
+      TLorentzVector b1jet_lorentz;
+      TLorentzVector b2jet_lorentz;
+      TLorentzVector totjets_lorentz;
 
     private:
-      TLorentzVector stableDecendantsLorentz(const reco::Candidate* cand); 
+      void stableDecendantsCandidates(const reco::Candidate* cand, std::vector<const reco::Candidate*> &candvec); 
+      void neutrinoDecendantsCandidates(const reco::Candidate *cand, std::vector<const reco::Candidate*> &candvec);
    
     private:
       TLorentzVector calculateMET(); 
@@ -282,6 +289,11 @@ class ttbarAnalyzer : public edm::EDAnalyzer {
       float bbarjet_decendant_py;
       float bbarjet_decendant_pz;
 
+      float totjets_energy;
+      float totjets_px;
+      float totjets_py;
+      float totjets_pz;
+
       float tbar_energy;
       float tbar_px;
       float tbar_py;
@@ -307,6 +319,10 @@ class ttbarAnalyzer : public edm::EDAnalyzer {
       bool tbartoWbbar;
       bool ttoWb;
 
+      bool hasbjet;
+      bool hasbbarjet;
+      bool hasMET;
+      bool hastwomuons;
         
     private:
       bool runMMC_;
@@ -337,7 +353,11 @@ ttbarAnalyzer::ttbarAnalyzer(const edm::ParameterSet& iConfig)
      metLabel_ = iConfig.getParameter<std::string>("metLabel");
      jetsPt_ = iConfig.getParameter<double>("jetsPt");
      jetsEta_ = iConfig.getParameter<double>("jetsEta");
-     muonsPt_ = iConfig.getParameter<double>("muonsPt");
+     bjetsPt_ = iConfig.getParameter<double>("bjetsPt");
+     bjetsEta_ = iConfig.getParameter<double>("bjetsEta");
+     jetsDeltaR_ = iConfig.getParameter<double>("jetsDeltaR");
+     muonPt1_ = iConfig.getParameter<double>("muonPt1");
+     muonPt2_ = iConfig.getParameter<double>("muonPt2");
      muonsEta_ = iConfig.getParameter<double>("muonsEta");
      metPt_ = iConfig.getParameter<double>("metPt");
    // initilize candidates pointer
@@ -662,19 +682,13 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	} 
    reco::GenMET genMet(genmetColl->front());
 
+   hasbjet = false;
+   hasbbarjet = false;
+   hasMET =false;
+   hastwomuons = false;
   // match bquark and bjet
-   bool hasbjet = false;
-   bool hasbbarjet = false;
-   dR_bjet = 99.0;
-   dR_bbarjet = 99.0;
-   bjet_energy_tot = 0;
-   bjet_px_tot = 0.0;
-   bjet_py_tot = 0.0;
-   bjet_pz_tot = 0.0;
-   bbarjet_energy_tot = 0;
-   bbarjet_px_tot = 0.0;
-   bbarjet_py_tot = 0.0;
-   bbarjet_pz_tot = 0.0;
+   dR_bjet = jetsDeltaR_;
+   dR_bbarjet = jetsDeltaR_;
 
    bjet_decendant_energy = 0;
    bjet_decendant_px = 0.0;
@@ -684,12 +698,24 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
    bbarjet_decendant_px = 0.0;
    bbarjet_decendant_py = 0.0;
    bbarjet_decendant_pz = 0.0;
+  
+   totjets_energy =0;
+   totjets_px =0;
+   totjets_py =0;
+   totjets_pz =0;
 
    int nparts = 0;
    if (ttoWb and tbartoWbbar){
    for (reco::GenJetCollection::const_iterator jetit = genjetColl->begin(); jetit != genjetColl->end(); jetit++){
+	if (jetit->pt() >= jetsPt_ and std::fabs(jetit->eta()) <= jetsEta_){	
+ 		totjets_px += jetit->px();
+		totjets_py += jetit->py();
+		totjets_pz += jetit->pz();
+		totjets_energy += jetit->energy();
+
+	}
 	//cuts on GenJets
-	if (jetit->pt()<jetsPt_ or std::fabs(jetit->eta())> jetsEta_) continue;
+	if (jetit->pt()<bjetsPt_ or std::fabs(jetit->eta())> bjetsEta_) continue;
 
 	//printCandidate(jetit->clone());
         std::vector <const reco::GenParticle*> mcparts = jetit->getGenConstituents();
@@ -699,13 +725,6 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		const reco::Candidate* tmpcand;
 		if ((bcand=findancestor(mcpart, -5, false)) and bcand->mother()->pdgId() == -6){ 
 			tmpcand = bcand->mother();
-			if (tmpcand == tbarcand and dR_bbarjet != deltaR(jetit->eta(), jetit->phi(), b2cand->eta(), b2cand->phi())){
-				bbarjet_px_tot += jetit->px();
-				bbarjet_py_tot += jetit->py();
-				bbarjet_pz_tot += jetit->pz();
-				bbarjet_energy_tot += jetit->energy();
-			
-			}
 			if (tmpcand == tbarcand and dR_bbarjet > deltaR(jetit->eta(), jetit->phi(), b2cand->eta(), b2cand->phi())){
 				dR_bbarjet = deltaR(jetit->eta(), jetit->phi(), b2cand->eta(), b2cand->phi());
 				//printCandidate(jetit->clone());
@@ -736,12 +755,6 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		  }
 		if ((bcand=findancestor(mcpart, 5, false)) and bcand->mother()->pdgId() == 6){
 			tmpcand = bcand->mother();
-			if (tmpcand == tcand and dR_bjet != deltaR(jetit->eta(), jetit->phi(), b1cand->eta(), b1cand->phi())){
-				bjet_px_tot += jetit->px();
-				bjet_py_tot += jetit->py();
-				bjet_pz_tot += jetit->pz();
-				bjet_energy_tot += jetit->energy();
-			}	
 			if (tmpcand == tcand and dR_bjet>deltaR(jetit->eta(), jetit->phi(), b1cand->eta(), b1cand->phi())){
 				dR_bjet = deltaR(jetit->eta(), jetit->phi(), b1cand->eta(), b1cand->phi());
 				//printCandidate(jetit->clone());
@@ -775,6 +788,14 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	if (!hasbbarjet or !hasbjet) std::cout <<" has ttbar->WbWbbar, but failed to two b jets " << std::endl;
     }//
 
+   if (ttoWb and hasbjet){
+	b1jet_lorentz.SetXYZT(b1jet->px(), b1jet->py(), b1jet->pz(), b1jet->energy());	
+
+     }
+   if (tbartoWbbar){
+	b2jet_lorentz.SetXYZT(b2jet->px(), b2jet->py(), b2jet->pz(), b2jet->energy());	
+
+    }
 
    if (ttoWb and tbartoWbbar) {
         std::cout << "find t and tbar candidate " << std::endl;
@@ -799,6 +820,7 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
    	nu1_lorentz.SetPtEtaPhiM(nu1cand->pt(), nu1cand->eta(), nu1cand->phi(), 0);
         mu2_lorentz.SetPtEtaPhiM(mu2cand->pt(), mu2cand->eta(), mu2cand->phi(), 0); 
         nu2_lorentz.SetPtEtaPhiM(nu2cand->pt(), nu2cand->eta(), nu2cand->phi(), 0); 
+        totjets_lorentz.SetXYZT(totjets_px, totjets_py, totjets_pz, totjets_energy);
         met_lorentz = calculateMET();
         std::cout <<"MET from nuetrinos "; met_lorentz.Print(); 
         met_lorentz.SetXYZT(genMet.px(), genMet.py(), 0, genMet.pt()); 
@@ -832,7 +854,6 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         std::cout <<" w2 " ; printCandidate(w2cand);
         std::cout <<" b1(b) " ; printCandidate(b1cand);
         std::cout <<" b2(bbar) " ; printCandidate(b2cand);
-        //std::cout <<" bjet, mass "<<bjet_lorentz.M(); bjet_lorentz.Print();
         //std::cout <<" bbarjet, mass "<<bbarjet_lorentz.M(); bbarjet_lorentz.Print();
         std::cout <<" t->Wb " ; printCandidate(tcand);
         std::cout <<" tbar->Wbbar " ; printCandidate(tbarcand);
@@ -863,16 +884,20 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
      }
 	//
 
+   if (genMet.pt() >= metPt_) hasMET =true;
    //if (h2tohh && runMMC_) runMMC();
    if (ttoWb and tbartoWbbar and  runMMC_){
-        bbar_lorentz.SetXYZT(b1cand->px()+b2cand->px(), b1cand->py()+b2cand->py(), b1cand->pz()+b2cand->pz(), b1cand->energy()+b2cand->energy());
+        b_genp_lorentz.SetXYZT(b1cand->px(), b1cand->py(), b1cand->pz(), b1cand->energy()); 
+        bbar_genp_lorentz.SetXYZT(b2cand->px(), b2cand->py(), b2cand->pz(), b2cand->energy()); 
         int onshellMarker = -1;
         if (w1cand->mass() > w2cand->mass()) onshellMarker = 1;
         else onshellMarker = 2;
         // std::cout <<" mu1 lorenz "; mu1_lorentz.Print(); 
         //thismmc = new MMC();
         //std::cout << "onshellMarkder  " << onshellMarker << std::endl;
-	thismmc = new MMC(&mu1_lorentz, &mu2_lorentz, &bbar_lorentz, &met_lorentz, &nu1_lorentz, &nu2_lorentz, onshellMarker, 
+        TLorentzVector tot_lorentz= mu1_lorentz+mu2_lorentz+nu1_lorentz+nu2_lorentz+b_genp_lorentz+bbar_genp_lorentz;
+	thismmc = new MMC(&mu1_lorentz, &mu2_lorentz, &b1jet_lorentz, &b2jet_lorentz, &totjets_lorentz, &met_lorentz, 
+	&nu1_lorentz, &nu2_lorentz,&b_genp_lorentz, &bbar_genp_lorentz, &tot_lorentz, onshellMarker, 
 	simulation_, ievent, mmcset_, fs, verbose_);
         //thismmc->printTrueLorentz();
         thismmc->runMMC();	
@@ -1105,18 +1130,7 @@ ttbarAnalyzer::fillbranches(){
       b2_px = b2cand->px();
       b2_py = b2cand->py();
       b2_pz = b2cand->pz();
-     /*
-      bjet_energy = bjet_lorentz.Energy();
-      bjet_px = bjet_lorentz.Px();
-      bjet_py = bjet_lorentz.Py();
-      bjet_pz = bjet_lorentz.Pz();
-      bjet_mass = bjet_lorentz.M();
-      bbarjet_energy = bbarjet_lorentz.Energy();
-      bbarjet_px = bbarjet_lorentz.Px();
-      bbarjet_py = bbarjet_lorentz.Py();
-      bbarjet_pz = bbarjet_lorentz.Pz();
-      bbarjet_mass = bbarjet_lorentz.M();
-      */
+
       tbar_energy = tbarcand->energy();
       tbar_px = tbarcand->px();
       tbar_py = tbarcand->py();
@@ -1275,24 +1289,40 @@ ttbarAnalyzer::hasDaughter(const reco::Candidate* cand, int id){
 
 }
 
+//----------- method called to calculate total lorentz vector for neutrinos decendants ---------------
+//
+void 
+ttbarAnalyzer::neutrinoDecendantsCandidates(const reco::Candidate *cand, std::vector<const reco::Candidate*> &candvec){
+  
+
+   for (unsigned i = 0; i < cand->numberOfDaughters(); i++){
+	if ((cand->daughter(i))->status() == 1 && (abs((cand->daughter(i))->pdgId()) == 12 
+	     || abs((cand->daughter(i))->pdgId()) == 14 || abs((cand->daughter(i))->pdgId()) == 16) ){
+		if (candvec.size() == 0) candvec.push_back(cand->daughter(i));
+		else if (std::find(candvec.begin(), candvec.end(), cand->daughter(i)) == candvec.end()) 
+			candvec.push_back(cand->daughter(i));
+	}else neutrinoDecendantsCandidates(cand->daughter(i), candvec);
+   }
+
+}
+
+
 
 //----------- method called to calculate total lorentz vector from b bar jets ---------------
 //
-TLorentzVector
-ttbarAnalyzer::stableDecendantsLorentz(const reco::Candidate *cand){
+void 
+ttbarAnalyzer::stableDecendantsCandidates(const reco::Candidate *cand, std::vector<const reco::Candidate*> &candvec){
   
-   TLorentzVector bjets = TLorentzVector();
    for (unsigned i = 0; i < cand->numberOfDaughters(); i++){
 	if ((cand->daughter(i))->status() == 1){
-		TLorentzVector tmp((cand->daughter(i))->px(), (cand->daughter(i))->py(), 
-				(cand->daughter(i))->pz(),(cand->daughter(i))->energy());
-                //printCandidate(cand->daughter(i));
-        	bjets = bjets+tmp; 
-	}else bjets = bjets+stableDecendantsLorentz(cand->daughter(i));
+		if (candvec.size() == 0) candvec.push_back(cand->daughter(i));
+		else if (std::find(candvec.begin(), candvec.end(), cand->daughter(i)) == candvec.end()) 
+			candvec.push_back(cand->daughter(i));
+	}else stableDecendantsCandidates(cand->daughter(i), candvec);
    }
 
-   return bjets;
 }
+
 
 //-------------  method called to calculate MET in simuation ------------------ 
 TLorentzVector 

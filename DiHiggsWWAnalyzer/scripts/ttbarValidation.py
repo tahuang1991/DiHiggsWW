@@ -591,6 +591,8 @@ if __name__ == "__main__":
     met_bins = "(150,0,150)"
     met = "met"
     #draw1D(file,dir,met,met_bins,"Simulated #slash{E}_{T}", "1","MET_1M_0413")
+    #drawAll_1D(filedir,dir,"dR_bjet","(50,0,2)","deltaR(bjet, b genParticle)", "1","dR_bjet_cuts_1M_0605_finalStates")
+    #drawAll_1D(filedir,dir,"dR_bbarjet","(50,0,2)","deltaR(bbarjet, bbar genParticle)", "1","dR_bbarjet_cuts_1M_0605_finalStates")
     
 ### as a reference for monitoring plots in MMC
     wmass_offshell_bins = "(60,0.0,60.0)" 
@@ -606,26 +608,8 @@ if __name__ == "__main__":
     nu2_pt = "sqrt(nu2_px**2+nu2_py**2)"
     onshellW_1_cut = "mu1_mother_mass>mu2_mother_mass"
     offshellW_1_cut = "mu2_mother_mass>mu1_mother_mass"
-#    draw1D_combined(file,dir,"mu1_mother_mass","mu2_mother_mass", wmass_onshell_bins,"Simulated M_{W}^{onshell}",onshellW_1_cut,offshellW_1_cut,"onshellW_mass_1M_0413")
-    
-   # draw1D_combined(file,dir,nu1_pt,nu2_pt, onshell_nupt_bins,"Simulated p_{T#nu}^{onshellW}",onshellW_1_cut,offshellW_1_cut,"onshell_nupt_1M_0413")
-    #draw1D(file,dir,"mu1_mother_mass", wmass_offshell_bins,"Simulated M_{W}^{offshell}, pdgid = -24", offshellW_1_cut,"offshellW1_mass_1M_0413")
-    #draw1D(file,dir,"mu2_mother_mass", wmass_offshell_bins,"Simulated M_{W}^{offshell}, pdgid = 24 ", onshellW_1_cut,"offshellW2_mass_1M_0413")
-    #draw1D(file,dir,"nu1_eta",eta_bins,"Simulated #eta_{#nu}^{offshellW}, pdgid = -14",offshellW_1_cut,"offshell_nu1_eta_1M_0413")
-    #draw1D(file,dir,"nu1_eta",eta_bins,"Simulated #eta_{#nu}^{onshellW}, pdgid = -14",onshellW_1_cut,"onshell_nu1_eta_1M_0413")
-    #draw1D(file,dir,"nu2_eta",eta_bins,"Simulated #eta_{#nu}^{offshellW}, pdgid = 14",onshellW_1_cut,"offshell_nu2_eta_1M_0413")
-    #draw1D(file,dir,"nu2_eta",eta_bins,"Simulated #eta_{#nu}^{onshellW}, pdgid = 14",offshellW_1_cut,"onshell_nu2_eta_1M_0413")
-    #draw1D(file,dir,nu1_pt, offshell_nupt_bins,"Simulated p_{T#nu}^{offshellW}, pdgid = -14",offshellW_1_cut,"offshell_nu1_pt_1M_0413")
-    #draw1D(file,dir,nu1_pt, onshell_nupt_bins,"Simulated p_{T#nu}^{onshellW}, pdgid = -14",onshellW_1_cut,"onshell_nu1_pt_1M_0413")
-    #draw1D(file,dir,nu2_pt, offshell_nupt_bins,"Simulated p_{T#nu}^{offshellW}, pdgid = 14",onshellW_1_cut,"offshell_nu2_pt_1M_0413")
-    #draw1D(file,dir,nu2_pt, onshell_nupt_bins,"Simulated p_{T#nu}^{onshellW}, pdgid = 14",offshellW_1_cut,"onshell_nu2_pt_1M_0413")
     delta_phi = "(25,-3.1415,3.1415)"
     delta_eta = "(50,-5.0,5.0)"
     #deltaR1(file,dir,delta_eta,delta_phi,h2toh1h1_cut,"h2toh1h1_0223")
     #deltaR2(file,dir,delta_eta,delta_phi,h2toh1h1_cut,"h2toh1h1_0223")
-   
-    onoffshellWmass1 = "mu1_mother_mass:mu2_mother_mass"
-    onoffshellWmass2 = "mu2_mother_mass:mu1_mother_mass"
-     
-    #draw2D_combined(file,dir, onoffshellWmass2, onoffshellWmass1, wmass_onshell_bins,wmass_offshell_bins,"Simulated M_{W}^{onshell}","Simulated M_{W}^{offshell}",onshellW_1_cut,offshellW_1_cut,"onshellVsoffshell_Wmass_1M_0413")
 

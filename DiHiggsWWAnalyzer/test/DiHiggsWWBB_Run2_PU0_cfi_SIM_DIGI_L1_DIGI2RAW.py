@@ -2,7 +2,7 @@
 # using: 
 # Revision: 1.19 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: DisplacedMuJet_Run2_cfi -s SIM,DIGI,L1,DIGI2RAW --datatier SIM-DIGI-RAW --conditions auto:run2_mc --magField 38T_PostLS1 --eventcontent RAWSIM --customise=SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1,MuJetAnalysis/GenProduction/addPileup.addPileup --pileup AVE_20_BX_25ns --fileout out_raw.root -n 10 --no_exec
+# with command line options: DiHiggsWWBB_Run2_PU0_cfi -s SIM,DIGI,L1,DIGI2RAW --datatier SIM-DIGI-RAW --conditions auto:run2_mc --magField 38T_PostLS1 --eventcontent RAWSIM --customise=SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1 --fileout out_raw.root -n 10 --no_exec
 import FWCore.ParameterSet.Config as cms
 
 process = cms.Process('DIGI2RAW')
@@ -12,7 +12,7 @@ process.load('Configuration.StandardSequences.Services_cff')
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
-process.load('SimGeneral.MixingModule.mix_POISSON_average_cfi')
+process.load('SimGeneral.MixingModule.mixNoPU_cfi')
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
 process.load('Configuration.Geometry.GeometrySimDB_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
@@ -24,13 +24,31 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(4)
+    input = cms.untracked.int32(10)
 )
 
 # Input source
 process.source = cms.Source("PoolSource",
-    secondaryFileNames = cms.untracked.vstring(),
-    fileNames = cms.untracked.vstring('file:/fdata/hepx/store/user/taohuang/Hhh_GEN/out_gen_1k_B3.root')
+    dropDescendantsOfDroppedBranches = cms.untracked.bool(False),
+    fileNames = cms.untracked.vstring('file:/fdata/hepx/store/user/taohuang/Hhh_GEN/out_gen_1k_B3.root'),
+    inputCommands = cms.untracked.vstring('keep *', 
+        'drop *_genParticles_*_*', 
+        'drop *_genParticlesForJets_*_*', 
+        'drop *_kt4GenJets_*_*', 
+        'drop *_kt6GenJets_*_*', 
+        'drop *_iterativeCone5GenJets_*_*', 
+        'drop *_ak4GenJets_*_*', 
+        'drop *_ak7GenJets_*_*', 
+        'drop *_ak8GenJets_*_*', 
+        'drop *_ak4GenJetsNoNu_*_*', 
+        'drop *_ak8GenJetsNoNu_*_*', 
+        'drop *_genCandidatesForMET_*_*', 
+        'drop *_genParticlesForMETAllVisible_*_*', 
+        'drop *_genMetCalo_*_*', 
+        'drop *_genMetCaloAndNonPrompt_*_*', 
+        'drop *_genMetTrue_*_*', 
+        'drop *_genMetIC5GenJs_*_*'),
+    secondaryFileNames = cms.untracked.vstring()
 )
 
 process.options = cms.untracked.PSet(
@@ -39,32 +57,27 @@ process.options = cms.untracked.PSet(
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
-    version = cms.untracked.string('$Revision: 1.19 $'),
-    annotation = cms.untracked.string('DisplacedMuJet_Run2_cfi nevts:10'),
-    name = cms.untracked.string('Applications')
+    annotation = cms.untracked.string('DiHiggsWWBB_Run2_PU0_cfi nevts:10'),
+    name = cms.untracked.string('Applications'),
+    version = cms.untracked.string('$Revision: 1.19 $')
 )
 
 # Output definition
 
 process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
-    splitLevel = cms.untracked.int32(0),
-    eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
-    outputCommands = process.RAWSIMEventContent.outputCommands,
-    fileName = cms.untracked.string('/fdata/hepx/store/user/taohuang/Hhh_GEN/out_raw_pu20_1k_B3.root'),
     dataset = cms.untracked.PSet(
-        filterName = cms.untracked.string(''),
-        dataTier = cms.untracked.string('SIM-DIGI-RAW')
-    )
+        dataTier = cms.untracked.string('SIM-DIGI-RAW'),
+        filterName = cms.untracked.string('')
+    ),
+    eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
+    fileName = cms.untracked.string('/fdata/hepx/store/user/taohuang/Hhh_GEN/out_raw.root'),
+    outputCommands = process.RAWSIMEventContent.outputCommands,
+    splitLevel = cms.untracked.int32(0)
 )
 
 # Additional output definition
 
 # Other statements
-#process.mix.input.nbPileupEvents.averageNumber = cms.double(0)
-process.mix.input.nbPileupEvents.averageNumber = cms.double(50.000000)
-process.mix.bunchspace = cms.int32(25)
-process.mix.minBunch = cms.int32(-12)
-process.mix.maxBunch = cms.int32(3)
 from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_mc', '')
 
@@ -86,12 +99,6 @@ from SLHCUpgradeSimulations.Configuration.postLS1Customs import customisePostLS1
 
 #call to customisation function customisePostLS1 imported from SLHCUpgradeSimulations.Configuration.postLS1Customs
 process = customisePostLS1(process)
-
-# Automatic addition of the customisation function from MuJetAnalysis.GenProduction.addPileup
-from MuJetAnalysis.GenProduction.addPileup import addPileup 
-
-#call to customisation function addPileup imported from MuJetAnalysis.GenProduction.addPileup
-process = addPileup(process)
 
 process.g4SimHits.Generator.HepMCProductLabel = cms.string('source')
 from Configuration.PyReleaseValidation.ConfigBuilder import MassReplaceInputTag

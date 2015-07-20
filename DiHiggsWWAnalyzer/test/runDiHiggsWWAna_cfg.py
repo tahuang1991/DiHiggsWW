@@ -19,7 +19,7 @@ process.genParticlesForJetsNoNu.ignoreParticleIDs += cms.vuint32( 12,14,16)
 from RecoJets.JetProducers.ak4GenJets_cfi import ak4GenJets
 process.ak4GenJetsNoNu = ak4GenJets.clone( src = cms.InputTag("genParticlesForJetsNoNu") )
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
 
 
 process.source = cms.Source("PoolSource",
@@ -27,8 +27,9 @@ process.source = cms.Source("PoolSource",
     #skipEvents = cms.untracked.uint32(617),
     # replace 'myfile.root' with the source file you want to use
     fileNames = cms.untracked.vstring(
-        'file:/fdata/hepx/store/user/taohuang/Hhh/HH-bbWW-B3_Gen_100k_0215.root'
+        #'file:/fdata/hepx/store/user/taohuang/Hhh/HH-bbWW-B3_Gen_100k_0215.root'
         #'file:/eos/uscms/store/user/tahuang/DiHiggs/HH-bbWW-Gen-10k_0408.root'
+ 	'file:/fdata/hepx/store/user/taohuang/DiHiggs_run2_pythia8_GEN_1M_filter_B3/DiHiggs_run2_pythia8_GEN_1M_filter_B3/dfecb3549f1dec22ff689431a004b699/out_gen_1_1_TbH.root'
     )
 )
 
@@ -45,26 +46,33 @@ refrootfile = os.getenv( "CMSSW_BASE" ) +"/src/DiHiggsWW/DiHiggsWWAnalyzer/plugi
 process.DiHiggsWWAna = cms.EDAnalyzer('DiHiggsWWAnalyzer',
 	verbose = cms.untracked.int32(0),
         finalStates = cms.bool(True),
+        rescalebjets = cms.bool(False),
 	#jetLabel = cms.string("ak4GenJets"),
 	jetLabel = cms.string("ak4GenJetsNoNu"),
 	metLabel = cms.string("genMetTrue"),	
 	jetsPt = cms.double(30.0),
 	jetsEta = cms.double(2.50),
+	bjetsPt = cms.double(20.0),
+	bjetsEta = cms.double(5.0),
 	jetsDeltaR = cms.double(2.00),
 	muonPt1 = cms.double(10.0),
 	muonPt2 = cms.double(10.0),
 	muonsEta = cms.double(2.40),
 	metPt = cms.double(20.0),
+        metcorrection = cms.bool(False),
         runMMC = cms.bool(True),
         simulation = cms.bool(True),
         mmcset = cms.PSet(
-	iterations = cms.untracked.int32(100000),
+	iterations = cms.untracked.int32(10),
 	seed = cms.int32(random.randint(0,100000000)),#may be ignored since we use can take ievent alone as seed
         weightfromonshellnupt_func = cms.bool(False),
         weightfromonshellnupt_hist = cms.bool(True),
         weightfromoffshellWmass_hist = cms.bool(True),
         weightfromonoffshellWmass_hist = cms.bool(True),
+        weightfrombjetrescalec1c2_hist = cms.bool(True),
 	useMET = cms.bool(True),
+        bjetrescale = cms.int32(2),
+        metcorrection = cms.int32(1),
 	RefPDFfile = cms.string("%s"%refrootfile)
         )
 )

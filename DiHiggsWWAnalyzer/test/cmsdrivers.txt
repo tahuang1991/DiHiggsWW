@@ -60,11 +60,26 @@ cmsDriver.py DiHiggsWWBB_Run2_cfi \
 --conditions auto:run2_mc \
 --magField 38T_PostLS1 \
 --eventcontent RAWSIM \
---customise=SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1,MuJetAnalysis/GenProduction/addPileup.addPileup \
+--customise=SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1,DiHiggsWW/DiHiggsWWAnalyzer/addPileup.addPileup \
 --pileup AVE_20_BX_25ns \
 --fileout out_raw.root \
 -n 10 \
 --no_exec
+
+
+# NO pileup #
+
+cmsDriver.py DiHiggsWWBB_Run2_PU0_cfi \
+-s SIM,DIGI,L1,DIGI2RAW \
+--datatier SIM-DIGI-RAW \
+--conditions auto:run2_mc \
+--magField 38T_PostLS1 \
+--eventcontent RAWSIM \
+--customise=SLHCUpgradeSimulations/Configuration/postLS1Customs.customisePostLS1 \
+--fileout out_raw.root \
+-n 10 \
+--no_exec
+
 
 ## HLT-RECO ## 
 

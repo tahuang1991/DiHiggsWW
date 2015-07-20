@@ -435,7 +435,7 @@ def draw_combined(file,todraw,todrawtrue,x_bins,tex,pic_name):
         
 
 #____________________________________________________________________________
-def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"]):
+def monitoringMMC(file,pic, cut = ["weight","weight*(control<2)","weight*(control>1)"]):
 
     num = gettreenum(file)
     #cut = ["weight*(nu_onshellW_pt>10)","weight*(control<2&&nu_onshellW_pt>10)","weight*(control>1&&nu_onshellW_pt>10)"]
@@ -452,6 +452,10 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
     	sub_list = obj.GetListOfKeys()
     	sub_key = sub_list.At(m)
 	tree = sub_key.ReadObj()
+	if tree.GetEntries()<100:
+		m =m+1
+		f.close()
+		continue
         #h2_mass_true = getTrueValue(tree,"mass_h2_true","(400,200,600)")
 #        h2_mass_reconstructed = geth2MassMostProba(tree,cut[0]) 
 #        if (h2_mass_reconstructed < 450 and h2_mass_reconstructed > 250):
@@ -821,9 +825,9 @@ def monitoringMMC(file,cut = ["weight","weight*(control<2)","weight*(control>1)"
     	tex.SetNDC()
 	tex.Draw("same")
 	c1.Update()
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0511_%s_B3.pdf"%cut[0])
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0511_%s_B3.png"%cut[0])
-        c1.SaveAs("%s"%(tree.GetTitle())+"_0511_%s_B3.C"%cut[0])
+        #c1.SaveAs("%s"%(tree.GetTitle())+"_%s_%s_B3.pdf"%(pic, cut[0]))
+	#c1.SaveAs("%s"%(tree.GetTitle())+"_%s_%s_B3.png"%(pic, cut[0]))
+    #    c1.SaveAs("%s"%(tree.GetTitle())+"_%s_%s_B3.C"%(pic, cut[0]))
         ##########################################
         ##### fill hist_h2
         
@@ -1044,20 +1048,30 @@ def drawh2Mass_combined(file, cut="weight"):
 
 
 #____________________________________________________________________________
-def drawh2MassAll_combined(dir, cut="weight"):
+def drawh2MassAll_combined(dir, pic, cut="weight"):
 
 
+    #ROOT.gStyle.SetOptStat(0)
 
     hist_h2 = ROOT.TH1F("hist_h2"," ",150,200,500)
     hist_h2true = ROOT.TH1F("hist_h2true"," ",150,200,500)
-
+    hist_h2ratio_metdiff = ROOT.TH2F("hist_h2ratio_metdiff"," ",40,0.6,1.4,50,0,30)
+    hist_h2_Metdiff = ROOT.TH2F("hist_h2_Metdiff"," ",75,200,500,50,0,30)
+    hist_h2_Metdiff.SetXTitle("reconstruced M_{H}")
+    hist_h2_Metdiff.SetYTitle("|#slash{E}_{T}-#vec{nu1}-#vec{nu2}|")
+    hist_Metdiffpx = ROOT.TH1F("hist_Metdiffpx", " ",100,-100,100)
 
     if not os.path.isdir(dir):
           print "ERROR: This is not a valid directory: ", dir
     ls = os.listdir(dir)
     tot = len(ls)
+    met_diff_Vec = ROOT.TVector2()
+    nu1_Vec = ROOT.TVector2()
+    nu2_Vec = ROOT.TVector2()
+    pi_root = ROOT.TMath.Pi()
     for x in ls:
 	x = dir[:]+x
+	print "rootfile X ",x
     	num = gettreenum(x)
 	m = 1
     	while m<num:
@@ -1068,15 +1082,45 @@ def drawh2MassAll_combined(dir, cut="weight"):
     		sub_list = obj.GetListOfKeys()
     		sub_key = sub_list.At(m)
 		tree = sub_key.ReadObj()
-        	h2_mass_true = getTrueValue(tree,"mass_h2_true","(800,200,1000)")
+		print tree.GetTitle()
+		if tree.GetEntries()<100:
+			m = m+1
+			f.Close()
+			continue
+			
+        	h2_mass_true = getTrueValue(tree,"mass_h2_true","(900,100,1000)")
+		met = getTrueValue(tree,"met_true","(100,0,300)")
+		nu1_pt = getTrueValue(tree,"pt_nuoffshellW_true","(400,0,200)")
+		nu2_pt = getTrueValue(tree,"pt_nuonshellW_true","(400,0,200)")
+		nu1_phi = getTrueValue(tree,"phi_nuoffshellW_true","(100,%f,%f)"%(-1*pi_root,pi_root))
+		nu2_phi = getTrueValue(tree,"phi_nuonshellW_true","(100,%f,%f)"%(-1*pi_root,pi_root))
+		met_phi = getTrueValue(tree,"met_phi_true","(100,%f,%f)"%(0,2*pi_root))
+		if met_phi>pi_root:
+			met_phi = met_phi-2*pi_root
+		#print "met ", met, " phi ", met_phi," nu1_pt ", nu1_pt, " nu1_phi ", nu1_phi," nu2_pt ",nu2_pt, " nu2_phi ",nu2_phi
+			
+		met_diff_Vec.SetMagPhi(met, met_phi)
+		nu1_Vec.SetMagPhi(nu1_pt, nu1_phi)
+		nu2_Vec.SetMagPhi(nu2_pt, nu2_phi)
+		met_diff_Vec = met_diff_Vec-nu1_Vec-nu2_Vec
+		#print "met ", met_diff_Vec.Print()
+		#print "nu1 ", nu1_Vec.Print()
+		#print "nu2 ", nu2_Vec.Print()
+		#print "met diff ", met_diff_Vec.Print()
     		name = tree.GetTitle()+"_h2Mass"
    		b1 = ROOT.TH1F("%s"%name,"b1",800,200,1000)
     		tree.Draw("h2tohh_Mass>>%s"%name,cut)
+		
         	h2_mass_mean = b1.GetMean()
         	maxbin = b1.GetMaximumBin() 
 		h2_mass_reconstructed = b1.GetXaxis().GetBinCenter(maxbin)
+			
+		print name," ",h2_mass_reconstructed,"  true mass ", h2_mass_true	
        		hist_h2.Fill(h2_mass_reconstructed)
 		hist_h2true.Fill(h2_mass_true)
+		#hist_h2ratio_metdiff.Fill(h2_mass_reconstructed/h2_mass_true, met_diff_Vec.Mod())
+		hist_h2_Metdiff.Fill(h2_mass_reconstructed, met_diff_Vec.Mod())
+		hist_Metdiffpx.Fill(met_diff_Vec.Px())
         	m = m+1
 		f.Close()
        
@@ -1093,12 +1137,33 @@ def drawh2MassAll_combined(dir, cut="weight"):
     #legend.SetFillStyle(0)
     legend.AddEntry(hist_h2,"Reconstructed ","l") 
     legend.AddEntry(hist_h2true,"True ","l") 
+    hist_h2.GetYaxis().SetRangeUser(0,hist_h2true.GetMaximum()+10)
     hist_h2.Draw()
     hist_h2true.Draw("same")
     legend.Draw("same")
-    h2Mass_c.SaveAs("MMC_h2Mass_0621_%s_1M_B3.pdf"%cut) 
-    h2Mass_c.SaveAs("MMC_h2Mass_0621_%s_1M_B3.png"%cut) 
+    h2Mass_c.SaveAs("MMC_h2Mass_%s_B3_%s.pdf"%(cut,pic)) 
+    h2Mass_c.SaveAs("MMC_h2Mass_%s_B3_%s.png"%(cut,pic)) 
 
+    h2_c3 = ROOT.TCanvas()
+    h2_c3.cd()
+    hist_h2_Metdiff.Draw("colz")
+    h2_c3.SaveAs("MMC_h2_Metdiff_%s_B3_%s.pdf"%(cut,pic))
+    h2_c3.SaveAs("MMC_h2_Metdiff_%s_B3_%s.png"%(cut,pic))
+    """
+    h2_c2 = ROOT.TCanvas()
+    h2_c2.cd()
+    hist_h2ratio_metdiff.SetXTitle("#frac{reconstruced M_{H}}{true M_{H}}")
+    hist_h2ratio_metdiff.SetYTitle("| #slash{E}_{T}-#vec{nu1}-#vec{nu2} |")
+    hist_h2ratio_metdiff.Draw("colz")
+    h2_c2.SaveAs("MMC_h2ratio_Metdiff_%s_B3_%s.pdf"%(cut,pic))
+    h2_c2.SaveAs("MMC_h2ratio_Metdiff_%s_B3_%s.png"%(cut,pic))
+
+    h2_c4 = ROOT.TCanvas()
+    h2_c4.cd()
+    hist_Metdiffpx.Draw()
+    h2_c4.SaveAs("MMC_h2_MetdiffPx_%s_B3_%s.pdf"%(cut,pic))
+    h2_c4.SaveAs("MMC_h2_MetdiffPx_%s_B3_%s.png"%(cut,pic))
+    """
 #___________________________________________________________________________
 def geth2MassMostProba(t, cut = "weight"):
  
@@ -1130,9 +1195,12 @@ def getTrueValue(t,var, x_bins, cut="control<2"):
     name = "tmp_%s"%var
     b1 = ROOT.TH1F("%s"%name,"b1",xBins,xminBin,xmaxBin)
     t.Draw("%s"%var+">>%s"%name, cut)
-    b1.Draw()
-   # c.SaveAs("getTrueVaule_%s"%var+"_contour.png")
-    value = b1.GetXaxis().GetBinCenter(b1.GetMaximumBin())
+    value = b1.GetMean()
+    if value<xminBin or value>xmaxBin:
+	print " getTrue value is not correct one ? ",var," value ", value
+    	b1.Draw()
+        c.SaveAs("getTrueVaule_%s"%var+"_test.png")
+    #value = b1.GetXaxis().GetBinCenter(b1.GetMaximumBin())
     #print "xaxis", var, "b1 maximum", b1.GetMaximumBin()," value", value
     del b1
     return value
@@ -1250,43 +1318,48 @@ def gethiststack(tree, todraw, todrawtrue, x_bins, hs_title, cut):
         #cut = ["weight*(nu_onshellW_pt>10)","weight*(control<2&&nu_onshellW_pt>10)","weight*(control>1&&nu_onshellW_pt>10)"]
         
 	name = "hs_%s"%tree.GetTitle()+"_%s"%todraw+"_%s"%cut[0]
+	print "name ",name
         #hs = ROOT.THStack("hs_%s"%tree.GetTitle()+"%s"%todraw,"%s"%hs_title);
         hs = ROOT.THStack("%s"%name,"  ");
         hist1 = hist_1D(tree, todraw, x_bins, cut,0)
-        hist1.SetLineColor(ROOT.kRed)
-        hist1.SetLineStyle(2)
-        hist1.SetLineWidth(4)
+        hist1.SetFillColor(ROOT.kRed)
+        #hist1.SetLineColor(ROOT.kRed)
+        #hist1.SetLineStyle(2)
+        #hist1.SetLineWidth(4)
         #hist1.Draw("E3") 
         
         hist2 = hist_1D(tree, todraw, x_bins, cut,1)
-        hist2.SetLineColor(ROOT.kBlue)
-        hist2.SetLineWidth(2)
+        #hist2.SetLineColor(ROOT.kBlue)
+        #ddhist2.SetLineWidth(2)
+        hist2.SetFillColor(ROOT.kBlue)
         #hist2.Draw("sameE3") 
    
         hist3 = hist_1D(tree, todraw, x_bins, cut,2)
-        hist3.SetLineColor(ROOT.kGreen)
-        hist3.SetLineWidth(2)
+        #hist3.SetLineColor(ROOT.kGreen)
+        #hist3.SetLineWidth(2)
+        hist3.SetFillColor(ROOT.kGreen)
         #hist3.Draw("sameE3") 
 
         hist4 = hist_1D(tree, todrawtrue, x_bins, cut,0)
-        hist4.SetFillColor(ROOT.kMagenta)
         max = hist1.GetMaximum()
         bin_max = hist4.GetMaximumBin()
 	hist4.SetBinContent(bin_max, max/4.0)
+        hist4.SetFillColor(ROOT.kMagenta)
 #	hist4.SetBinContent(bin_max-1, max/4.0)
 	#hist4.SetBinContent(bin_max+1, max/4.0)
         #add muon information
     #    mutodraw = todraw.replace("nu","mu",1)
      #   print "todraw ",todraw, " mutodraw ",mutodraw
-	hs.Add(hist1)
-	hs.Add(hist2)
 	hs.Add(hist3)
+	hs.Add(hist2)
+	hs.Add(hist1)
         hs.Add(hist4)
          
 
-    	#c = ROOT.TCanvas() 
-    #	hs.Draw("nostack")
-    #	c.SaveAs("gethiststack_%s"%todraw+"_%s"%tree.GetTitle()+"_contour.png")
+    	ctemp = ROOT.TCanvas() 
+	ctemp.cd()
+    	hs.Draw()
+    	ctemp.SaveAs("gethiststack_%s"%todraw+"_%s"%tree.GetTitle()+"_contour.png")
 	#hs.SetTitleOffset(0.8)
         return hs   
      #   c1.SaveAs("contour_%d"%(n%9)+".png") 
@@ -1353,7 +1426,12 @@ if __name__ == "__main__":
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_weight_0408_B3.root"
     #file = "/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_100k_finalStates_checksolution_0511_B3.root"
     file = "/fdata/hepx/store/user/taohuang/Hhh/0504_h2tohh/DiHiggs-1M-0504-mediateStates-B3-combined.root"
-    filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_htobbana_cuts_1M_filter_B3_MMC/"
+    #filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_htobbana_cuts_1M_filter_B3_MMC/"
+    filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_cuts_1M_filter_B3_MMC_useMET_METcorrection/"
+    #filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_cuts_1M_filter_B3_MMC_PTconservation/"
+    #filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_cuts_1M_filter_B3_MMC_useMET_METcorrection_V3MMC/"
+    filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_cuts_1M_filter_B3_MMC_useMET_METcorrectionwithMMC/"
+    #filedir = "/fdata/hepx/store/user/taohuang/DiHiggs_run2_PU0_cuts_1M_filter_B3_MMC_MetNubjets/"
     dir = "DiHiggsWWAna/%s"%treename
     #dir = "DiHiggsWWAna/"
     
@@ -1363,12 +1441,25 @@ if __name__ == "__main__":
     cut_weight1 = ["weight1","weight1*(control<2)","weight1*(control>1)"]
     cut_weight = ["weight","weight*(control<2)","weight*(control>1)"]
     #test(file, dir)
-    #monitoringMMC(file,cut_weight)  
+    if not os.path.isdir(filedir):
+          print "ERROR: This is not a valid directory: ", filedir
+    ls = os.listdir(filedir)
+    tot = len(ls)
+    num=0
+    for x in ls:
+	x = filedir[:]+x
+	print "gettreenum ",gettreenum(x)
+    	num = num+gettreenum(x)
+	if num >150:
+		break
+	m = 1
+    #	while m<gettreenum(x):
+    #		monitoringMMC(x,"0621_1M",cut_weight)  
     #monitoringMMC(file,cut_weight1)
     #monitoringMMC(file,cut_weight2)
     #monitoringMMC(file,cut_weight3)
-    drawh2MassAll_combined(filedir)
-    drawh2MassAll_combined(filedir,"weight1")
+    drawh2MassAll_combined(filedir,"0710_1M_useMET_METcorrectionwithMMC")
+    #drawh2MassAll_combined(filedir,"0629_1M_PTconservation","weight1")
     #drawh2Mass_combined(file,"weight2")
     #drawh2Mass_combined(file,"weight3")
     title1 = "MMC PDF for M_{H}, Event 4204"

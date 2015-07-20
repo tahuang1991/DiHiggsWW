@@ -49,8 +49,9 @@ class MMC{
 
     public:
     //constructor
-    MMC(TLorentzVector* mu1_lorentz, TLorentzVector* mu2_lorentz, TLorentzVector* bbar_lorentz,TLorentzVector* met_lorentz, 
-	TLorentzVector* nu1_lorentz, TLorentzVector* nu2_lorentz, int onshellMarker, bool simulation,// only for simulation 
+    MMC(TLorentzVector* mu1_lorentz, TLorentzVector* mu2_lorentz, TLorentzVector* b1jet_lorentz, TLorentzVector* b2jet_lorentz, 
+	TLorentzVector* totjets_lorentz,TLorentzVector* met_lorentz, TLorentzVector* nu1_lorentz, TLorentzVector* nu2_lorentz,
+	TLorentzVector* b_genp_lorentz, TLorentzVector* bbar_genp_lorentz, TLorentzVector* h2tohh_lorentz, int onshellMarker, bool simulation,// only for simulation 
 	int ievent, edm::ParameterSet& mmcset_, edm::Service< TFileService > fs, int verbose_ =0
 	);
     MMC();
@@ -58,10 +59,21 @@ class MMC{
 
     private:
       TTree *mmctree;
+      TH1F MMC_h2Mass;
  
    //runMMC
    public: 
-      void runMMC();
+      bool runMMC();
+      TH1F getMMCh2();
+      TTree* getMMCTree();
+      //TH1F* getMMCNeutrio_onshell1();
+      //TH1F* getMMCNeutrio_onshell2();
+      //TH1F* getMMCNeutrio_offshell1();
+      //TH1F* getMMCNeutrio_offshell2();
+   private:
+      void metCorrection();
+      void bjetsCorrection();
+
    private:
       void initTree(TTree* mmctree);
         
@@ -93,6 +105,9 @@ class MMC{
       TH1F* readoutoffshellWMassPDF();
       TH2F* readoutonoffshellWMassPDF();
       TH1F* readoutonshellnuptPDF();
+      TH1F* readoutbjetrescalec1PDF();
+      TH1F* readoutbjetrescalec2PDF();
+      TH2F* readoutbjetrescalec1c2PDF();
  
     private:
       float weightfromhist(TH1F* pdf, float x); 
@@ -103,6 +118,7 @@ class MMC{
       bool weightfromonshellnupt_func_;
       bool weightfromonshellnupt_hist_;
       bool weightfromonoffshellWmass_hist_;
+      bool weightfrombjetrescalec1c2_hist_;
       bool useMET_;   
 
     private:
@@ -119,16 +135,28 @@ class MMC{
       int seed_;
       std::string RefPDFfile_;
       int verbose;
+      int metcorrection_;
+      int bjetrescale_;
+      float b1rescalefactor;
+      float b2rescalefactor;
+      float rescalec1;
+      float rescalec2;
+   
 
     private:
       TLorentzVector* mmc_mu1_lorentz;
       TLorentzVector* mmc_mu2_lorentz;
-      TLorentzVector* mmc_bbbar_lorentz;
+      TLorentzVector* mmc_bjets_lorentz;
+      TLorentzVector* mmc_b1jet_lorentz;
+      TLorentzVector* mmc_b2jet_lorentz;
+      TLorentzVector* mmc_totjets_lorentz;
       TLorentzVector* nu1_lorentz_true;
       TLorentzVector* nu2_lorentz_true;
       TLorentzVector* onshellW_lorentz_true;
       TLorentzVector* offshellW_lorentz_true;
       TVector2* mmcmet_vec2;
+      TLorentzVector* bquark_lorentz;
+      TLorentzVector* bbarquark_lorentz;
       TLorentzVector* htoWW_lorentz_true;
       TLorentzVector* htoBB_lorentz_true;
       TLorentzVector* h2tohh_lorentz_true;
@@ -159,6 +187,7 @@ class MMC{
       float weight1;//extra weight
       float weight2;//extra weight
       float weight3;//extra weight
+      float weight4;//extra weight
  
       float mu_onshellW_Eta;
       float mu_onshellW_Phi;
@@ -187,7 +216,25 @@ class MMC{
       float offshellW_Pt;
       float offshellW_E;
       float offshellW_Mass;
-     
+    
+      float b1jet_Pt;
+      float b1jet_Energy;
+      float b1jet_Eta;
+      float b1jet_Phi;
+      float b1jet_Mass;
+      float b2jet_Pt;
+      float b2jet_Energy;
+      float b2jet_Eta;
+      float b2jet_Phi;
+      float b2jet_Mass;
+      float b1jet_dR;
+      float b2jet_dR;
+       
+      float htoBB_jets_Eta;
+      float htoBB_jets_Phi;
+      float htoBB_jets_Pt;
+      float htoBB_jets_E;
+      float htoBB_jets_Mass;
       float htoBB_Eta;
       float htoBB_Phi;
       float htoBB_Pt;
