@@ -75,6 +75,7 @@ class h2to2W2BFilter : public edm::EDFilter {
       bool hasDaughter(const reco::Candidate* cand,int id );
   // ----------member data ---------------------------
   std::string fLabel_;
+      bool Wtotau_;
 
 };
 //
@@ -88,6 +89,7 @@ h2to2W2BFilter::h2to2W2BFilter(const edm::ParameterSet& iConfig)
 {
    //now do what ever initialization is needed
   fLabel_ = iConfig.getUntrackedParameter("moduleLabel",std::string("prunedGenParticles"));
+  Wtotau_ = iConfig.getUntrackedParameter<bool>("Wtotau",false);
   //minPtLepton_ = iConfig.getUntrackedParameter<double>("MinPtLepton", 2.0);
   
 }
@@ -255,6 +257,7 @@ h2to2W2BFilter::leptonicaldecay(const reco::Candidate* cand){
    
    for (unsigned int i=0; i < cand->numberOfDaughters(); i++){
        if (abs((cand->daughter(i))->pdgId())==13 || abs((cand->daughter(i))->pdgId()==11)) return true;
+       if (abs((cand->daughter(i))->pdgId())==15 and Wtotau_) return true;
        //printCandidate(cand->daughter(i));
    }
    return false;

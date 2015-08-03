@@ -63,6 +63,9 @@ process.ttbarAna = cms.EDAnalyzer('ttbarAnalyzer',
         weightfromoffshellWmass_hist = cms.bool(True),
         weightfromonoffshellWmass_hist = cms.bool(True),
 	useMET = cms.bool(True),
+        bjetrescale = cms.int32(1),
+        metcorrection = cms.int32(-1),
+	writemmctree = cms.bool(False),
 	RefPDFfile = cms.string("%s"%refrootfile)
         )
 )

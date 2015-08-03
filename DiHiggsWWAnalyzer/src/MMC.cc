@@ -44,10 +44,10 @@ MMC::MMC(TLorentzVector* mu1_lorentz, TLorentzVector* mu2_lorentz, TLorentzVecto
 
         htoWW_lorentz_true = new TLorentzVector(*offshellW_lorentz_true + *onshellW_lorentz_true);
         h2tohh_lorentz_true = new TLorentzVector(*h2_lorentz); 
-	bquark_lorentz = b_genp_lorentz;
-        bbarquark_lorentz = bbar_genp_lorentz;
+	b1_lorentz = b_genp_lorentz;
+        b2_lorentz = bbar_genp_lorentz;
    	htoBB_lorentz_true = new TLorentzVector(*b_genp_lorentz+*bbar_genp_lorentz);
-	//mmcmet_vec2->Set(nu1_lorentz_true->Px()+nu2_lorentz_true->Px(),nu1_lorentz_true->Py()+nu2_lorentz_true->Py());
+	ideal_met_lorentz.SetXYZM(nu1_lorentz_true->Px()+nu2_lorentz_true->Px(),nu1_lorentz_true->Py()+nu2_lorentz_true->Py(),0,0);
    }
    
    verbose = verbose_; 
@@ -61,17 +61,29 @@ MMC::MMC(TLorentzVector* mu1_lorentz, TLorentzVector* mu2_lorentz, TLorentzVecto
    seed_ = mmcset_.getParameter<int>("seed");
    RefPDFfile_ = mmcset_.getParameter<std::string>("RefPDFfile");
    useMET_ = mmcset_.getParameter<bool>("useMET");
-   metcorrection_ = mmcset_.getParameter<int>("metcorrection");//0.no correction; 1. ?
-   bjetrescale_ = mmcset_.getParameter<int>("bjetrescale");//0.no rescale; 1.simple rescale; 2.elaborate rescale
+   metcorrection_ = mmcset_.getParameter<int>("metcorrection");//0.no correction; 1. simpel rescale, 2.elaborate rescale, -1.ideal case
+   bjetrescale_ = mmcset_.getParameter<int>("bjetrescale");//0.no rescale; 1.simple rescale; 2.elaborate rescale, -1.ideal case
+   writemmctree_ = mmcset_.getParameter<bool>("writemmctree");//0.no rescale; 1.simple rescale; 2.elaborate rescale, -1.ideal case
    
+   //writemmctree_ = false;
    std::stringstream ss;
    ss << "mmctree_" << iev;
    const std::string name(ss.str());
-   mmctree = fs->make<TTree>(name.c_str(), name.c_str());
+   if (writemmctree_) mmctree = fs->make<TTree>(name.c_str(), name.c_str());
+   else mmctree = new TTree(name.c_str(), name.c_str());
+
    std::stringstream histss;
+   std::stringstream histweight1ss;
+   std::stringstream histweight4ss;
    histss << "MMC_h2Mass_" << iev;
+   histweight1ss << "MMC_h2Mass_weight1_" << iev;
+   histweight4ss << "MMC_h2Mass_weight4_" << iev;
    const std::string histname(histss.str());
+   const std::string histweight1name(histweight1ss.str());
+   const std::string histweight4name(histweight4ss.str());
    MMC_h2Mass = TH1F(histname.c_str(),histname.c_str(), 900, 100, 1000);
+   MMC_h2Massweight1 = TH1F(histweight1name.c_str(),histweight1name.c_str(), 900, 100, 1000);
+   MMC_h2Massweight4 = TH1F(histweight4name.c_str(),histweight4name.c_str(), 900, 100, 1000);
    initTree(mmctree);
    
    b1rescalefactor = 1;
@@ -123,6 +135,7 @@ MMC::~MMC(){
    delete h2tohh_lorentz;
    delete met_vec2;
    
+  if (not writemmctree_) delete mmctree;
 }
 
 
@@ -196,15 +209,15 @@ MMC::runMMC(){
 		}
 	   if (bjetrescale_ ==2){
 		rescalec1 = bjetrescalec1_hist->GetRandom();
-		std::cout <<" rescale c1 " << rescalec1 << std::endl;
+		//std::cout <<" rescale c1 " << rescalec1 << std::endl;
 		bjetsCorrection();
     		//*htoBB_lorentz = b1rescalefactor*b1lorentz+b2rescalefactor*b2lorentz; 
 	      } 
-	  std::cout <<" MMC bjetrescale b1 "<< b1rescalefactor << " b2 "<< b2rescalefactor << std::endl;
+	  //std::cout <<" MMC bjetrescale b1 "<< b1rescalefactor << " b2 "<< b2rescalefactor << std::endl;
 	   if (bjetrescale_>0)
 		*htoBB_lorentz = b1rescalefactor*(*mmc_b1jet_lorentz)+b2rescalefactor*(*mmc_b2jet_lorentz);
 
-           if (metcorrection_ == bjetrescale_) metCorrection();
+           if (metcorrection_>0 and metcorrection_ == bjetrescale_) metCorrection();
 	   else if (metcorrection_ ==1){
 		b1rescalefactor = 125/mmc_bjets_lorentz->M();
 		b2rescalefactor = 125/mmc_bjets_lorentz->M();
@@ -215,9 +228,15 @@ MMC::runMMC(){
 		bjetsCorrection();
    		metCorrection(); 
 		}
+
+           if (bjetrescale_ == -1 and simulation)
+		*htoBB_lorentz = *htoBB_lorentz_true;
+	   if (metcorrection_ ==-1 and simulation)
+		*met_vec2 = TVector2(nu1_lorentz_true->Px()+nu2_lorentz_true->Px(),nu1_lorentz_true->Py()+nu2_lorentz_true->Py());
+		
 	  //std::cout <<" MMC metCorrection b1 "<< b1rescalefactor << " b2 "<< b2rescalefactor << std::endl;
    	   //std::cout <<" MMC input met  px "<< mmcmet_vec2->Px() << " py "<<mmcmet_vec2->Py() <<" pt "<< mmcmet_vec2->Mod() <<std::endl;
-   	   //std::cout <<" bjets input M_h= "<< htoBB_lorentz->M(); htoBB_lorentz->Print();
+   	  // std::cout <<" bjets input M_h= "<< htoBB_lorentz->M(); htoBB_lorentz->Print();
            //wmass_gen = wmasspdf->GetRandom(50.0,90.0);
            //test
            //eta_gen = eta_nuonshellW_true;
@@ -255,6 +274,13 @@ MMC::runMMC(){
 	 //  int fill = mmctree->Fill();
 	        if (!solution[j])  continue;
                 // reassign muons LorentzVector
+	  	if (simulation){
+			TLorentzVector tmpnu12;
+			tmpnu12.SetXYZM(met_vec2->Px(),met_vec2->Py(),nu1_lorentz_true->Pz()+nu2_lorentz_true->Pz(),0);
+			h2tohh_expect_lorentz = *mu_onshellW_lorentz+*mu_offshellW_lorentz+*htoBB_lorentz+tmpnu12;
+			mass_h2_expect = h2tohh_expect_lorentz.M();
+		}
+		
                 control = j;
                 assignMuLorentzVec(j/2);
                 nu_onshellW_pt = nu1pt_onshellW(std::make_pair(eta_gen, phi_gen), mu_onshellW_lorentz, wmass_gen); 
@@ -361,14 +387,18 @@ MMC::runMMC(){
                 }
 
                 //printMMCresult();
-             	mmctree->Fill();
+      //       	mmctree->Fill();
 		MMC_h2Mass.Fill(h2tohh_Mass, weight);
+		MMC_h2Massweight1.Fill(h2tohh_Mass, weight1);
+		MMC_h2Massweight4.Fill(h2tohh_Mass, weight4);
            }//end controls loop,(0,1,2,3)
               	//mmctree->Fill();
-   }//end of tries
-    std::cout <<" mmctree entries " << mmctree->GetEntries() << std::endl;
+   }//end of iteration
+   std::cout <<"last iteration MMC input met  px "<<met_vec2->Px() << " py "<<met_vec2->Py() <<" pt "<< met_vec2->Mod() <<std::endl;
+   std::cout <<"last iteration bjets input M_h= "<< htoBB_lorentz->M(); htoBB_lorentz->Print();
+   std::cout <<"num of solutions " << MMC_h2Mass.GetEntries() << std::endl;
    delete generator;
-   if (mmctree->GetEntries()>0) return true;
+   if (MMC_h2Mass.GetEntries()>0) return true;
    else return false;
 }
 
@@ -383,22 +413,31 @@ MMC::initTree(TTree* mmctree){
    weight1 = 1.0;
    weight2 = 1.0;
    weight3 = 1.0;
+   weight4 = 1.0;
 
    if (simulation and onshellMarker == 1){
 	eta_nuoffshellW_true = nu2_lorentz_true->Eta();
 	phi_nuoffshellW_true = nu2_lorentz_true->Phi();
 	pt_nuoffshellW_true = nu2_lorentz_true->Pt();
+	px_nuoffshellW_true = nu2_lorentz_true->Px();
+	py_nuoffshellW_true = nu2_lorentz_true->Py();
 	eta_nuonshellW_true = nu1_lorentz_true->Eta();
 	phi_nuonshellW_true = nu1_lorentz_true->Phi();
 	pt_nuonshellW_true = nu1_lorentz_true->Pt();
+	px_nuonshellW_true = nu1_lorentz_true->Px();
+	py_nuonshellW_true = nu1_lorentz_true->Py();
     }
     else if (simulation and onshellMarker == 2){
 	eta_nuoffshellW_true = nu1_lorentz_true->Eta();
 	phi_nuoffshellW_true = nu1_lorentz_true->Phi();
 	pt_nuoffshellW_true = nu1_lorentz_true->Pt();
+	px_nuoffshellW_true = nu1_lorentz_true->Px();
+	py_nuoffshellW_true = nu1_lorentz_true->Py();
 	eta_nuonshellW_true = nu2_lorentz_true->Eta();
 	phi_nuonshellW_true = nu2_lorentz_true->Phi();
 	pt_nuonshellW_true = nu2_lorentz_true->Pt();
+	px_nuonshellW_true = nu2_lorentz_true->Px();
+	py_nuonshellW_true = nu2_lorentz_true->Py();
     }
 
    if (simulation){ 
@@ -407,14 +446,29 @@ MMC::initTree(TTree* mmctree){
    	htoBB_Pt = htoBB_lorentz_true->Pt();
    	htoBB_E = htoBB_lorentz_true->E();
    	htoBB_Mass = htoBB_lorentz_true->M();
-
+	b1_Eta = b1_lorentz->Eta();
+	b1_Phi = b1_lorentz->Phi();
+	b1_Pt = b1_lorentz->Pt();
+	b1_Px = b1_lorentz->Px();
+	b1_Py = b1_lorentz->Py();
+	b1_E = b1_lorentz->E();
+	b1_Mass = b1_lorentz->M();
+	b2_Eta = b2_lorentz->Eta();
+	b2_Phi = b2_lorentz->Phi();
+	b2_Pt = b2_lorentz->Pt();
+	b2_Px = b2_lorentz->Px();
+	b2_Py = b2_lorentz->Py();
+	b2_E = b2_lorentz->E();
+	b2_Mass = b2_lorentz->M();
+	
         mass_offshellW_true = offshellW_lorentz_true->M();
         mass_onshellW_true = onshellW_lorentz_true->M();
    	mass_htoWW_true = htoWW_lorentz_true->M();
    	pt_h2tohh_true = h2tohh_lorentz_true->Pt();
    	mass_h2tohh_true = h2tohh_lorentz_true->M();
-   b1jet_dR = deltaR(b1jet_Eta, b1jet_Phi, bquark_lorentz->Eta(), bquark_lorentz->Phi());
-   b2jet_dR = deltaR(b2jet_Eta, b2jet_Phi, bbarquark_lorentz->Eta(), bbarquark_lorentz->Phi());
+	ideal_met_Px = ideal_met_lorentz.Px();
+	ideal_met_Py = ideal_met_lorentz.Py();
+	ideal_met_E = ideal_met_lorentz.Energy();
    }
    else {
 	eta_nuoffshellW_true = -1;
@@ -436,14 +490,32 @@ MMC::initTree(TTree* mmctree){
    b1jet_Eta = mmc_b1jet_lorentz->Eta();
    b1jet_Phi = mmc_b1jet_lorentz->Phi();
    b1jet_Pt = mmc_b1jet_lorentz->Pt();
+   b1jet_Px = mmc_b1jet_lorentz->Px();
+   b1jet_Py = mmc_b1jet_lorentz->Py();
    b1jet_Energy = mmc_b1jet_lorentz->Energy();
    b1jet_Mass = mmc_b1jet_lorentz->M();
    b2jet_Eta = mmc_b2jet_lorentz->Eta();
    b2jet_Phi = mmc_b2jet_lorentz->Phi();
    b2jet_Pt = mmc_b2jet_lorentz->Pt();
+   b2jet_Px = mmc_b2jet_lorentz->Px();
+   b2jet_Py = mmc_b2jet_lorentz->Py();
    b2jet_Energy = mmc_b2jet_lorentz->Energy();
    b2jet_Mass = mmc_b2jet_lorentz->M();
 
+   if (simulation){
+   b1jet_dR = deltaR(b1jet_Eta, b1jet_Phi, b1_lorentz->Eta(), b1_lorentz->Phi());
+   b2jet_dR = deltaR(b2jet_Eta, b2jet_Phi, b2_lorentz->Eta(), b2_lorentz->Phi());
+   b1rescalefactor_true = b1_Pt/b1jet_Pt;
+   b2rescalefactor_true = b2_Pt/b2jet_Pt;
+    if (b1jet_Pt>b2jet_Pt){
+	rescalec1_true = b1rescalefactor_true;
+	rescalec2_true = b2rescalefactor_true;
+	}
+     else {
+	rescalec1_true = b2rescalefactor_true;
+	rescalec2_true = b1rescalefactor_true;
+	}
+   }
    met = mmcmet_vec2->Mod(); 
    met_px = mmcmet_vec2->Px();
    met_py = mmcmet_vec2->Py();
@@ -489,14 +561,33 @@ MMC::initTree(TTree* mmctree){
    mmctree->Branch("htoWW_E", &htoWW_E);
    mmctree->Branch("htoWW_Mass", &htoWW_Mass);
 
+   mmctree->Branch("b1_Eta", &b1_Eta);
+   mmctree->Branch("b1_Phi", &b1_Phi);
+   mmctree->Branch("b1_Pt", &b1_Pt);
+   mmctree->Branch("b1_Px", &b1_Px);
+   mmctree->Branch("b1_Py", &b1_Py);
+   mmctree->Branch("b1_E", &b1_E);
+   mmctree->Branch("b1_Mass", &b1_Mass);
+   mmctree->Branch("b2_Eta", &b2_Eta);
+   mmctree->Branch("b2_Phi", &b2_Phi);
+   mmctree->Branch("b2_Pt", &b2_Pt);
+   mmctree->Branch("b2_Px", &b2_Px);
+   mmctree->Branch("b2_Py", &b2_Py);
+   mmctree->Branch("b2_E", &b2_E);
+   mmctree->Branch("b2_Mass", &b2_Mass);
+
    mmctree->Branch("b1jet_Eta", &b1jet_Eta);
    mmctree->Branch("b1jet_Phi", &b1jet_Phi);
    mmctree->Branch("b1jet_Pt", &b1jet_Pt);
+   mmctree->Branch("b1jet_Px", &b1jet_Px);
+   mmctree->Branch("b1jet_Py", &b1jet_Py);
    mmctree->Branch("b1jet_E", &b1jet_Energy);
    mmctree->Branch("b1jet_Mass", &b1jet_Mass);
    mmctree->Branch("b2jet_Eta", &b2jet_Eta);
    mmctree->Branch("b2jet_Phi", &b2jet_Phi);
    mmctree->Branch("b2jet_Pt", &b2jet_Pt);
+   mmctree->Branch("b2jet_Px", &b2jet_Px);
+   mmctree->Branch("b2jet_Py", &b2jet_Py);
    mmctree->Branch("b2jet_E", &b2jet_Energy);
    mmctree->Branch("b2jet_Mass", &b2jet_Mass);
    mmctree->Branch("b2jet_dR", &b2jet_dR);
@@ -509,8 +600,12 @@ MMC::initTree(TTree* mmctree){
    mmctree->Branch("htoBB_Mass", &htoBB_Mass);
    mmctree->Branch("b1rescalefactor",&b1rescalefactor);
    mmctree->Branch("b2rescalefactor",&b2rescalefactor);
+   mmctree->Branch("b1rescalefactor_true",&b1rescalefactor_true);
+   mmctree->Branch("b2rescalefactor_true",&b2rescalefactor_true);
    mmctree->Branch("rescalec1",&rescalec1);
    mmctree->Branch("rescalec2",&rescalec2);
+   mmctree->Branch("rescalec1_true",&rescalec1_true);
+   mmctree->Branch("rescalec2_true",&rescalec2_true);
 
    mmctree->Branch("htoBB_jets_Eta", &htoBB_jets_Eta);
    mmctree->Branch("htoBB_jets_Phi", &htoBB_jets_Phi);
@@ -522,6 +617,10 @@ MMC::initTree(TTree* mmctree){
    mmctree->Branch("MMCmet_Phi",&MMCmet_Phi);
    mmctree->Branch("MMCmet_Px",&MMCmet_Px);
    mmctree->Branch("MMCmet_Py",&MMCmet_Py);
+   mmctree->Branch("ideal_met_Px", &ideal_met_Px);
+   mmctree->Branch("ideal_met_Py", &ideal_met_Py);
+   mmctree->Branch("ideal_met_E", &ideal_met_E);
+   
 
    mmctree->Branch("h2tohh_Eta", &h2tohh_Eta);
    mmctree->Branch("h2tohh_Phi", &h2tohh_Phi);
@@ -540,12 +639,17 @@ MMC::initTree(TTree* mmctree){
    mmctree->Branch("eta_nuonshellW_true", &eta_nuonshellW_true);
    mmctree->Branch("phi_nuonshellW_true", &phi_nuonshellW_true);
    mmctree->Branch("pt_nuoffshellW_true", &pt_nuoffshellW_true);
+   mmctree->Branch("px_nuoffshellW_true", &px_nuoffshellW_true);
+   mmctree->Branch("py_nuoffshellW_true", &py_nuoffshellW_true);
    mmctree->Branch("pt_nuonshellW_true", &pt_nuonshellW_true);
+   mmctree->Branch("px_nuonshellW_true", &px_nuonshellW_true);
+   mmctree->Branch("py_nuonshellW_true", &py_nuonshellW_true);
    mmctree->Branch("mass_offshellW_true", &mass_offshellW_true);
    mmctree->Branch("mass_onshellW_true", &mass_onshellW_true);
    mmctree->Branch("mass_h2_true", &mass_h2tohh_true);
    mmctree->Branch("pt_h2_true", &pt_h2tohh_true);
    mmctree->Branch("mass_htoWW_true", &mass_htoWW_true);
+   mmctree->Branch("mass_h2_expect", &mass_h2_expect);
 
    mmctree->Branch("weight", &weight);
    mmctree->Branch("weight1", &weight1);
@@ -1134,6 +1238,7 @@ MMC::bjetsCorrection(){
 	b1rescalefactor = rescalec1;
 	b2rescalefactor = rescalec2;
      }else{
+	std::cout <<"wired b1jet is not jet with larger pt "<< std::endl;
 	b2rescalefactor = rescalec1;
 	b1rescalefactor = rescalec2;
 	}
@@ -1156,8 +1261,26 @@ MMC::metCorrection(){
 TH1F
 MMC::getMMCh2(){
 
-    std::cout <<" RMS "<< MMC_h2Mass.GetRMS() << " entries " << MMC_h2Mass.GetEntries() << std::endl;
+    //std::cout <<" RMS "<< MMC_h2Mass.GetRMS() << " entries " << MMC_h2Mass.GetEntries() << std::endl;
     return MMC_h2Mass;
+
+}
+
+//--------------------------- retrun MMC result ----------------------------------------------------------
+TH1F
+MMC::getMMCh2weight1(){
+
+    //std::cout <<" RMS "<< MMC_h2Mass.GetRMS() << " entries " << MMC_h2Mass.GetEntries() << std::endl;
+    return MMC_h2Massweight1;
+
+}
+
+//--------------------------- retrun MMC result ----------------------------------------------------------
+TH1F
+MMC::getMMCh2weight4(){
+
+    //std::cout <<" RMS "<< MMC_h2Mass.GetRMS() << " entries " << MMC_h2Mass.GetEntries() << std::endl;
+    return MMC_h2Massweight4;
 
 }
 

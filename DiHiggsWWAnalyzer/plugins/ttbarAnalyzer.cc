@@ -201,6 +201,7 @@ class ttbarAnalyzer : public edm::EDAnalyzer {
       TTree *evtree;
       TFile *output;
     private:
+      void init();
       void fillbranches(); 
       edm::Service< TFileService > fs;
       
@@ -361,11 +362,15 @@ ttbarAnalyzer::ttbarAnalyzer(const edm::ParameterSet& iConfig)
      muonsEta_ = iConfig.getParameter<double>("muonsEta");
      metPt_ = iConfig.getParameter<double>("metPt");
    // initilize candidates pointer
+      ievent = 0;
 
+}
 
+//------ init tree
+void 
+ttbarAnalyzer::init(){
 
    //now do what ever initialization is needed
-      ievent = 0;
       mu1_W1_cand = NULL;
       nu1_W1_cand = NULL;
       mu2_W2_cand = NULL;
@@ -441,13 +446,38 @@ ttbarAnalyzer::ttbarAnalyzer(const edm::ParameterSet& iConfig)
       tbar_pz = 0.0;
       tbar_mass = 0.0;
       
-
       mu_positive = false;
       mu_negative = false;
+      nu_positive = false;
+      nu_negative = false;
       bquark = false;
       bbarquark = false;
+      Wtomu1nu1 = false;
+      Wtomu2nu2 = false;
       tbartoWbbar = false;
       ttoWb = false;
+
+   hasbjet = false;
+   hasbbarjet = false;
+   hasMET =false;
+   hastwomuons = false;
+  // match bquark and bjet
+   dR_bjet = jetsDeltaR_;
+   dR_bbarjet = jetsDeltaR_;
+
+   bjet_decendant_energy = 0;
+   bjet_decendant_px = 0.0;
+   bjet_decendant_py = 0.0;
+   bjet_decendant_pz = 0.0;
+   bbarjet_decendant_energy = 0;
+   bbarjet_decendant_px = 0.0;
+   bbarjet_decendant_py = 0.0;
+   bbarjet_decendant_pz = 0.0;
+  
+   totjets_energy =0;
+   totjets_px =0;
+   totjets_py =0;
+   totjets_pz =0;
 
 
 }
@@ -503,17 +533,7 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
    edm::Handle<edm::View<reco::GenMET> > genmetColl; 
    iEvent.getByLabel(metLabel_, genmetColl);
-
-      mu_positive = false;
-      mu_negative = false;
-      nu_positive = false;
-      nu_negative = false;
-      bquark = false;
-      bbarquark = false;
-      Wtomu1nu1 = false;
-      Wtomu2nu2 = false;
-      tbartoWbbar = false;
-      ttoWb = false;
+   init();
       
  /*     
    for (std::vector<pat::Muon>::const_iterator it = muonColl->begin(); it != muonColl->end(); ++it){
@@ -682,27 +702,6 @@ ttbarAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	} 
    reco::GenMET genMet(genmetColl->front());
 
-   hasbjet = false;
-   hasbbarjet = false;
-   hasMET =false;
-   hastwomuons = false;
-  // match bquark and bjet
-   dR_bjet = jetsDeltaR_;
-   dR_bbarjet = jetsDeltaR_;
-
-   bjet_decendant_energy = 0;
-   bjet_decendant_px = 0.0;
-   bjet_decendant_py = 0.0;
-   bjet_decendant_pz = 0.0;
-   bbarjet_decendant_energy = 0;
-   bbarjet_decendant_px = 0.0;
-   bbarjet_decendant_py = 0.0;
-   bbarjet_decendant_pz = 0.0;
-  
-   totjets_energy =0;
-   totjets_px =0;
-   totjets_py =0;
-   totjets_pz =0;
 
    int nparts = 0;
    if (ttoWb and tbartoWbbar){

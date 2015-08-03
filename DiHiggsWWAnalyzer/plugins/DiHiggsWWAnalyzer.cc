@@ -52,7 +52,7 @@
 #include "TRandom3.h"
 #include "TF1.h"
 #include "TH1F.h"
-
+#include "TCanvas.h"
 
 
 #include "DiHiggsWW/DiHiggsWWAnalyzer/src/MMC.h"
@@ -114,10 +114,12 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
      double bjetsPt_;
      double bjetsEta_;
      double jetsDeltaR_;
+     double jetleptonDeltaR_;
      double muonPt2_;
      double muonPt1_;
      double muonsEta_;
      double metPt_;
+     double leptonIso_;
      
      bool rescalebjets_;
      bool metcorrection_;
@@ -189,6 +191,7 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       TFile *output;
     private:
       void fillbranches(); 
+      void init();
       edm::Service< TFileService > fs;
       
       //----------branches of tree ---------------------------
@@ -243,28 +246,41 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       float b1_py;
       float b1_pz;
       float b1_pt;
+      float b1_eta;
+      float b1_phi;
       int b1_motherid;
       float b2_energy;
       float b2_px;
       float b2_py;
       float b2_pz;
       float b2_pt;
+      float b2_eta;
+      float b2_phi;
       int b2_motherid;
       float bjet_energy;
       float bjet_px;
       float bjet_py;
       float bjet_pz;
       float bjet_pt;
+      float bjet_eta;
+      float bjet_phi;
       float bjet_mass;
       float bbarjet_energy;
       float bbarjet_px;
       float bbarjet_py;
       float bbarjet_pz;
       float bbarjet_pt;
+      float bbarjet_eta;
+      float bbarjet_phi;
       float bbarjet_mass;
       float dR_bjet;
       float dR_bbarjet;
       float rescalefactor;
+
+      float dR_b1l1;
+      float dR_b1l2;
+      float dR_b2l1;
+      float dR_b2l2;
 
       float bjet_energy_tot;
       float bjet_px_tot;
@@ -343,9 +359,12 @@ class DiHiggsWWAnalyzer : public edm::EDAnalyzer {
       bool runMMC_;
       bool simulation_;
       MMC* thismmc;
+      TTree* MMCtree;
       bool runmmc;
   
       float MMC_h2mass_prob;
+      float MMC_h2massweight1_prob;
+      float MMC_h2massweight4_prob;
       float MMC_h2mass_Entries;
       float MMC_h2mass_RMS;
       float MMC_h2mass_Mean;
@@ -381,6 +400,8 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
      bjetsPt_ = iConfig.getParameter<double>("bjetsPt");
      bjetsEta_ = iConfig.getParameter<double>("bjetsEta");
      jetsDeltaR_ = iConfig.getParameter<double>("jetsDeltaR");
+     jetleptonDeltaR_ = iConfig.getParameter<double>("jetleptonDeltaR");
+     leptonIso_ = iConfig.getParameter<double>("leptonIso");
      muonPt1_ = iConfig.getParameter<double>("muonPt1");
      muonPt2_ = iConfig.getParameter<double>("muonPt2");
      muonsEta_ = iConfig.getParameter<double>("muonsEta");
@@ -388,10 +409,17 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
      metcorrection_ = iConfig.getParameter<bool>("metcorrection");
    // initilize candidates pointer
 
-
+  
 
    //now do what ever initialization is needed
       ievent = 0;
+
+}
+
+//init tree
+void
+DiHiggsWWAnalyzer::init(){
+
       mu1_W1_cand = NULL;
       nu1_W1_cand = NULL;
       mu2_W2_cand = NULL;
@@ -459,6 +487,11 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       bbarjet_pz = 0.0;
       bbarjet_mass = 0.0;
       rescalefactor = 1.0;
+      
+      dR_b1l1 =0;
+      dR_b1l2 = 0;
+      dR_b2l1 =0;
+      dR_b2l2 =0;
 
       htobb_energy = 0.0;
       htobb_px = 0.0;
@@ -472,13 +505,54 @@ DiHiggsWWAnalyzer::DiHiggsWWAnalyzer(const edm::ParameterSet& iConfig)
       h2tohh_pz = 0.0;
       h2tohh_mass = 0.0;
 
+      met = 0.0;
+      met_px = 0.0;
+      met_py = 0.0;
+      met_phi = 0.0;
+     
       mu_positive = false;
       mu_negative = false;
+      nu_positive = false;
+      nu_negative = false;
       bquark = false;
       bbarquark = false;
+      Wtomu1nu1 = false;
+      Wtomu2nu2 = false;
       htobb = false;
       htoWW = false;
+      h2tohh = false;
+      runmmc = false;
+      rescalefactor  =1.0;
 
+
+   hasbjet = false;
+   hasbbarjet =false;
+   hasMET = false;
+   hastwomuons =false;
+   dR_bjet = jetsDeltaR_;
+   dR_bbarjet = jetsDeltaR_;
+   bjet_nu_energy = 0;
+   bjet_nu_px = 0.0;
+   bjet_nu_py = 0.0;
+   bjet_nu_pz = 0.0;
+   bbarjet_nu_energy = 0;
+   bbarjet_nu_px = 0.0;
+   bbarjet_nu_py = 0.0;
+   bbarjet_nu_pz = 0.0;
+
+   bjet_decendant_energy = 0;
+   bjet_decendant_px = 0.0;
+   bjet_decendant_py = 0.0;
+   bjet_decendant_pz = 0.0;
+   bbarjet_decendant_energy = 0;
+   bbarjet_decendant_px = 0.0;
+   bbarjet_decendant_py = 0.0;
+   bbarjet_decendant_pz = 0.0;
+  
+   totjets_energy =0;
+   totjets_px =0;
+   totjets_py =0;
+   totjets_pz =0;
 
 }
 
@@ -530,21 +604,8 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    std::vector<const reco::Candidate*> bbarjet_nucands;
    std::vector<const reco::Candidate*> h2_nucands;
 
-      mu_positive = false;
-      mu_negative = false;
-      nu_positive = false;
-      nu_negative = false;
-      bquark = false;
-      bbarquark = false;
-      Wtomu1nu1 = false;
-      Wtomu2nu2 = false;
-      htobb = false;
-      htoWW = false;
-      h2tohh = false;
-   runmmc = false;
-   rescalefactor  =1.0;
-   
-   std::cout <<" genJetColl size " << genjetColl->size() <<" genmetColl size " << genmetColl->size() << std::endl;   
+   init(); 
+   //std::cout <<" genJetColl size " << genjetColl->size() <<" genmetColl size " << genmetColl->size() << std::endl;   
 
    for (reco::GenParticleCollection::const_iterator it = genParticleColl->begin(); it != genParticleColl->end(); ++it) {
 
@@ -737,34 +798,6 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
       met_py = genMet.py();
 
   // match bquark and bjet
-   hasbjet = false;
-   hasbbarjet =false;
-   hasMET = false;
-   hastwomuons =false;
-   dR_bjet = jetsDeltaR_;
-   dR_bbarjet = jetsDeltaR_;
-   bjet_nu_energy = 0;
-   bjet_nu_px = 0.0;
-   bjet_nu_py = 0.0;
-   bjet_nu_pz = 0.0;
-   bbarjet_nu_energy = 0;
-   bbarjet_nu_px = 0.0;
-   bbarjet_nu_py = 0.0;
-   bbarjet_nu_pz = 0.0;
-
-   bjet_decendant_energy = 0;
-   bjet_decendant_px = 0.0;
-   bjet_decendant_py = 0.0;
-   bjet_decendant_pz = 0.0;
-   bbarjet_decendant_energy = 0;
-   bbarjet_decendant_px = 0.0;
-   bbarjet_decendant_py = 0.0;
-   bbarjet_decendant_pz = 0.0;
-  
-   totjets_energy =0;
-   totjets_px =0;
-   totjets_py =0;
-   totjets_pz =0;
 	
    int nparts = 0;
    if ((!runMMC_ and htobb) || (runMMC_ and h2tohh)){
@@ -854,7 +887,8 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	}
 	 bjet_nu_lorentz = tmp;
    }
-   else b2jet_lorentz.SetXYZT(1,0,0,1);
+   //else b2jet_lorentz.SetXYZT(1,0,0,1);
+   else b1jet_lorentz = TLorentzVector();
 
    if (htobb and hasbbarjet) {
 	b2jet_lorentz.SetXYZT(b2jet->px(), b2jet->py(), b2jet->pz(), b2jet->energy());
@@ -867,7 +901,8 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	}
 	bbarjet_nu_lorentz = tmp;
    }
-   else b2jet_lorentz.SetXYZT(1,0,0,1);
+   //else b2jet_lorentz.SetXYZT(1,0,0,1);
+   else b2jet_lorentz = TLorentzVector();
 
    if (htoWW){
          if (((mu1cand->pt() >= muonPt1_ and mu2cand->pt() >= muonPt2_) || (mu2cand->pt()>=muonPt1_ and mu1cand->pt()>=muonPt2_)) and
@@ -967,6 +1002,10 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	for (unsigned int i =0; i<h2_nucands.size(); i++)
 		printCandidate(h2_nucands[i]);
 	}*/
+	dR_b1l1 = deltaR(b1jet->eta(),b1jet->phi(),mu1cand->eta(),mu1cand->phi());
+	dR_b1l2 = deltaR(b1jet->eta(),b1jet->phi(),mu2cand->eta(),mu2cand->phi());
+	dR_b2l1 = deltaR(b2jet->eta(),b2jet->phi(),mu1cand->eta(),mu1cand->phi());
+	dR_b2l2 = deltaR(b2jet->eta(),b2jet->phi(),mu2cand->eta(),mu2cand->phi());
         bjets_lorentz.SetXYZT(b1jet->px()+b2jet->px(), b1jet->py()+b2jet->py(), b1jet->pz()+b2jet->pz(), b1jet->energy()+b2jet->energy());
        //need to correction later
 	std::cout <<"m_(jets) before rescaling " << bjets_lorentz.M(); bjets_lorentz.Print(); 
@@ -974,15 +1013,15 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         totjets_lorentz.SetXYZT(totjets_px+(rescalefactor-1)*bjets_lorentz.Px(), totjets_py+(rescalefactor-1)*bjets_lorentz.Py(), totjets_pz+(rescalefactor-1)*bjets_lorentz.Pz(), totjets_energy+(rescalefactor-1)*bjets_lorentz.Energy());
     }
     
-    //met correction 
+    //met correction? remove? 
     TVector2 met_correction_vec2(met_lorentz.Px()-(rescalefactor-1)*bjets_lorentz.Px(), met_lorentz.Py()-(rescalefactor-1)*bjets_lorentz.Py());
     met_correction = met_correction_vec2.Mod();
     met_correction_px = met_correction_vec2.Px();
     met_correction_py = met_correction_vec2.Py();
     met_correction_phi = met_correction_vec2.Phi();
     if (metcorrection_){
-	met_lorentz.SetXYZT(met_correction_px,met_correction_py,0,met_correction);
-	//met_lorentz = met_lorentz-bjet_nu_lorentz-bbarjet_nu_lorentz;
+	//met_lorentz.SetXYZT(met_correction_px,met_correction_py,0,met_correction);
+	met_lorentz = met_lorentz-bjet_nu_lorentz-bbarjet_nu_lorentz;
     	std::cout <<"met due to  correction(nubjets) "; met_lorentz.Print();
 	}
 
@@ -995,7 +1034,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	//rescale bjets
 	//std::cout <<" b1jet "; b1jet_lorentz.Print();
 	//std::cout <<" b2jet "; b2jet_lorentz.Print();
-	
+		
         int onshellMarker = -1;
 
         if (w1cand->mass() > w2cand->mass()) onshellMarker = 1;
@@ -1003,10 +1042,23 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         b_genp_lorentz.SetXYZT(b1cand->px(), b1cand->py(), b1cand->pz(), b1cand->energy()); 
         bbar_genp_lorentz.SetXYZT(b2cand->px(), b2cand->py(), b2cand->pz(), b2cand->energy()); 
 	h2tohh_genp_lorentz.SetXYZT(h2tohhcand->px(), h2tohhcand->py(), h2tohhcand->pz(), h2tohhcand->energy());
+	TLorentzVector bgenp_pt1_lorentz,bgenp_pt2_lorentz,bjet_pt1_lorentz,bjet_pt2_lorentz;
+	if (b1jet->pt()>b2jet->pt()) {
+		bgenp_pt1_lorentz = b_genp_lorentz;//pair with large Pt
+		bgenp_pt2_lorentz = bbar_genp_lorentz;
+		bjet_pt1_lorentz = b1jet_lorentz;
+		bjet_pt2_lorentz = b2jet_lorentz;
+	}
+	else{
+		bgenp_pt1_lorentz = bbar_genp_lorentz;
+		bgenp_pt2_lorentz = b_genp_lorentz;
+		bjet_pt1_lorentz = b2jet_lorentz;
+		bjet_pt2_lorentz = b1jet_lorentz;
+	}
         //met_lorentz = calculateMET();
     std::cout <<"met before correction px "<< met_px  <<"  py "<< met_py << "  pt "<< met << std::endl;
     std::cout <<"met after correction px "<< met_correction_px  <<"  py "<< met_correction_py << "  pt "<< met_correction << std::endl;
-    std::cout <<"met used in MMC  px "<< met_lorentz.Px()  <<"  py "<< met_lorentz.Py() << "  pt "<< met_lorentz.Pt() << std::endl;
+    std::cout <<"NoNufromb met used in MMC  px "<< met_lorentz.Px()  <<"  py "<< met_lorentz.Py() << "  pt "<< met_lorentz.Pt() << std::endl;
         //std::cout <<" totjets lorenz "; totjets_lorentz.Print(); 
         TLorentzVector sum_lorentz = TLorentzVector();
         //std::cout <<" sum of (mu1 nu1 mu2 nu2 (corrected)bjets ) "; 
@@ -1020,22 +1072,29 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	std::cout <<" px " << sum_lorentz.Px() <<" py " << sum_lorentz.Py() << std::endl;
         //thismmc = new MMC();
         //std::cout << "onshellMarkder  " << onshellMarker << std::endl;
-	thismmc = new MMC(&mu1_lorentz, &mu2_lorentz, &b1jet_lorentz, &b2jet_lorentz, &totjets_lorentz,&met_lorentz, 
-	&nu1_lorentz, &nu2_lorentz, &b_genp_lorentz, &bbar_genp_lorentz, &h2tohh_genp_lorentz, 
+	thismmc = new MMC(&mu1_lorentz, &mu2_lorentz, &bjet_pt1_lorentz, &bjet_pt2_lorentz, &totjets_lorentz,&met_lorentz, 
+	&nu1_lorentz, &nu2_lorentz, &bgenp_pt1_lorentz, &bgenp_pt2_lorentz, &h2tohh_genp_lorentz, 
 	onshellMarker, simulation_, ievent, mmcset_, fs, verbose_);
         //thismmc->printTrueLorentz();
         runmmc=thismmc->runMMC();	
         if (runmmc) {
+		MMCtree =  (thismmc->getMMCTree())->CloneTree();
+		std::cout <<" MMCtree entries " << MMCtree->GetEntries() << std::endl;
 		TH1F* MMC_h2mass =(TH1F*)(thismmc->getMMCh2()).Clone("MMC_h2mass");
+		TH1F* MMC_h2mass_weight1 =(TH1F*)(thismmc->getMMCh2weight1()).Clone("MMC_h2massweight1");
+		TH1F* MMC_h2mass_weight4 =(TH1F*)(thismmc->getMMCh2weight4()).Clone("MMC_h2massweight4");
 		std::cout <<" Mass_h2mass in Analyzer " << std::endl;
 		MMC_h2mass_prob = (MMC_h2mass->GetXaxis())->GetBinCenter(MMC_h2mass->GetMaximumBin());
+		MMC_h2massweight1_prob = (MMC_h2mass_weight1->GetXaxis())->GetBinCenter(MMC_h2mass_weight1->GetMaximumBin());
+		MMC_h2massweight4_prob = (MMC_h2mass_weight4->GetXaxis())->GetBinCenter(MMC_h2mass_weight4->GetMaximumBin());
 		MMC_h2mass_RMS = MMC_h2mass->GetRMS();
 		MMC_h2mass_Entries = MMC_h2mass->GetEntries();
 		MMC_h2mass_Mean = MMC_h2mass->GetMean();
 		int nbin=(MMC_h2mass->GetXaxis())->GetNbins();
 		MMC_h2mass_overflow = MMC_h2mass->GetBinContent(nbin+1);
 		MMC_h2mass_underflow = MMC_h2mass->GetBinContent(-1);
-                std::cout <<" most prob " << MMC_h2mass_prob <<" RMS "<< MMC_h2mass_RMS << " entries " << MMC_h2mass_Entries << std::endl;
+                std::cout <<" most prob " << MMC_h2mass_prob <<" RMS "<< MMC_h2mass_RMS << " entries " << MMC_h2mass_Entries 
+		<< " most prob weight1 "<< MMC_h2massweight1_prob <<" weight4 "<< MMC_h2massweight4_prob <<std::endl;
 	
 	}
         delete thismmc;
@@ -1045,6 +1104,17 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         fillbranches();
         evtree->Fill();
     }
+
+   /*if (h2tohh and runmmc){
+   	std::cout <<" MMCtree entries " << MMCtree->GetEntries() << std::endl;
+	TH1F* th1 = new TH1F("th1","th1",900,100,1000);
+	//th1->SetDirectory(0);
+   	//TH1::AddDirectory(kFALSE);
+   	TCanvas *c1 = new TCanvas("c1","c1",600,800);
+	MMCtree->Draw("h2tohh_Mass>>th1","weight4");
+        c1->Print("c1test.png");
+	std::cout <<"th1 entries "<< th1->GetEntries() << std::endl;
+   }*/
 }
 
 
@@ -1106,12 +1176,16 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("b1_py",&b1_py);
    evtree->Branch("b1_pz",&b1_pz);
    evtree->Branch("b1_pt",&b1_pt);
+   evtree->Branch("b1_eta",&b1_eta);
+   evtree->Branch("b1_phi",&b1_phi);
    evtree->Branch("b1_motherid",&b1_motherid);
    evtree->Branch("b2_energy",&b2_energy);
    evtree->Branch("b2_px",&b2_px);
    evtree->Branch("b2_py",&b2_py);
    evtree->Branch("b2_pz",&b2_pz);
    evtree->Branch("b2_pt",&b2_pt);
+   evtree->Branch("b2_eta",&b2_eta);
+   evtree->Branch("b2_phi",&b2_phi);
    evtree->Branch("b2_motherid",&b2_motherid);
    evtree->Branch("hasbjet",&hasbjet);
    evtree->Branch("bjet_energy",&bjet_energy);
@@ -1119,6 +1193,8 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("bjet_py",&bjet_py);
    evtree->Branch("bjet_pz",&bjet_pz);
    evtree->Branch("bjet_pt",&bjet_pt);
+   evtree->Branch("bjet_eta",&bjet_eta);
+   evtree->Branch("bjet_phi",&bjet_phi);
    evtree->Branch("bjet_mass",&bjet_mass);
    evtree->Branch("hasbbarjet",&hasbbarjet);
    evtree->Branch("bbarjet_energy",&bbarjet_energy);
@@ -1126,9 +1202,15 @@ DiHiggsWWAnalyzer::beginJob()
    evtree->Branch("bbarjet_py",&bbarjet_py);
    evtree->Branch("bbarjet_pz",&bbarjet_pz);
    evtree->Branch("bbarjet_pt",&bbarjet_pt);
+   evtree->Branch("bbarjet_eta",&bbarjet_eta);
+   evtree->Branch("bbarjet_phi",&bbarjet_phi);
    evtree->Branch("bbarjet_mass",&bbarjet_mass);
    evtree->Branch("dR_bjet",&dR_bjet);
    evtree->Branch("dR_bbarjet",&dR_bbarjet);
+   evtree->Branch("dR_b1l1",&dR_b1l1);
+   evtree->Branch("dR_b1l2",&dR_b1l2);
+   evtree->Branch("dR_b2l1",&dR_b2l1);
+   evtree->Branch("dR_b2l2",&dR_b2l2);
    evtree->Branch("rescalefactor",&rescalefactor);
 
    evtree->Branch("bjet_nu_energy",&bjet_nu_energy);
@@ -1184,6 +1266,8 @@ DiHiggsWWAnalyzer::beginJob()
   
    evtree->Branch("runmmc",&runmmc); 
    evtree->Branch("MMC_h2mass_prob",&MMC_h2mass_prob);
+   evtree->Branch("MMC_h2massweight1_prob",&MMC_h2massweight1_prob);
+   evtree->Branch("MMC_h2massweight4_prob",&MMC_h2massweight4_prob);
    evtree->Branch("MMC_h2mass_RMS",&MMC_h2mass_RMS);
    evtree->Branch("MMC_h2mass_Mean",&MMC_h2mass_Mean);
    evtree->Branch("MMC_h2mass_Entries",&MMC_h2mass_Entries);
@@ -1300,11 +1384,15 @@ DiHiggsWWAnalyzer::fillbranches(){
       b1_py = b1cand->py();
       b1_pz = b1cand->pz();
       b1_pt = b1cand->pt();
+      b1_eta = b1cand->eta();
+      b1_phi = b1cand->phi();
       b2_energy = b2cand->energy();
       b2_px = b2cand->px();
       b2_py = b2cand->py();
       b2_pz = b2cand->pz();
       b2_pt = b2cand->pt();
+      b2_eta = b2cand->eta();
+      b2_phi = b2cand->phi();
 
       htobb_energy = htoBBcand->energy();
       htobb_px = htoBBcand->px();
@@ -1318,6 +1406,8 @@ DiHiggsWWAnalyzer::fillbranches(){
       bbarjet_py = b2jet->py();
       bbarjet_pz = b2jet->pz();
       bbarjet_pt = b2jet->pt();
+      bbarjet_eta = b2jet->eta();
+      bbarjet_phi = b2jet->phi();
       bbarjet_energy = b2jet->energy();
       bbarjet_mass = b2jet->mass();
       bbarjet_nu_energy = bbarjet_nu_lorentz.Energy();
@@ -1330,6 +1420,8 @@ DiHiggsWWAnalyzer::fillbranches(){
       bjet_py = b1jet->py();
       bjet_pz = b1jet->pz();
       bjet_pt = b1jet->pt();
+      bjet_eta = b1jet->eta();
+      bjet_phi = b1jet->phi();
       bjet_energy = b1jet->energy();
       bjet_mass = b1jet->mass();
       bjet_nu_energy = bjet_nu_lorentz.Energy();

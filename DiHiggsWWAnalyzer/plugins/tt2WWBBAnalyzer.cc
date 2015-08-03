@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    htoWWAnalyzer
-// Class:      htoWWAnalyzer
+// Package:    tt2WWBBAnalyzer
+// Class:      tt2WWBBAnalyzer
 // 
-/**\class htoWWAnalyzer htoWWAnalyzer.cc htoWW/htoWWAnalyzer/plugins/htoWWAnalyzer.cc
+/**\class tt2WWBBAnalyzer tt2WWBBAnalyzer.cc htoWW/tt2WWBBAnalyzer/plugins/tt2WWBBAnalyzer.cc
 
  Description: [one line class summary]
 
@@ -51,10 +51,10 @@
 //
 using namespace reco;
 
-class htoWWAnalyzer : public edm::EDAnalyzer {
+class tt2WWBBAnalyzer : public edm::EDAnalyzer {
    public:
-      explicit htoWWAnalyzer(const edm::ParameterSet&);
-      ~htoWWAnalyzer();
+      explicit tt2WWBBAnalyzer(const edm::ParameterSet&);
+      ~tt2WWBBAnalyzer();
 
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -69,12 +69,13 @@ class htoWWAnalyzer : public edm::EDAnalyzer {
       //virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
       //virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
     private:
-      std::vector<reco::GenParticle*> b1Coll; 
-      std::vector<reco::GenParticle*> b2Coll;
+	//t->bW+ , 6->5,24
+      std::vector<reco::GenParticle*> b1Coll; //5
+      std::vector<reco::GenParticle*> b2Coll; //-5
       std::vector<reco::GenParticle*> W1Coll;
       std::vector<reco::GenParticle*> W2Coll;
-      std::vector<const reco::Candidate*> htoWWColl;
-      std::vector<const reco::Candidate*> htoBBColl;
+      std::vector<const reco::Candidate*> tColl;
+      std::vector<const reco::Candidate*> tbarColl;
       const reco::Candidate* b1cand;
       const reco::Candidate* b2cand;
       const reco::Candidate* w1cand;
@@ -83,9 +84,8 @@ class htoWWAnalyzer : public edm::EDAnalyzer {
       const reco::Candidate* l2cand;
       const reco::Candidate* nu1cand;
       const reco::Candidate* nu2cand;
-      const reco::Candidate* htoWWcand;
-      const reco::Candidate* htoBBcand;
-      const reco::Candidate* h2tohhcand;
+      const reco::Candidate* t1cand;
+      const reco::Candidate* t2cand;
 
       const reco::GenJet* b1jet;
       const reco::GenJet* b2jet;
@@ -184,11 +184,6 @@ class htoWWAnalyzer : public edm::EDAnalyzer {
       float w2_mass;
       
      
-      float htoWW_energy;
-      float htoWW_px;
-      float htoWW_py;
-      float htoWW_pz; 
-      float htoWW_mass;
     //  float w2_mass;
       float b1_energy;
       float b1_px;
@@ -199,11 +194,6 @@ class htoWWAnalyzer : public edm::EDAnalyzer {
       float b2_py;
       float b2_pz;
 
-      float htobb_energy;
-      float htobb_px;
-      float htobb_py;
-      float htobb_pz;
-      float htobb_mass;
 
       float b1jet_energy;
       float b1jet_px;
@@ -233,11 +223,19 @@ class htoWWAnalyzer : public edm::EDAnalyzer {
       float mass_l1l2;
       float mass_b1b2;
 
-      float h2tohh_energy;
-      float h2tohh_px;
-      float h2tohh_py;
-      float h2tohh_pz;
-      float h2tohh_mass;
+
+      float t1_energy;
+      float t1_px;
+      float t1_py;
+      float t1_pz; 
+      float t1_mass;
+      float t2_energy;
+      float t2_px;
+      float t2_py;
+      float t2_pz; 
+      float t2_mass;
+      
+      
 
       float met;
       float met_phi;
@@ -247,9 +245,9 @@ class htoWWAnalyzer : public edm::EDAnalyzer {
       //cuts for higgstoWWbb
       bool bquark;
       bool bbarquark;
-      bool htobb;
-      bool htoWW;
-      bool h2tohh;
+      bool ttbar;
+      bool ttoWb;
+      bool tbartoWbbar;
       bool W1tolepton;
       bool W2tolepton;
 
@@ -259,7 +257,6 @@ class htoWWAnalyzer : public edm::EDAnalyzer {
       bool hastwomuons;
       bool hasdRljet;
       bool hasdRjets;
-
 
 
 };
@@ -275,7 +272,7 @@ class htoWWAnalyzer : public edm::EDAnalyzer {
 //
 // constructors and destructor
 //
-htoWWAnalyzer::htoWWAnalyzer(const edm::ParameterSet& iConfig)
+tt2WWBBAnalyzer::tt2WWBBAnalyzer(const edm::ParameterSet& iConfig)
 
 {
 
@@ -302,7 +299,7 @@ htoWWAnalyzer::htoWWAnalyzer(const edm::ParameterSet& iConfig)
 
 //init tree
 void 
-htoWWAnalyzer::init(){
+tt2WWBBAnalyzer::init(){
       l1_energy = 0;
       l1_px =0;
       l1_py =0;
@@ -332,11 +329,6 @@ htoWWAnalyzer::init(){
       w2_pz = 0.0;
       w2_mass = 0.0;
 
-      htoWW_energy = 0.0;
-      htoWW_px = 0.0;
-      htoWW_py = 0.0;
-      htoWW_pz = 0.0;
-      htoWW_mass = 0.0;
 
       b1_energy = 0.0;
       b1_px = 0.0;
@@ -346,11 +338,6 @@ htoWWAnalyzer::init(){
       b2_px = 0.0;
       b2_py = 0.0;
       b2_pz = 0.0;
-      htobb_energy = 0.0;
-      htobb_px = 0.0;
-      htobb_py = 0.0;
-      htobb_pz = 0.0;
-      htobb_mass = 0.0; 
 
       b1jet_energy = 0.0;
       b1jet_px = 0.0;
@@ -374,12 +361,17 @@ htoWWAnalyzer::init(){
       mass_l1l2 =0;
       mass_b1b2 =0;
 
+      t1_energy = 0.0;
+      t1_px = 0.0;
+      t1_py = 0.0;
+      t1_pz = 0.0;
+      t1_mass = 0.0;
+      t2_energy = 0.0;
+      t2_px = 0.0;
+      t2_py = 0.0;
+      t2_pz = 0.0;
+      t2_mass = 0.0;
 
-      h2tohh_energy = 0.0;
-      h2tohh_px = 0.0;
-      h2tohh_py = 0.0;
-      h2tohh_pz = 0.0;
-      h2tohh_mass = 0.0;
 
       met = 0.0;
       met_px = 0.0;
@@ -388,9 +380,9 @@ htoWWAnalyzer::init(){
 
       bquark = false;
       bbarquark = false;
-      htobb = false;
-      htoWW = false;
-      h2tohh = false;
+      ttbar =false;
+      ttoWb = false;
+      tbartoWbbar = false;
       W1tolepton =false;
       W2tolepton =false;
       b1cand = 0;
@@ -401,9 +393,8 @@ htoWWAnalyzer::init(){
       l2cand = 0;
       nu1cand = 0;
       nu2cand = 0;
-      htoBBcand = 0;
-      htoWWcand = 0;
-      h2tohhcand = 0;
+      t1cand = 0;
+      t2cand = 0;
       genMet = 0;
       b1jet = 0;
       b2jet =0;
@@ -412,13 +403,12 @@ htoWWAnalyzer::init(){
       hasbbarjet =false;
       hasMET =false;
       hastwomuons = false;
-      hasdRljet = false;
-      hasdRjets =false;
-
+      hasdRjets=false;
+      hasdRljet =false;
 }
 
 
-htoWWAnalyzer::~htoWWAnalyzer()
+tt2WWBBAnalyzer::~tt2WWBBAnalyzer()
 {
  
    // do anything here that needs to be done at desctruction time
@@ -433,7 +423,7 @@ htoWWAnalyzer::~htoWWAnalyzer()
 
 // ------------ method called for each event  ------------
 void
-htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+tt2WWBBAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
    using namespace edm;
 
@@ -474,23 +464,23 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 //      std::cout << "Gen paticles: id " << it->pdgId() << std::endl; 
       if (it->pdgId() == 24 ){
         const reco::Candidate* tmpw1 = it->mother();
-        while (tmpw1->pdgId() == 24 && tmpw1->numberOfMothers() == 1) tmpw1 = tmpw1->mother();
-        if (tmpw1->pdgId() == 25)  W1Coll.push_back(it->clone());
+        //while (tmpw1->pdgId() == 24 && tmpw1->numberOfMothers() == 1) tmpw1 = tmpw1->mother();
+        if (tmpw1->pdgId() == 6)  W1Coll.push_back(it->clone());
 	}
       else if (it->pdgId() == -24 )
       {
         const reco::Candidate* tmpw2 = it->mother();
-        while (tmpw2->pdgId() == -24 && tmpw2->numberOfMothers() == 1) tmpw2 = tmpw2->mother();
-        if (tmpw2->pdgId() == 25)  W2Coll.push_back(it->clone());
+        //while (tmpw2->pdgId() == -24 && tmpw2->numberOfMothers() == 1) tmpw2 = tmpw2->mother();
+        if (tmpw2->pdgId() == -6)  W2Coll.push_back(it->clone());
         }
 
-      else if (it->pdgId() == 5 && it->mother()->pdgId() == 25 )
+      else if (it->pdgId() == 5 && it->mother()->pdgId() == 6 )
       {
 	  bquark = true;
           if (it->numberOfMothers() != 1) std::cout << "bquark has more than one mother particle" << std::endl;
           b1Coll.push_back(it->clone());
       }
-      else if (it->pdgId() == -5 && it->mother()->pdgId() == 25 )
+      else if (it->pdgId() == -5 && it->mother()->pdgId() == -6 )
       {
 	  bbarquark = true;
           if (it->numberOfMothers() != 1) std::cout << "bquark has more than one mother particle" << std::endl;
@@ -501,74 +491,93 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
    }// all Gen particles
 
 
-    //htoWW
-    if (W1Coll.size() && W2Coll.size()){
+    //t->bW+ 6->5,24
+    if (W1Coll.size() && b1Coll.size()){
          for (auto W1_cand : W1Coll)
-              for (auto W2_cand : W2Coll){
+              for (auto b1_cand : b1Coll){
+                      const reco::Candidate* b1_mother = b1_cand->mother();
                       const reco::Candidate* W1_mother = W1_cand->mother();
-                      const reco::Candidate* W2_mother = W2_cand->mother();
-                      while (W1_mother->pdgId() == -24) W1_mother = W1_mother->mother();
-                      while (W2_mother->pdgId() ==  24) W2_mother = W2_mother->mother();
-                      if (W1_mother == W2_mother && W1_mother->pdgId() == 25) {
-				htoWWColl.push_back(W1_mother);
-				htoWW = true;
+              //        while (W1_mother->pdgId() == 24) W1_mother = W1_mother->mother();
+                      if (W1_mother == b1_mother && W1_mother->pdgId() == 6) {
+				tColl.push_back(W1_mother);
+				ttoWb = true;
+				std::cout <<" find t->bW+" << std::endl;
 				break;
 			}
               }
     }
 
      //htoBB
-     if (b1Coll.size() && b2Coll.size()){
-          for(auto b1_cand : b1Coll)
+     if (W2Coll.size() && b2Coll.size()){
+          for(auto W2_cand : W2Coll)
               for (auto b2_cand : b2Coll) {
-                       const reco::Candidate* b1_mother = b1_cand->mother();
-                       const reco::Candidate* b2_mother = b2_cand->mother();
-                       if (b1_mother == b2_mother && b1_mother->pdgId() == 25) {
-				htoBBColl.push_back(b1_mother);
-				htobb = true;
+                      const reco::Candidate* W2_mother = W2_cand->mother();
+                      const reco::Candidate* b2_mother = b2_cand->mother();
+                   //   while (W2_mother->pdgId() == -24) W2_mother = W2_mother->mother();
+                       if (W2_mother == b2_mother && W2_mother->pdgId() == -6) {
+				tbarColl.push_back(W2_mother);
+				tbartoWbbar = true;
+				std::cout <<" find tbar->bbarW- " << std::endl;
 				break;
 			}
 
               }
        
      }
+     /*std::cout <<"tColl size " << tColl.size() <<" tbarColl " << tbarColl.size() << std::endl;
+     for (unsigned int i = 0; i<tColl.size(); i++){
+	std::cout <<" t1cand " ; printCandidate(tColl.at(i));
+	}
+     for (unsigned int j = 0; j<tbarColl.size(); j++){
+	std::cout <<" t2cand " ; printCandidate(tbarColl.at(j));
+	}*/
 
-      //h2tohh
-     if (htoWWColl.size() && htoBBColl.size()){
-           for (auto htoWW_cand : htoWWColl){
-               for (auto htoBB_cand : htoBBColl){
-                       const reco::Candidate* htoWW_mother = htoWW_cand->mother();
-                       const reco::Candidate* htoBB_mother = htoBB_cand->mother();
-                       while (htoWW_mother->pdgId() == 25)  htoWW_mother = htoWW_mother->mother();
-                       while (htoBB_mother->pdgId() == 25)  htoBB_mother = htoBB_mother->mother();
-                       if (htoWW_mother == htoBB_mother && (htoBB_mother->pdgId()==99927 or htoBB_mother->pdgId()==99926)){ 
-				h2tohhcand = htoWW_mother;
-				htoWWcand = htoWW_cand;
-				htoBBcand = htoBB_cand;
-				h2tohh = true;
-				break;
+     if (tColl.size()==1 and tbarColl.size() ==1){
+	t1cand = tColl.at(0);
+	t2cand = tbarColl.at(0);
+	while (t1cand->numberOfMothers()==1 and (t1cand->mother())->pdgId()==6) t1cand = t1cand->mother();
+	while (t2cand->numberOfMothers()==1 and (t2cand->mother())->pdgId()==-6) t2cand = t2cand->mother();
+	std::cout <<"t1 mothers " << t1cand->numberOfMothers() <<" t2 mothers " << t2cand->numberOfMothers() << std::endl; 
+	if (t1cand->numberOfMothers() == t2cand->numberOfMothers()) ttbar =true; 
+	if (ttbar){
+	//	std::cout <<" t1 t2 has same number of mother " << std::endl;
+		
+		for (unsigned int i=0; i<t1cand->numberOfMothers(); i++){
+			bool matchttbar=false;
+			for (unsigned int j=0; j<t2cand->numberOfMothers(); j++){
+				if ((t1cand->mother(i))->mass()==(t2cand->mother(j))->mass()) {	
+					matchttbar = true; 
+			//		std::cout <<"t1 mother can match to t2 mother" << std::endl;
+					break;
+				}
 			}
-               }
-	   	if (h2tohh) break;
-           }
-     }
-
-     if (h2tohh){
-        std::cout << "find h2 candidate " << std::endl;
-        std::cout << "h2 candidate id " << h2tohhcand->pdgId() << " mass " << h2tohhcand->mass() << std::endl;
+			if (not matchttbar) {	
+			 std::cout <<"fail to match t1 mother to t2 mother " << std::endl;
+			 ttbar =false;
+			 break;
+                        }
+		}
+	}
+      }
+    
+     if (ttbar){
+        std::cout << "find t and tbar candidate " << std::endl;
+	t1cand = tColl.at(0);
+	t2cand = tbarColl.at(0);
+	
 	if (finalStates_){
-       		b1cand = finddecendant(htoBBcand, 5, false);
-        	b2cand = finddecendant(htoBBcand, -5, false);
-        	w1cand = finddecendant(htoWWcand, 24, false);
-		w2cand = finddecendant(htoWWcand, -24, false);   
+       		b1cand = finddecendant(t1cand, 5, false);
+        	w1cand = finddecendant(t1cand, 24, false);
+        	b2cand = finddecendant(t2cand, -5, false);
+		w2cand = finddecendant(t2cand, -24, false);   
 	 }else{
-       		b1cand = finddecendant(htoBBcand, 5, true);
-        	b2cand = finddecendant(htoBBcand, -5, true);
-        	w1cand = finddecendant(htoWWcand, 24, true);
-		w2cand = finddecendant(htoWWcand, -24, true);   
+       		b1cand = finddecendant(t1cand, 5, true);
+        	w1cand = finddecendant(t1cand, 24, true);
+        	b2cand = finddecendant(t2cand, -5, true);
+		w2cand = finddecendant(t2cand, -24, true);   
 
 	}
-//	printallDecendants(h2tohhcand);
+
 	if (Wtolepton(w1cand)) {//w1 pdgid = 24
 		if (finddecendant(w1cand, -11)) {
 			l1cand = finddecendant(w1cand, -11, false); nu1cand = finddecendant(w1cand, 12, false);}
@@ -599,8 +608,7 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   // match bquark and bjet
 	
-   if (h2tohh){
-   
+   if (ttbar){
    for (reco::GenJetCollection::const_iterator jetit = genjetColl->begin(); jetit != genjetColl->end(); jetit++){
 	//cuts on GenJets
 	/*if (jetit->pt() >= jetsPt_ and std::fabs(jetit->eta()) <= jetsEta_){	
@@ -615,30 +623,28 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   	for (unsigned i = 0; i < mcparts.size(); i++) {
     		const reco::GenParticle* mcpart = mcparts[i];
 		const reco::Candidate* bcand;
-		const reco::Candidate* hcand;
-		//std::cout <<"GenP id "<< mcpart->pdgId() <<" mass "<< mcpart->mass()  <<" energy "<< mcpart->energy() <<std::endl;
+		const reco::Candidate* tcand;
 		if  ( dR_bbarjet>deltaR(jetit->eta(), jetit->phi(), b2cand->eta(), b2cand->phi())
-		 	and (bcand=findancestor(mcpart, -5, false)) and bcand->mother()->pdgId() == 25){ 
-			
-			hcand = bcand->mother();
-			if (hcand == htoBBcand){
+		 	and (bcand=findancestor(mcpart, -5, false)) and bcand->mother()->pdgId() == -6){ 
+			tcand = bcand->mother();
+			if (tcand == t2cand and dR_bbarjet>deltaR(jetit->eta(), jetit->phi(), b2cand->eta(), b2cand->phi())){
 				dR_bbarjet = deltaR(jetit->eta(), jetit->phi(), b2cand->eta(), b2cand->phi());
 				//printCandidate(jetit->clone());
 				//std::cout <<" bcand(-5) "; printCandidate(bcand);
-				std::cout <<" has h->bbar,h is the same from h->bb in genparticles flow,dR "<< dR_bbarjet <<std::endl;
+			     std::cout <<" has tbar->Wbbar,h is the same from tbar->Wbbar in genparticles flow,dR "<< dR_bbarjet <<std::endl;
 				hasbbarjet = true;
 				b2jet = jetit->clone();
 			}
    			
 		  }
 		if ( dR_bjet>deltaR(jetit->eta(), jetit->phi(), b1cand->eta(), b1cand->phi()) 
-			and (bcand=findancestor(mcpart, 5, false)) and bcand->mother()->pdgId() == 25){
-			hcand = bcand->mother();
-			if (hcand == htoBBcand){
+			and (bcand=findancestor(mcpart, 5, false)) and bcand->mother()->pdgId() == 6){
+			tcand = bcand->mother();
+			if (tcand == t1cand and dR_bjet>deltaR(jetit->eta(), jetit->phi(), b1cand->eta(), b1cand->phi())){
 				dR_bjet = deltaR(jetit->eta(), jetit->phi(), b1cand->eta(), b1cand->phi());
 				//printCandidate(jetit->clone());
 				//std::cout <<" bcand(5) "; printCandidate(bcand);
-				std::cout <<" has h->b, h is the same from h->bb in genparticles flow,dR "<< dR_bjet <<std::endl;
+				std::cout <<" has t->Wb, t is the same from t->Wb in genparticles flow,dR "<< dR_bjet <<std::endl;
 				hasbjet = true;
 				b1jet = jetit->clone();
 			}
@@ -646,10 +652,10 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	}//mcparts
 	//std::cout <<"mcparticle size " <<mcparts.size() <<"   nparts "<< nparts << std::endl;
      }// genjetColl
-	if (!hasbbarjet or !hasbjet) std::cout <<" has h->bb, but failed to two b jets " << std::endl;
-    }//htobb
+	if (!hasbbarjet or !hasbjet) std::cout <<" has ttbar,  failed to two b jets " << std::endl;
+    }//ttbar
 
-   if (htobb and hasbjet and hasbbarjet and b1jet->px() == b2jet->px() and b1jet->py() == b2jet->py()) {
+   if (ttbar and hasbjet and hasbbarjet and b1jet->px() == b2jet->px() and b1jet->py() == b2jet->py()) {
 	std::cout <<" error: two bjets are in fact the same " << "b1jetpx "<< b1jet->px() <<" b2jetpx "<< b2jet->px()<<std::endl;
 	hasbjet = false;
 	hasbbarjet =false;
@@ -658,19 +664,19 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
    if (genMet->pt()>= metPt_) hasMET = true;
    else hasMET = false;
    
-   if (h2tohh and W1tolepton and W2tolepton){
+   if (ttbar and W1tolepton and W2tolepton){
          if (((l1cand->pt() >= muonPt1_ and l2cand->pt() >= muonPt2_) || (l2cand->pt()>=muonPt1_ and l1cand->pt()>=muonPt2_)) and
 		fabs(l1cand->eta()) <= muonsEta_ and fabs(l2cand->eta()) <= muonsEta_) 
 		hastwomuons = true;
     }
     
-   if (h2tohh and W1tolepton and W2tolepton and hasbjet and hasbbarjet){
+   if (ttbar and W1tolepton and W2tolepton and hasbjet and hasbbarjet){
 	dR_b1l1 = deltaR(b1jet->eta(),b1jet->phi(),l1cand->eta(),l1cand->phi());
 	dR_b1l2 = deltaR(b1jet->eta(),b1jet->phi(),l2cand->eta(),l2cand->phi());
 	dR_b2l1 = deltaR(b2jet->eta(),b2jet->phi(),l1cand->eta(),l1cand->phi());
 	dR_b2l2 = deltaR(b2jet->eta(),b2jet->phi(),l2cand->eta(),l2cand->phi());
 	dR_l1l2 = deltaR(l1cand->eta(),l1cand->phi(),l2cand->eta(),l2cand->phi());
-        dR_b1b2 = deltaR(b1jet->eta(),b1jet->phi(),b2jet->eta(),b2jet->phi());
+	dR_b1b2 = deltaR(b1jet->eta(),b1jet->phi(),b2jet->eta(),b2jet->phi());
         bjets_lorentz = TLorentzVector(b1jet->px()+b2jet->px(),b1jet->py()+b2jet->py(),b1jet->pz()+b2jet->pz(),b1jet->energy()+b2jet->energy());
 	mass_b1b2 = bjets_lorentz.M();
         ll_lorentz = TLorentzVector(l1cand->px()+l2cand->px(),l1cand->py()+l2cand->py(),l1cand->pz()+l2cand->pz(),l1cand->energy()+l2cand->energy());
@@ -683,7 +689,7 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         //std::cout <<" w2 " ; printCandidate(w2cand);
         //std::cout <<" b1 " ; printCandidate(b1cand);
         //std::cout <<" b2 " ; printCandidate(b2cand);
-   if (h2tohh){
+   if (ttbar){
      	fillbranches();
         evtree->Fill();
     }
@@ -693,7 +699,7 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 // ------------ method called once each job just before starting event loop  ------------
 void 
-htoWWAnalyzer::beginJob()
+tt2WWBBAnalyzer::beginJob()
 {
    evtree = fs->make<TTree>("evtree", "evtree");
  //  output = new TFile("output.root","recreate");
@@ -746,11 +752,6 @@ htoWWAnalyzer::beginJob()
    evtree->Branch("w2_pz",&w2_pz);
    evtree->Branch("w2_mass",&w2_mass);
 
-   evtree->Branch("htoWW_energy",&htoWW_energy);
-   evtree->Branch("htoWW_px",&htoWW_px);
-   evtree->Branch("htoWW_py",&htoWW_py);
-   evtree->Branch("htoWW_pz",&htoWW_pz);
-   evtree->Branch("htoWW_mass",&htoWW_mass);
    
    evtree->Branch("b1_energy",&b1_energy);
    evtree->Branch("b1_px",&b1_px);
@@ -761,11 +762,16 @@ htoWWAnalyzer::beginJob()
    evtree->Branch("b2_py",&b2_py);
    evtree->Branch("b2_pz",&b2_pz);
    
-   evtree->Branch("htobb_energy",&htobb_energy);
-   evtree->Branch("htobb_px",&htobb_px);
-   evtree->Branch("htobb_py",&htobb_py);
-   evtree->Branch("htobb_pz",&htobb_pz);
-   evtree->Branch("htobb_mass",&htobb_mass);
+   evtree->Branch("t1_energy",&t1_energy);
+   evtree->Branch("t1_px",&t1_px);
+   evtree->Branch("t1_py",&t1_py);
+   evtree->Branch("t1_pz",&t1_pz);
+   evtree->Branch("t1_mass",&t1_mass);
+   evtree->Branch("t2_energy",&t2_energy);
+   evtree->Branch("t2_px",&t2_px);
+   evtree->Branch("t2_py",&t2_py);
+   evtree->Branch("t2_pz",&t2_pz);
+   evtree->Branch("t2_mass",&t2_mass);
    
    evtree->Branch("hasbjet",&hasbjet);
    evtree->Branch("b1jet_energy",&b1jet_energy);
@@ -796,12 +802,6 @@ htoWWAnalyzer::beginJob()
    evtree->Branch("mass_l1l2",&mass_l1l2);
    evtree->Branch("mass_b1b2",&mass_b1b2);
 
-   evtree->Branch("h2tohh_energy",&h2tohh_energy);
-   evtree->Branch("h2tohh_px",&h2tohh_px);
-   evtree->Branch("h2tohh_py",&h2tohh_py);
-   evtree->Branch("h2tohh_pz",&h2tohh_pz);
-   evtree->Branch("h2tohh_mass",&h2tohh_mass);
-   
    evtree->Branch("met",&met);
    evtree->Branch("met_phi",&met_phi);
    evtree->Branch("met_px",&met_px);
@@ -811,18 +811,18 @@ htoWWAnalyzer::beginJob()
    evtree->Branch("hastwomuons",&hastwomuons);
    evtree->Branch("hasdRljet",&hasdRljet);
    evtree->Branch("hasdRjets",&hasdRjets);
-  
-   evtree->Branch("htobb",&htobb);
-   evtree->Branch("htoWW",&htoWW);
+    
+   evtree->Branch("ttbar",&ttbar);
+   evtree->Branch("ttoWb",&ttoWb);
+   evtree->Branch("tbartoWbbar",&tbartoWbbar);
    evtree->Branch("W1tolepton",&W1tolepton);
    evtree->Branch("W2tolepton",&W2tolepton);
-   evtree->Branch("h2tohh",&h2tohh);
     
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
 void 
-htoWWAnalyzer::endJob() 
+tt2WWBBAnalyzer::endJob() 
 {
     //output->Write();
    // output->Close();
@@ -831,7 +831,7 @@ htoWWAnalyzer::endJob()
 // ------------ method called when starting to processes a run  ------------
 /*
 void 
-htoWWAnalyzer::beginRun(edm::Run const&, edm::EventSetup const&)
+tt2WWBBAnalyzer::beginRun(edm::Run const&, edm::EventSetup const&)
 {
 }
 */
@@ -839,7 +839,7 @@ htoWWAnalyzer::beginRun(edm::Run const&, edm::EventSetup const&)
 // ------------ method called when ending the processing of a run  ------------
 /*
 void 
-htoWWAnalyzer::endRun(edm::Run const&, edm::EventSetup const&)
+tt2WWBBAnalyzer::endRun(edm::Run const&, edm::EventSetup const&)
 {
 }
 */
@@ -847,7 +847,7 @@ htoWWAnalyzer::endRun(edm::Run const&, edm::EventSetup const&)
 // ------------ method called when starting to processes a luminosity block  ------------
 /*
 void 
-htoWWAnalyzer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+tt2WWBBAnalyzer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
 {
 }
 */
@@ -855,26 +855,25 @@ htoWWAnalyzer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup
 // ------------ method called when ending the processing of a luminosity block  ------------
 /*
 void 
-htoWWAnalyzer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+tt2WWBBAnalyzer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
 {
 }
 */
 void
-htoWWAnalyzer::clear(){
+tt2WWBBAnalyzer::clear(){
    b1Coll.clear();
    b2Coll.clear();
    W1Coll.clear();
    W2Coll.clear();
-   htoWWColl.clear();
-   htoBBColl.clear();
+   tColl.clear();
+   tbarColl.clear();
 
    b1cand = NULL;
    b2cand = NULL;
    w1cand = NULL;
    w2cand = NULL;
-   htoWWcand = NULL;
-   htoBBcand = NULL;
-   h2tohhcand = NULL;
+   t1cand = NULL;
+   t2cand = NULL;
 
 
 
@@ -884,7 +883,7 @@ htoWWAnalyzer::clear(){
 
 //------------- method called to find stable decendant with pdgid = id
 const reco::Candidate* 
-htoWWAnalyzer::stabledecendant(const reco::Candidate* cand, int id){
+tt2WWBBAnalyzer::stabledecendant(const reco::Candidate* cand, int id){
    const reco::Candidate* tmp = NULL;
    for (unsigned int i=0; i < cand->numberOfDaughters(); i++){
 	if ((cand->daughter(i))->pdgId() == id && (cand->daughter(i))->status() == 1)
@@ -903,7 +902,7 @@ htoWWAnalyzer::stabledecendant(const reco::Candidate* cand, int id){
 //if first it true, then return the candidate closest to seed
 //if first it false, then return the candidate farthest to seed
 const reco::Candidate* 
-htoWWAnalyzer::finddecendant(const reco::Candidate* cand, int id, bool first){
+tt2WWBBAnalyzer::finddecendant(const reco::Candidate* cand, int id, bool first){
    const reco::Candidate* tmp = NULL;
    for (unsigned int i=0; i < cand->numberOfDaughters(); i++){
         
@@ -925,10 +924,9 @@ htoWWAnalyzer::finddecendant(const reco::Candidate* cand, int id, bool first){
 //if first is true, then return the candidate closest to seed
 //if first is false, then return the candidate furthest to seed
 const reco::Candidate*
-htoWWAnalyzer::findancestor(const reco::Candidate* cand, int id, bool first){
+tt2WWBBAnalyzer::findancestor(const reco::Candidate* cand, int id, bool first){
 
    const reco::Candidate* tmp = NULL;
-   //std::cout <<"find ancestor id "<<id ; printCandidate(cand);
    for (unsigned int i=0; i < cand->numberOfMothers(); i++){
         
 	if ((cand->mother(i))->pdgId() == id && first && cand->pdgId() != id)
@@ -944,7 +942,7 @@ htoWWAnalyzer::findancestor(const reco::Candidate* cand, int id, bool first){
 
 //---------- method called to check whether cand has mother with pdgid = id -----------------------------------
 bool
-htoWWAnalyzer::hasMother(const reco::Candidate* cand, int id){
+tt2WWBBAnalyzer::hasMother(const reco::Candidate* cand, int id){
 
    for (unsigned int i=0; i < cand->numberOfMothers(); i++)
         if ((cand->mother(i))->pdgId() == id) return true;
@@ -954,7 +952,7 @@ htoWWAnalyzer::hasMother(const reco::Candidate* cand, int id){
 
 //-------- method called to check whether cand has daughter with pdgid = id ------------------------------------
 bool
-htoWWAnalyzer::hasDaughter(const reco::Candidate* cand, int id){
+tt2WWBBAnalyzer::hasDaughter(const reco::Candidate* cand, int id){
  
    for (unsigned int i=0; i < cand->numberOfDaughters(); i++)
         if ((cand->daughter(i))->pdgId() == id) return true;
@@ -965,7 +963,7 @@ htoWWAnalyzer::hasDaughter(const reco::Candidate* cand, int id){
 
 //-------- method called to check whether W decays into lepton and if so, return the 
 bool
-htoWWAnalyzer::Wtolepton(const reco::Candidate* Wcand){
+tt2WWBBAnalyzer::Wtolepton(const reco::Candidate* Wcand){
    
    if (not hasDaughter(Wcand, Wcand->pdgId())){
      for (unsigned int i=0; i < Wcand->numberOfDaughters(); i++)
@@ -987,7 +985,7 @@ htoWWAnalyzer::Wtolepton(const reco::Candidate* Wcand){
 
 //---------- method called to print candidates for debug ---------------------
 void
-htoWWAnalyzer::printCandidate(const reco::Candidate* cand){
+tt2WWBBAnalyzer::printCandidate(const reco::Candidate* cand){
 
    std::cout <<" Candidate id: "<< cand->pdgId() << " mass: " << cand->mass() <<" (P,E)= ("<< cand->px() <<", "<< cand->py()<<", "<< cand->pz()<<", "<< cand->energy()
              <<")" << " status: " << cand->status() << std::endl;
@@ -997,7 +995,7 @@ htoWWAnalyzer::printCandidate(const reco::Candidate* cand){
 
 //--------- method called to print all decendants for cand -------------------
 void 
-htoWWAnalyzer::printallDecendants(const reco::Candidate* cand){
+tt2WWBBAnalyzer::printallDecendants(const reco::Candidate* cand){
    
    if (cand->status() != 0 && cand->numberOfDaughters() > 0){
         std::cout << "******************  children of id "<< cand->pdgId() <<"      *********************" << std::endl;
@@ -1014,7 +1012,7 @@ htoWWAnalyzer::printallDecendants(const reco::Candidate* cand){
 
 //---------- method called to fill branches --------------------------------------------
 void 
-htoWWAnalyzer::fillbranches(){
+tt2WWBBAnalyzer::fillbranches(){
       w1_energy = w1cand->energy();
       w1_px = w1cand->px();
       w1_py = w1cand->py();
@@ -1026,11 +1024,6 @@ htoWWAnalyzer::fillbranches(){
       w2_pz = w2cand->pz();
       w2_mass = w2cand->mass();
 
-      htoWW_energy = htoWWcand->energy();
-      htoWW_px = htoWWcand->px();
-      htoWW_py = htoWWcand->py();
-      htoWW_pz = htoWWcand->pz();
-      htoWW_mass = htoWWcand->mass();
 
       b1_energy = b1cand->energy();
       b1_px = b1cand->px();
@@ -1040,18 +1033,18 @@ htoWWAnalyzer::fillbranches(){
       b2_px = b2cand->px();
       b2_py = b2cand->py();
       b2_pz = b2cand->pz();
-      htobb_energy = htoBBcand->energy();
-      htobb_px = htoBBcand->px();
-      htobb_py = htoBBcand->py();
-      htobb_pz = htoBBcand->pz();
-      htobb_mass = htoBBcand->mass();
-      
-      h2tohh_energy = h2tohhcand->energy();
-      h2tohh_px = h2tohhcand->px();
-      h2tohh_py = h2tohhcand->py();
-      h2tohh_pz = h2tohhcand->pz();
-      h2tohh_mass = h2tohhcand->mass();
 	
+      t1_energy = t1cand->energy();
+      t1_px = t1cand->px();
+      t1_py = t1cand->py();
+      t1_pz = t1cand->pz();
+      t1_mass = t1cand->mass();
+      t2_energy = t2cand->energy();
+      t2_px = t2cand->px();
+      t2_py = t2cand->py();
+      t2_pz = t2cand->pz();
+      t2_mass = t2cand->mass();
+
       if (W1tolepton){
       l1_energy = l1cand->energy();
       l1_px = l1cand->px();
@@ -1125,7 +1118,7 @@ htoWWAnalyzer::fillbranches(){
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
-htoWWAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+tt2WWBBAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
@@ -1134,4 +1127,4 @@ htoWWAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
 }
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(htoWWAnalyzer);
+DEFINE_FWK_MODULE(tt2WWBBAnalyzer);

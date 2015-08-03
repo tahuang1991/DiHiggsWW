@@ -60,11 +60,15 @@ class MMC{
     private:
       TTree *mmctree;
       TH1F MMC_h2Mass;
+      TH1F MMC_h2Massweight1;
+      TH1F MMC_h2Massweight4;
  
    //runMMC
    public: 
       bool runMMC();
       TH1F getMMCh2();
+      TH1F getMMCh2weight1();
+      TH1F getMMCh2weight4();
       TTree* getMMCTree();
       //TH1F* getMMCNeutrio_onshell1();
       //TH1F* getMMCNeutrio_onshell2();
@@ -120,6 +124,7 @@ class MMC{
       bool weightfromonoffshellWmass_hist_;
       bool weightfrombjetrescalec1c2_hist_;
       bool useMET_;   
+      bool writemmctree_;
 
     private:
       TLorentzVector calculateMET(); 
@@ -155,8 +160,8 @@ class MMC{
       TLorentzVector* onshellW_lorentz_true;
       TLorentzVector* offshellW_lorentz_true;
       TVector2* mmcmet_vec2;
-      TLorentzVector* bquark_lorentz;
-      TLorentzVector* bbarquark_lorentz;
+      TLorentzVector* b1_lorentz;
+      TLorentzVector* b2_lorentz;
       TLorentzVector* htoWW_lorentz_true;
       TLorentzVector* htoBB_lorentz_true;
       TLorentzVector* h2tohh_lorentz_true;
@@ -172,6 +177,11 @@ class MMC{
       TLorentzVector* htoWW_lorentz;
       TLorentzVector* htoBB_lorentz;
       TLorentzVector* h2tohh_lorentz;
+
+    private:
+	
+      TLorentzVector ideal_met_lorentz;
+      TLorentzVector h2tohh_expect_lorentz;
     private:
       //branches
       float eta_mean;
@@ -217,18 +227,41 @@ class MMC{
       float offshellW_E;
       float offshellW_Mass;
     
+      float b1_Pt;
+      float b1_Px;
+      float b1_Py;
+      float b1_E;
+      float b1_Eta;
+      float b1_Phi;
+      float b1_Mass;
+      float b2_Pt;
+      float b2_Px;
+      float b2_Py;
+      float b2_E;
+      float b2_Eta;
+      float b2_Phi;
+      float b2_Mass;
+
       float b1jet_Pt;
+      float b1jet_Px;
+      float b1jet_Py;
       float b1jet_Energy;
       float b1jet_Eta;
       float b1jet_Phi;
       float b1jet_Mass;
       float b2jet_Pt;
+      float b2jet_Px;
+      float b2jet_Py;
       float b2jet_Energy;
       float b2jet_Eta;
       float b2jet_Phi;
       float b2jet_Mass;
       float b1jet_dR;
       float b2jet_dR;
+      float b1rescalefactor_true;
+      float b2rescalefactor_true;
+      float rescalec1_true;
+      float rescalec2_true;
        
       float htoBB_jets_Eta;
       float htoBB_jets_Phi;
@@ -250,6 +283,9 @@ class MMC{
       float MMCmet_Phi;
       float MMCmet_Px;
       float MMCmet_Py;
+      float ideal_met_E;
+      float ideal_met_Px;
+      float ideal_met_Py;
 
       float h2tohh_Eta;
       float h2tohh_Phi;
@@ -266,14 +302,19 @@ class MMC{
       float eta_nuoffshellW_true;
       float phi_nuoffshellW_true;
       float pt_nuoffshellW_true;
+      float px_nuoffshellW_true;
+      float py_nuoffshellW_true;
       float eta_nuonshellW_true;
       float phi_nuonshellW_true;
       float pt_nuonshellW_true;
+      float px_nuonshellW_true;
+      float py_nuonshellW_true;
       float mass_offshellW_true;
       float mass_onshellW_true;
       float mass_htoWW_true;
       float pt_h2tohh_true;
       float mass_h2tohh_true;
+      float mass_h2_expect;
 
 };
    

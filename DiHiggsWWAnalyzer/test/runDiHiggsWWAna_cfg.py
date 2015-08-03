@@ -19,12 +19,13 @@ process.genParticlesForJetsNoNu.ignoreParticleIDs += cms.vuint32( 12,14,16)
 from RecoJets.JetProducers.ak4GenJets_cfi import ak4GenJets
 process.ak4GenJetsNoNu = ak4GenJets.clone( src = cms.InputTag("genParticlesForJetsNoNu") )
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(400) )
+
 
 
 process.source = cms.Source("PoolSource",
     # 318 548 618 725 843
-    #skipEvents = cms.untracked.uint32(617),
+    #skipEvents = cms.untracked.uint32(4),
     # replace 'myfile.root' with the source file you want to use
     fileNames = cms.untracked.vstring(
         #'file:/fdata/hepx/store/user/taohuang/Hhh/HH-bbWW-B3_Gen_100k_0215.root'
@@ -50,20 +51,22 @@ process.DiHiggsWWAna = cms.EDAnalyzer('DiHiggsWWAnalyzer',
 	#jetLabel = cms.string("ak4GenJets"),
 	jetLabel = cms.string("ak4GenJetsNoNu"),
 	metLabel = cms.string("genMetTrue"),	
-	jetsPt = cms.double(30.0),
-	jetsEta = cms.double(2.50),
-	bjetsPt = cms.double(20.0),
-	bjetsEta = cms.double(5.0),
+	bjetsPt = cms.double(30.0),
+	bjetsEta = cms.double(2.50),
+	jetsPt = cms.double(20.0),
+	jetsEta = cms.double(5.0),
 	jetsDeltaR = cms.double(2.00),
+	jetleptonDeltaR = cms.double(0.30),
+	leptonIso = cms.double(1.0),#not use at generator level
 	muonPt1 = cms.double(10.0),
 	muonPt2 = cms.double(10.0),
 	muonsEta = cms.double(2.40),
 	metPt = cms.double(20.0),
-        metcorrection = cms.bool(False),
+        metcorrection = cms.bool(False),#remove nu from b-decay by hand
         runMMC = cms.bool(True),
         simulation = cms.bool(True),
         mmcset = cms.PSet(
-	iterations = cms.untracked.int32(10),
+	iterations = cms.untracked.int32(500000),
 	seed = cms.int32(random.randint(0,100000000)),#may be ignored since we use can take ievent alone as seed
         weightfromonshellnupt_func = cms.bool(False),
         weightfromonshellnupt_hist = cms.bool(True),
@@ -71,8 +74,9 @@ process.DiHiggsWWAna = cms.EDAnalyzer('DiHiggsWWAnalyzer',
         weightfromonoffshellWmass_hist = cms.bool(True),
         weightfrombjetrescalec1c2_hist = cms.bool(True),
 	useMET = cms.bool(True),
-        bjetrescale = cms.int32(2),
-        metcorrection = cms.int32(1),
+        bjetrescale = cms.int32(1),
+        metcorrection = cms.int32(-1),
+	writemmctree = cms.bool(False),
 	RefPDFfile = cms.string("%s"%refrootfile)
         )
 )
@@ -82,7 +86,7 @@ process.dump=cms.EDAnalyzer('EventContentAnalyzer')
 
 process.TFileService = cms.Service("TFileService", 
       #fileName = cms.string("/eos/uscms/store/user/tahuang/DiHiggs/DiHiggs_10k_test_0413_newframe_B3.root"),
-      fileName = cms.string("/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_10k_test_0601_B3.root"),
+      fileName = cms.string("/fdata/hepx/store/user/taohuang/Hhh/DiHiggs_400_0720_11_B3.root"),
       closeFileFast = cms.untracked.bool(True)
       
   )
