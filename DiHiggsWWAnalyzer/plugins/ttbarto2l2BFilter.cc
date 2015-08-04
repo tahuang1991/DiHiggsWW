@@ -58,6 +58,7 @@ class ttbarto2l2BFilter : public edm::EDFilter {
   std::string fLabel_;
   double minEtaLepton_, maxEtaLepton_;
   double minPtLepton_, maxPtLepton_;
+  bool Wtotau_;
 
 };
 //
@@ -75,6 +76,7 @@ ttbarto2l2BFilter::ttbarto2l2BFilter(const edm::ParameterSet& iConfig)
   minEtaLepton_ = iConfig.getUntrackedParameter<double>("MinEtaLepton", 0);
   maxPtLepton_ = iConfig.getUntrackedParameter<double>("MaxPtLepton", 1000);
   minPtLepton_ = iConfig.getUntrackedParameter<double>("MinPtLepton", 2.0);
+  Wtotau_ = iConfig.getUntrackedParameter<bool>("Wtotau",false);
   
 }
 
@@ -155,6 +157,24 @@ ttbarto2l2BFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
              {
 		 numNeutrinos++;
                 }
+       }
+      else if (Wtotau_ and (std::abs(it->pdgId()) == 15) and std::abs(it->mother()->pdgId()) == 24){
+
+	const reco::Candidate* tmp_w = it->mother();
+        while (std::abs(tmp_w->pdgId()) == 24) tmp_w = it->mother();
+        if (std::abs(tmp_w->pdgId()) == 6)
+		numLeptons++;
+        if (std::abs(tmp_w->pdgId()) == 6) std::cout <<"t->Wb and W->tau nu" << std::endl;
+
+       }
+      else if (Wtotau_ and (std::abs(it->pdgId()) == 16) and it->status() ==1){
+
+        const reco::Candidate* tmp_w = it->mother();
+        while (std::abs(tmp_w->pdgId()) == 16) tmp_w = it->mother();
+        while (std::abs(tmp_w->pdgId()) == 24) tmp_w = it->mother();
+        if (std::abs(tmp_w->pdgId()) == 6)
+                numNeutrinos++;
+
        }
 
       else if (it->pdgId() == 5 && it->mother()->pdgId() == 6 && !bquark)
