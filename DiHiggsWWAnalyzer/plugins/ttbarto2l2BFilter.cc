@@ -54,6 +54,15 @@ class ttbarto2l2BFilter : public edm::EDFilter {
       virtual bool filter(edm::Event&, const edm::EventSetup&);
       virtual void endJob() ;
       
+   private:
+      
+      void printCandidate(const reco::Candidate* );
+      void printChildren(const reco::Candidate* );
+      void printMothers(const reco::Candidate* );
+      void printallDecendants(const reco::Candidate* );
+      void printallAncestors(const reco::Candidate* );
+      bool hasMother(const reco::Candidate* cand, int id);
+      bool hasDaughter(const reco::Candidate* cand, int id);
   // ----------member data ---------------------------
   std::string fLabel_;
   double minEtaLepton_, maxEtaLepton_;
@@ -110,30 +119,45 @@ ttbarto2l2BFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
    int numNeutrinos = 0;
    bool bquark = false;
    bool bbarquark = false;
+  // std::cout <<" Wtotau " << (Wtotau_ ? " is true ":" is false ")<< std::endl;
    for (reco::GenParticleCollection::const_iterator it = genParticleColl->begin(); it != genParticleColl->end(); ++it) {
 
 //particle id, (muon13),(b5),(W+24),(SM higgs25)
    // particle id  it->pdgId()
       if (std::abs(it->pdgId()) == 13 && it->status() == 1)
       {
-          const reco::Candidate* tmp_mu1 = it->mother(); 
-          while (std::abs(tmp_mu1->pdgId()) == 13 && tmp_mu1->numberOfMothers() == 1) tmp_mu1 = tmp_mu1->mother();
-          if (tmp_mu1->numberOfMothers() != 1 ) std::cout << "muon has more than one mother particle" << std::endl;
-          while (std::abs(tmp_mu1->pdgId()) == 24 && tmp_mu1->numberOfMothers() == 1) tmp_mu1 = tmp_mu1->mother();
-          if (tmp_mu1->numberOfMothers() != 1 ) std::cout << "W- has more than one mother particle" << std::endl;
+          const reco::Candidate* tmp_mu1 = it->clone(); 
+          while (std::abs(tmp_mu1->pdgId()) == 13 and (hasMother(tmp_mu1, 13) or hasMother(tmp_mu1, -13))) { 
+	      tmp_mu1 = tmp_mu1->mother();
+	      //printMothers(tmp_mu1);
+            if (tmp_mu1->numberOfMothers() != 1 )  printMothers(tmp_mu1);
+	  }
+          if (tmp_mu1->numberOfMothers() == 1 and std::abs(tmp_mu1->mother()->pdgId())==24) tmp_mu1 = tmp_mu1->mother();
+	  else if (tmp_mu1->numberOfMothers() != 1)  printMothers(tmp_mu1);
+          while (std::abs(tmp_mu1->pdgId()) == 24 and (hasMother(tmp_mu1, 24) or hasMother(tmp_mu1, -24))) 
+	  { 	tmp_mu1 = tmp_mu1->mother();
+	  //    printMothers(tmp_mu1);
+          	if (tmp_mu1->numberOfMothers() != 1 ) printMothers(tmp_mu1);
+	  }
+          if (tmp_mu1->numberOfMothers() == 1 and std::abs(tmp_mu1->mother()->pdgId())==6) tmp_mu1 = tmp_mu1->mother();
+	  else if (tmp_mu1->numberOfMothers() != 1)  printMothers(tmp_mu1);
           if (std::abs(tmp_mu1->pdgId()) == 6 && it->eta() > minEtaLepton_ && it->eta() < maxEtaLepton_ && it->pt() < maxPtLepton_ && it->pt() > minPtLepton_)   
              {
 		numLeptons++;
               }
       }
-      else if (std::abs(it->pdgId()) == 11 && it->status() == 1)
+      else if (std::abs(it->pdgId()) == 11 and std::abs(it->mother()->pdgId()) == 24)
       {
           const reco::Candidate* tmp_e = it->mother(); 
-          while (std::abs(tmp_e->pdgId()) == 11 && tmp_e->numberOfMothers() == 1) tmp_e = tmp_e->mother();
-          if (tmp_e->numberOfMothers() != 1 ) std::cout << "electron has more than one mother particle" << std::endl;
-          while (std::abs(tmp_e->pdgId()) == 24 && tmp_e->numberOfMothers() == 1) tmp_e = tmp_e->mother();
-          if (tmp_e->numberOfMothers() != 1 ) std::cout << "W- has more than one mother particle" << std::endl;
-          if (std::abs(tmp_e->pdgId()) == 6 && it->eta() > minEtaLepton_ && it->eta() < maxEtaLepton_ && it->pt() < maxPtLepton_ && it->pt() > minPtLepton_)   
+          while (std::abs(tmp_e->pdgId()) == 24 and (hasMother(tmp_e, 24) or hasMother(tmp_e, -24))) 
+	  { 	tmp_e = tmp_e->mother();
+          	if (tmp_e->numberOfMothers() != 1 ) printMothers(tmp_e);
+	  }
+          if (tmp_e->numberOfMothers() == 1 and std::abs(tmp_e->mother()->pdgId())==6 ) tmp_e = tmp_e->mother();
+	  else if (tmp_e->numberOfMothers() != 1)  printMothers(tmp_e);
+	  const reco::Candidate* final_e = it->clone();
+	  while (final_e->numberOfDaughters()==1 and std::abs(final_e->daughter(0)->pdgId()) == 11) final_e = final_e->daughter(0);
+          if (std::abs(tmp_e->pdgId()) == 6 && final_e->eta() > minEtaLepton_ && final_e->eta() < maxEtaLepton_ && final_e->pt() < maxPtLepton_ && final_e->pt() > minPtLepton_)   
              {
 		numLeptons++;
               }
@@ -158,20 +182,34 @@ ttbarto2l2BFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
 		 numNeutrinos++;
                 }
        }
+
       else if (Wtotau_ and (std::abs(it->pdgId()) == 15) and std::abs(it->mother()->pdgId()) == 24){
 
 	const reco::Candidate* tmp_w = it->mother();
-        while (std::abs(tmp_w->pdgId()) == 24) tmp_w = it->mother();
-        if (std::abs(tmp_w->pdgId()) == 6)
+	//std::cout <<" Wtotau_ "; printCandidate(it->clone());
+	//std::cout <<" its mother "; printCandidate(tmp_w);
+        while (std::abs(tmp_w->pdgId()) == 24 and (hasMother(tmp_w, -24) or hasMother(tmp_w, 24))) {
+	      tmp_w = tmp_w->mother();
+	    if (tmp_w->numberOfMothers()>1 ) printMothers(tmp_w);
+	}
+          if (tmp_w->numberOfMothers() == 1 and std::abs(tmp_w->mother()->pdgId())==6) tmp_w = tmp_w->mother();
+	  else if (tmp_w->numberOfMothers() != 1)  printMothers(tmp_w);
+	const reco::Candidate* final_tau = it->clone();
+	while (final_tau->numberOfDaughters()==1 and std::abs(final_tau->daughter(0)->pdgId()) == 15) {
+	    printChildren(final_tau);
+	    final_tau = final_tau->daughter(0);
+	}
+        if (std::abs(tmp_w->pdgId()) == 6 and final_tau->eta() > minEtaLepton_ && final_tau->eta() < maxEtaLepton_ && final_tau->pt() < maxPtLepton_ && final_tau->pt() > minPtLepton_)
 		numLeptons++;
         if (std::abs(tmp_w->pdgId()) == 6) std::cout <<"t->Wb and W->tau nu" << std::endl;
 
        }
-      else if (Wtotau_ and (std::abs(it->pdgId()) == 16) and it->status() ==1){
 
+      else if (Wtotau_ and (std::abs(it->pdgId()) == 16) and it->status() ==1){
+        //std::cout <<" Wtotau_ neutrino "; printCandidate(it->clone());
         const reco::Candidate* tmp_w = it->mother();
-        while (std::abs(tmp_w->pdgId()) == 16) tmp_w = it->mother();
-        while (std::abs(tmp_w->pdgId()) == 24) tmp_w = it->mother();
+        while (std::abs(tmp_w->pdgId()) == 16) tmp_w = tmp_w->mother();
+        while (std::abs(tmp_w->pdgId()) == 24) tmp_w = tmp_w->mother();
         if (std::abs(tmp_w->pdgId()) == 6)
                 numNeutrinos++;
 
@@ -196,7 +234,9 @@ ttbarto2l2BFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
    if(numLeptons == 2 && numNeutrinos == 2 && bquark && bbarquark){
        accept = true;
+       std::cout <<" find ttbar->bbWW->bblvlv "<<(Wtotau_? " including tau":" not including tau ") << std::endl;
    }
+   else std::cout <<"numLeptons " << numLeptons <<"   numNeutrinos  "<< numNeutrinos << std::endl;
    //delete evt;
    return accept;
 }
@@ -207,6 +247,97 @@ ttbarto2l2BFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
 void 
 ttbarto2l2BFilter::endJob() {
 }
+
+
+//---------- method called to print candidates for debug ---------------------
+void
+ttbarto2l2BFilter::printCandidate(const reco::Candidate* cand){
+
+   std::cout <<" Candidate id: "<< cand->pdgId() << " mass: " << cand->mass() <<" (P,E)= ("<< cand->px() <<", "<< cand->py()<<", "<< cand->pz()<<", "<< cand->energy() <<")" <<"(Pt,E) = ("<< cand->pt() <<", "<< cand->eta() <<", "<< cand->phi()<<", "<<cand->energy()<< ")" <<" status: " << cand->status() << std::endl;
+
+}
+
+//--------- method called to print all decendants for cand -------------------
+void 
+ttbarto2l2BFilter::printallDecendants(const reco::Candidate* cand){
+   
+   if (cand->status() != 0 && cand->numberOfDaughters() > 0){
+        std::cout << "******************  children of id "<< cand->pdgId() <<"      *********************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfDaughters(); i++)
+        	printCandidate(cand->daughter(i));
+        std::cout << "***********************************************************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfDaughters(); i++)
+		printallDecendants(cand->daughter(i));
+
+    }
+}
+
+
+//--------- method called to print all Ancestors for cand -------------------
+void 
+ttbarto2l2BFilter::printallAncestors(const reco::Candidate* cand){
+   
+   if (cand->status() != 0 && cand->numberOfMothers() > 0){
+        std::cout << "******************  mothers of id "<< cand->pdgId() <<"      *********************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfMothers(); i++)
+        	printCandidate(cand->mother(i));
+        std::cout << "***********************************************************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfMothers(); i++)
+		printallAncestors(cand->mother(i));
+
+    }
+}
+
+
+//--------- method called to print children for cand -------------------
+void 
+ttbarto2l2BFilter::printChildren(const reco::Candidate* cand){
+   
+   if (cand->status() != 0 && cand->numberOfDaughters() > 0){
+        std::cout << "******************  children of id "<< cand->pdgId() <<"      *********************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfDaughters(); i++)
+        	printCandidate(cand->daughter(i));
+        std::cout << "***********************************************************" << std::endl;
+
+
+    }
+}
+
+
+//--------- method called to print all Ancestors for cand -------------------
+void 
+ttbarto2l2BFilter::printMothers(const reco::Candidate* cand){
+   
+   if (cand->status() != 0 && cand->numberOfMothers() > 0){
+        std::cout << "******************  mothers of id "<< cand->pdgId() <<"      *********************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfMothers(); i++)
+        	printCandidate(cand->mother(i));
+        std::cout << "***********************************************************" << std::endl;
+
+    }
+}
+
+//---------- method called to check whether cand has mother with pdgid = id -----------------------------------
+bool
+ttbarto2l2BFilter::hasMother(const reco::Candidate* cand, int id){
+
+   for (unsigned int i=0; i < cand->numberOfMothers(); i++)
+        if ((cand->mother(i))->pdgId() == id) return true;
+   return false;
+
+}
+
+//-------- method called to check whether cand has daughter with pdgid = id ------------------------------------
+bool
+ttbarto2l2BFilter::hasDaughter(const reco::Candidate* cand, int id){
+ 
+   for (unsigned int i=0; i < cand->numberOfDaughters(); i++)
+        if ((cand->daughter(i))->pdgId() == id) return true;
+   return false;
+
+}
+
+
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(ttbarto2l2BFilter);
