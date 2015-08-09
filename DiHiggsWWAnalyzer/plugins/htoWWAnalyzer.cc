@@ -109,6 +109,8 @@ class htoWWAnalyzer : public edm::EDAnalyzer {
     private:
       void printCandidate(const reco::Candidate* );
       void printallDecendants(const reco::Candidate* );
+      void printChildren(const reco::Candidate* );
+      void printMothers(const reco::Candidate* );
       
 
 
@@ -575,7 +577,8 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		if (finddecendant(w1cand, -13)) {
 			l1cand = finddecendant(w1cand, -13, false);nu1cand = finddecendant(w1cand, 14, false);}
 		if (Wtotau_ and finddecendant(w1cand, -15)) {
-			l1cand = finddecendant(w1cand, -15, false);nu1cand = finddecendant(w1cand, 16, false);}
+			l1cand = finddecendant(w1cand, -15, false);nu1cand = finddecendant(w1cand, 16, false);
+			std::cout <<" find tau from W+ ";}
 		if (l1cand and nu1cand) W1tolepton=true;
 		else W1tolepton =false;
 		if (not W1tolepton) std::cout <<" w1 has lepton decendant but program failed to find it " << std::endl;
@@ -587,7 +590,8 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		if (finddecendant(w2cand, 13)) {
 			l2cand = finddecendant(w2cand, 13, false);nu2cand = finddecendant(w2cand, -14, false);}
 		if (Wtotau_ and finddecendant(w2cand, 15)) {
-			l2cand = finddecendant(w1cand, 15, false); nu2cand = finddecendant(w2cand, -16, false);}
+			l2cand = finddecendant(w2cand, 15, false); nu2cand = finddecendant(w2cand, -16, false);
+			std::cout <<" find tau from W- ";}
 		if (l2cand and nu2cand) W2tolepton=true;
 		else W2tolepton =false;
 		if (not W2tolepton) std::cout <<" w2 has lepton decendant but program failed to find it " << std::endl;
@@ -625,7 +629,7 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 				dR_bbarjet = deltaR(jetit->eta(), jetit->phi(), b2cand->eta(), b2cand->phi());
 				//printCandidate(jetit->clone());
 				//std::cout <<" bcand(-5) "; printCandidate(bcand);
-				std::cout <<" has h->bbar,h is the same from h->bb in genparticles flow,dR "<< dR_bbarjet <<std::endl;
+				//std::cout <<" has h->bbar,h is the same from h->bb in genparticles flow,dR "<< dR_bbarjet <<std::endl;
 				hasbbarjet = true;
 				b2jet = jetit->clone();
 			}
@@ -638,7 +642,7 @@ htoWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 				dR_bjet = deltaR(jetit->eta(), jetit->phi(), b1cand->eta(), b1cand->phi());
 				//printCandidate(jetit->clone());
 				//std::cout <<" bcand(5) "; printCandidate(bcand);
-				std::cout <<" has h->b, h is the same from h->bb in genparticles flow,dR "<< dR_bjet <<std::endl;
+				//std::cout <<" has h->b, h is the same from h->bb in genparticles flow,dR "<< dR_bjet <<std::endl;
 				hasbjet = true;
 				b1jet = jetit->clone();
 			}
@@ -906,7 +910,8 @@ const reco::Candidate*
 htoWWAnalyzer::finddecendant(const reco::Candidate* cand, int id, bool first){
    const reco::Candidate* tmp = NULL;
    for (unsigned int i=0; i < cand->numberOfDaughters(); i++){
-        
+        //std::cout <<"to find decendant id "<< id <<" daughter "<< i <<" child id " << (cand->daughter(i))->pdgId()
+	//	<< " numberOfdaghter for this child " << (cand->daughter(i))->numberOfDaughters() << std::endl; 
 	if ((cand->daughter(i))->pdgId() == id && first && cand->pdgId() != id)
 		return 	tmp=cand->daughter(i);
 	else if ((cand->daughter(i))->pdgId() == id && !first && !hasDaughter(cand->daughter(i), id)) 
@@ -916,7 +921,7 @@ htoWWAnalyzer::finddecendant(const reco::Candidate* cand, int id, bool first){
         else if (finddecendant(cand->daughter(i),id, first)) 
 		return tmp=finddecendant(cand->daughter(i),id, first);
    }
-    
+     
     return tmp;
 
 }
@@ -1006,6 +1011,34 @@ htoWWAnalyzer::printallDecendants(const reco::Candidate* cand){
         std::cout << "***********************************************************" << std::endl;
    	for (unsigned int i=0; i < cand->numberOfDaughters(); i++)
 		printallDecendants(cand->daughter(i));
+
+    }
+}
+
+//--------- method called to print children for cand -------------------
+void 
+htoWWAnalyzer::printChildren(const reco::Candidate* cand){
+   
+   if (cand->status() != 0 && cand->numberOfDaughters() > 0){
+        std::cout << "******************  children of id "<< cand->pdgId() <<"      *********************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfDaughters(); i++)
+        	printCandidate(cand->daughter(i));
+        std::cout << "***********************************************************" << std::endl;
+
+
+    }
+}
+
+
+//--------- method called to print all Ancestors for cand -------------------
+void 
+htoWWAnalyzer::printMothers(const reco::Candidate* cand){
+   
+   if (cand->status() != 0 && cand->numberOfMothers() > 0){
+        std::cout << "******************  mothers of id "<< cand->pdgId() <<"      *********************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfMothers(); i++)
+        	printCandidate(cand->mother(i));
+        std::cout << "***********************************************************" << std::endl;
 
     }
 }

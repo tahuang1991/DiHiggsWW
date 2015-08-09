@@ -822,7 +822,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 				dR_bbarjet = deltaR(jetit->eta(), jetit->phi(), b2cand->eta(), b2cand->phi());
 				//printCandidate(jetit->clone());
 				//std::cout <<" bcand(-5) "; printCandidate(bcand);
-				std::cout <<" has h->bbar,h is the same from h->bb in genparticles flow,dR "<< dR_bbarjet <<std::endl;
+				//std::cout <<" has h->bbar,h is the same from h->bb in genparticles flow,dR "<< dR_bbarjet <<std::endl;
 				hasbbarjet = true;
 				b2jet = jetit->clone();
 				bbarjet_decendant_px = 0;
@@ -847,7 +847,7 @@ DiHiggsWWAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 				dR_bjet = deltaR(jetit->eta(), jetit->phi(), b1cand->eta(), b1cand->phi());
 				//printCandidate(jetit->clone());
 				//std::cout <<" bcand(5) "; printCandidate(bcand);
-				std::cout <<" has h->b, h is the same from h->bb in genparticles flow,dR "<< dR_bjet <<std::endl;
+				//std::cout <<" has h->b, h is the same from h->bb in genparticles flow,dR "<< dR_bjet <<std::endl;
 				hasbjet = true;
 				b1jet = jetit->clone();
 				bjet_decendant_px = 0;

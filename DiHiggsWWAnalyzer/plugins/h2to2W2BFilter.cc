@@ -208,6 +208,8 @@ h2to2W2BFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
         //if (leptonicaldecay(W1cand)) std::cout <<" W1 is leptonical decay " << std::endl;     
         //if (leptonicaldecay(W2cand)) std::cout <<" W2 is leptonical decay " << std::endl;     
         accept = (leptonicaldecay(W1cand) and leptonicaldecay(W2cand));
+	//if (hasDaughter(W1cand, -15)) std::cout <<" W1 has tau daughter " << std::endl;
+	//if (hasDaughter(W2cand, 15)) std::cout <<" W2 has tau daughter " << std::endl;
         if (accept) std::cout <<" both W are leptonical decay " << std::endl;
 
 	} 

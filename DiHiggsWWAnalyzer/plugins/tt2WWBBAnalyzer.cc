@@ -109,6 +109,8 @@ class tt2WWBBAnalyzer : public edm::EDAnalyzer {
     private:
       void printCandidate(const reco::Candidate* );
       void printallDecendants(const reco::Candidate* );
+      void printChildren(const reco::Candidate* );
+      void printMothers(const reco::Candidate* );
       
 
 
@@ -584,7 +586,8 @@ tt2WWBBAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
 		if (finddecendant(w1cand, -13)) {
 			l1cand = finddecendant(w1cand, -13, false);nu1cand = finddecendant(w1cand, 14, false);}
 		if (Wtotau_ and finddecendant(w1cand, -15)) {
-			l1cand = finddecendant(w1cand, -15, false);nu1cand = finddecendant(w1cand, 16, false);}
+			l1cand = finddecendant(w1cand, -15, false);nu1cand = finddecendant(w1cand, 16, false);
+			std::cout <<" tau from W+ " << std::endl; }
 		if (l1cand and nu1cand) W1tolepton=true;
 		else W1tolepton =false;
 		if (not W1tolepton) std::cout <<" w1 has lepton decendant but program failed to find it " << std::endl;
@@ -596,7 +599,8 @@ tt2WWBBAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
 		if (finddecendant(w2cand, 13)) {
 			l2cand = finddecendant(w2cand, 13, false);nu2cand = finddecendant(w2cand, -14, false);}
 		if (Wtotau_ and finddecendant(w2cand, 15)) {
-			l2cand = finddecendant(w1cand, 15, false); nu2cand = finddecendant(w2cand, -16, false);}
+			l2cand = finddecendant(w2cand, 15, false); nu2cand = finddecendant(w2cand, -16, false);
+			std::cout <<" tau from W-" << std::endl; }
 		if (l2cand and nu2cand) W2tolepton=true;
 		else W2tolepton =false;
 		if (not W2tolepton) std::cout <<" w2 has lepton decendant but program failed to find it " << std::endl;
@@ -631,7 +635,7 @@ tt2WWBBAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
 				dR_bbarjet = deltaR(jetit->eta(), jetit->phi(), b2cand->eta(), b2cand->phi());
 				//printCandidate(jetit->clone());
 				//std::cout <<" bcand(-5) "; printCandidate(bcand);
-			     std::cout <<" has tbar->Wbbar,h is the same from tbar->Wbbar in genparticles flow,dR "<< dR_bbarjet <<std::endl;
+			    //std::cout <<" has tbar->Wbbar,tbar is the same from tbar->Wbbar in genparticles flow,dR "<< dR_bbarjet <<std::endl;
 				hasbbarjet = true;
 				b2jet = jetit->clone();
 			}
@@ -644,7 +648,7 @@ tt2WWBBAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
 				dR_bjet = deltaR(jetit->eta(), jetit->phi(), b1cand->eta(), b1cand->phi());
 				//printCandidate(jetit->clone());
 				//std::cout <<" bcand(5) "; printCandidate(bcand);
-				std::cout <<" has t->Wb, t is the same from t->Wb in genparticles flow,dR "<< dR_bjet <<std::endl;
+				//std::cout <<" has t->Wb, t is the same from t->Wb in genparticles flow,dR "<< dR_bjet <<std::endl;
 				hasbjet = true;
 				b1jet = jetit->clone();
 			}
@@ -1114,6 +1118,34 @@ tt2WWBBAnalyzer::fillbranches(){
    
 }
 
+
+//--------- method called to print children for cand -------------------
+void 
+tt2WWBBAnalyzer::printChildren(const reco::Candidate* cand){
+   
+   if (cand->status() != 0 && cand->numberOfDaughters() > 0){
+        std::cout << "******************  children of id "<< cand->pdgId() <<"      *********************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfDaughters(); i++)
+        	printCandidate(cand->daughter(i));
+        std::cout << "***********************************************************" << std::endl;
+
+
+    }
+}
+
+
+//--------- method called to print all Ancestors for cand -------------------
+void 
+tt2WWBBAnalyzer::printMothers(const reco::Candidate* cand){
+   
+   if (cand->status() != 0 && cand->numberOfMothers() > 0){
+        std::cout << "******************  mothers of id "<< cand->pdgId() <<"      *********************" << std::endl;
+   	for (unsigned int i=0; i < cand->numberOfMothers(); i++)
+        	printCandidate(cand->mother(i));
+        std::cout << "***********************************************************" << std::endl;
+
+    }
+}
 
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
