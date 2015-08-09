@@ -19,6 +19,7 @@ process.source = cms.Source("PoolSource",
 
 process.Filter = cms.EDFilter('h2to2W2BFilter',
 	moduleLabel = cms.untracked.string("genParticles"),
+	Wtotau = cms.untracked.bool(True)
  )
 
 #ttbarFilter = cms.Sequence( ttbarto2l2BFilter )
